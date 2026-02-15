@@ -131,7 +131,11 @@ export default function App() {
             order_total: formatCurrency(finalTotal),
             sales_rep: activeRep,
             sales_rep_phone: activeRepPhone,
-            order_details: cart.map(item => `${item.name} x ${item.quantity}`).join('\n'),
+            order_details: cart
+  .map(item =>
+    `${item.reference} | ${item.name} | ${item.quantity} x ${formatCurrency(item.calculatedPrice)} = ${formatCurrency(item.calculatedPrice * item.quantity)}`
+  )
+  .join('\n'),
             observations: observations || 'Sin observaciones'
         };
 
