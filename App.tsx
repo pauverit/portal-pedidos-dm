@@ -139,18 +139,19 @@ export default function App() {
         // Para pruebas, puedes usar 'service_id', 'template_id', 'user_id' de tu cuenta gratuita
         // O configurar variables de entorno VITE_EMAILJS_...
 
-        // Simulamos el envío para no bloquear si no hay credenciales
-        console.log('Enviando email...', templateParams);
-
-        /* 
-        // Descomentar cuando tengas las credenciales
-        emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams, 'YOUR_PUBLIC_KEY')
-          .then((response) => {
-             console.log('SUCCESS!', response.status, response.text);
-          }, (err) => {
-             console.log('FAILED...', err);
-          });
-        */
+        emailjs
+  .send(
+    import.meta.env.VITE_EMAILJS_SERVICE_ID,
+    import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+    templateParams,
+    import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+  )
+  .then((response) => {
+    console.log('EMAIL ENVIADO OK', response.status, response.text);
+  })
+  .catch((error) => {
+    console.error('ERROR ENVIANDO EMAIL', error);
+  });
 
         setCurrentView('order_success');
     };
