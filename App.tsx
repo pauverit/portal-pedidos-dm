@@ -1,18 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import emailjs from '@emailjs/browser';
 import { Sidebar } from './components/Sidebar';
-import { INITIAL_PRODUCTS, SALES_REPS, SALES_REPS_PHONES, DEMO_USER, ADMIN_USER } from './constants';
+import { INITIAL_PRODUCTS, SALES_REPS, SALES_REPS_PHONES, DEFAULT_USERS } from './constants';
 import { Product, CartItem, User } from './types';
 import {
     Search, Filter, ShoppingCart, Plus, Minus, Check, ArrowRight,
     MapPin, Printer, Download, CreditCard, ChevronRight, AlertCircle, Trash2, ArrowLeft,
-    CheckCircle, Settings, Save, Lock, Truck, Phone, Mail, FileText
+    CheckCircle, Settings, Save, Lock, Truck, Phone, Mail, FileText, UserPlus
 } from 'lucide-react';
 
 const formatCurrency = (value: number) =>
     new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
 
 export default function App() {
+    // --- STATE MANAGEMENT ---
+    // User persistence using LocalStorage
+    const [users, setUsers] = useState<User[]>(() => {
+        const saved = localStorage.getItem('dm_portal_users');
+        return saved ? JSON.parse(saved) : DEFAULT_USERS;
+    });
+
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [currentView, setCurrentView] = useState('login');
     const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
@@ -39,13 +46,12 @@ export default function App() {
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        if (username === 'demo' && password === 'demo') {
-            setCurrentUser(DEMO_USER);
-            setCurrentView('dashboard');
-            setLoginError('');
-        } else if (username === 'admin' && password === 'admin') {
-            setCurrentUser(ADMIN_USER);
-            setCurrentView('admin_load');
+
+        const foundUser = users.find(u => u.username === username && u.password === password);
+
+        if (foundUser) {
+            setCurrentUser(foundUser);
+            setCurrentView(foundUser.role === 'admin' ? 'admin_users' : 'dashboard');
             setLoginError('');
         } else {
             setLoginError('Credenciales incorrectas');
@@ -132,10 +138,10 @@ export default function App() {
             sales_rep: activeRep,
             sales_rep_phone: activeRepPhone,
             order_details: cart
-  .map(item =>
-    `${item.reference} | ${item.name} | ${item.quantity} x ${formatCurrency(item.calculatedPrice)} = ${formatCurrency(item.calculatedPrice * item.quantity)}`
-  )
-  .join('\n'),
+                .map(item =>
+                    `${item.reference} | ${item.name} | ${item.quantity} x ${formatCurrency(item.calculatedPrice)} = ${formatCurrency(item.calculatedPrice * item.quantity)}`
+                )
+                .join('\n'),
             observations: observations || 'Sin observaciones'
         };
 
@@ -144,18 +150,18 @@ export default function App() {
         // O configurar variables de entorno VITE_EMAILJS_...
 
         emailjs
-  .send(
-    import.meta.env.VITE_EMAILJS_SERVICE_ID,
-    import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
-    templateParams,
-    import.meta.env.VITE_EMAILJS_PUBLIC_KEY
-  )
-  .then((response) => {
-    console.log('EMAIL ENVIADO OK', response.status, response.text);
-  })
-  .catch((error) => {
-    console.error('ERROR ENVIANDO EMAIL', error);
-  });
+            .send(
+                import.meta.env.VITE_EMAILJS_SERVICE_ID,
+                import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+                templateParams,
+                import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+            )
+            .then((response) => {
+                console.log('EMAIL ENVIADO OK', response.status, response.text);
+            })
+            .catch((error) => {
+                console.error('ERROR ENVIANDO EMAIL', error);
+            });
 
         setCurrentView('order_success');
     };
@@ -181,13 +187,40 @@ export default function App() {
         alert("Productos cargados correctamente");
     };
 
+    // --- USER MANAGEMENT (ADMIN) ---
+    const [newUser, setNewUser] = useState({ username: '', password: '', name: '', email: '', phone: '' });
+
+    const handleAddUser = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newUser.username || !newUser.password || !newUser.name) return;
+
+        const userToAdd: User = {
+            id: `client-${Date.now()}`,
+            name: newUser.name,
+            email: newUser.email,
+            role: 'client',
+            username: newUser.username,
+            password: newUser.password,
+            phone: newUser.phone,
+            rappelAccumulated: 0,
+            registrationDate: new Date().toISOString()
+        };
+
+        const updatedUsers = [...users, userToAdd];
+        setUsers(updatedUsers);
+        localStorage.setItem('dm_portal_users', JSON.stringify(updatedUsers));
+
+        setNewUser({ username: '', password: '', name: '', email: '', phone: '' });
+        alert('Cliente registrado correctamente');
+    };
+
     // --- VIEW RENDERERS ---
 
     const renderLoginView = () => (
         <div class="min-h-screen bg-slate-100 flex items-center justify-center p-4">
             <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8 border border-slate-200">
                 <div class="text-center mb-8">
-                    <div class="h-12 w-12 bg-slate-900 rounded-lg flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">DM</div>
+                    <img src="/logo.png" alt="DigitalMarket" class="h-16 w-auto mx-auto mb-4" />
                     <h1 class="text-2xl font-bold text-slate-900">Portal B2B</h1>
                     <p class="text-slate-500 text-sm mt-2">Introduce tus credenciales de acceso</p>
                 </div>
@@ -290,6 +323,87 @@ export default function App() {
                 <button onClick={saveBulkProducts} class="bg-slate-900 text-white px-6 py-3 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-800 transition-colors">
                     <Save size={18} /> Guardar Productos
                 </button>
+            </div>
+        </div>
+    );
+
+    const renderAdminUsersView = () => (
+        <div class="p-6 md:p-10 max-w-4xl mx-auto">
+            <h1 class="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+                <UserPlus className="text-slate-400" /> Alta de Nuevo Cliente
+            </h1>
+
+            <div class="bg-white rounded-xl shadow-lg border border-slate-200 p-8">
+                <form onSubmit={handleAddUser} class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="md:col-span-2">
+                        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Credenciales de Acceso</h3>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Usuario de Acceso</label>
+                        <input required type="text" value={newUser.username} onChange={e => setNewUser({ ...newUser, username: e.target.value })}
+                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none" placeholder="ej. cliente1" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Contraseña</label>
+                        <input required type="text" value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })}
+                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none" placeholder="ej. 123456" />
+                        <p class="text-[10px] text-slate-400 mt-1">Comparte estas credenciales con el cliente.</p>
+                    </div>
+
+                    <div class="md:col-span-2 mt-4">
+                        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Datos de Facturación / Contacto</h3>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nombre Fiscal / Comercial</label>
+                        <input required type="text" value={newUser.name} onChange={e => setNewUser({ ...newUser, name: e.target.value })}
+                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none" placeholder="ej. Reformas y Construcciones S.L." />
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Email</label>
+                        <input required type="email" value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })}
+                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none" placeholder="ej. contabilidad@empresa.com" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Teléfono</label>
+                        <input required type="tel" value={newUser.phone} onChange={e => setNewUser({ ...newUser, phone: e.target.value })}
+                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none" placeholder="ej. 600 000 000" />
+                    </div>
+
+                    <div class="md:col-span-2 mt-6 flex justify-end">
+                        <button type="submit" class="bg-slate-900 text-white px-8 py-3 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-lg active:scale-95">
+                            <UserPlus size={20} /> Registrar Cliente
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="mt-8">
+                <h3 class="text-lg font-bold text-slate-900 mb-4">Clientes Registrados</h3>
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-slate-50 border-b border-slate-200 text-slate-500">
+                            <tr>
+                                <th class="px-6 py-3">Nombre</th>
+                                <th class="px-6 py-3">Usuario</th>
+                                <th class="px-6 py-3">Email</th>
+                                <th class="px-6 py-3">Rappels</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            {users.filter(u => u.role === 'client').map((user, idx) => (
+                                <tr key={idx} class="hover:bg-slate-50">
+                                    <td class="px-6 py-3 font-medium text-slate-900">{user.name}</td>
+                                    <td class="px-6 py-3 font-mono text-slate-500">{user.username}</td>
+                                    <td class="px-6 py-3 text-slate-500">{user.email}</td>
+                                    <td class="px-6 py-3 font-bold text-slate-900">{formatCurrency(user.rappelAccumulated)}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );
@@ -679,7 +793,7 @@ export default function App() {
             <div class="flex-1 flex flex-col h-screen overflow-y-auto">
                 <header class="md:hidden bg-white border-b border-slate-200 p-4 sticky top-0 z-30 flex items-center justify-between shadow-sm">
                     <div class="flex items-center gap-2">
-                        <div class="h-8 w-8 bg-slate-900 rounded-lg flex items-center justify-center text-white font-bold">DM</div>
+                        <img src="/logo.png" alt="DigitalMarket" class="h-8 w-auto" />
                         <span class="font-bold text-sm truncate max-w-[150px]">{currentUser?.name}</span>
                     </div>
                     <div class="flex gap-4">
@@ -699,6 +813,7 @@ export default function App() {
                     {currentView === 'cart' && renderCheckoutView()}
                     {currentView === 'order_success' && renderSuccessView()}
                     {currentView === 'admin_load' && currentUser.role === 'admin' && renderAdminLoadView()}
+                    {currentView === 'admin_users' && currentUser.role === 'admin' && renderAdminUsersView()}
                 </main>
             </div>
         </div>
