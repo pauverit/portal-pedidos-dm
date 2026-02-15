@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { LayoutDashboard, ShoppingCart, Settings, LogOut, Printer, Database, UserCircle, ChevronDown, ChevronRight, Layers, Box, Wrench, UserPlus, X } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Settings, LogOut, Printer, Database, UserCircle, ChevronDown, ChevronRight, Layers, Box, Wrench, UserPlus, X, ShoppingBag, Scroll } from 'lucide-react';
 import { User } from '../types';
 
 interface SidebarProps {
@@ -82,6 +81,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
       label: 'Alta Clientes',
       icon: UserPlus,
       roles: ['admin']
+    },
+    {
+      id: 'client_orders',
+      label: 'Mis Pedidos',
+      icon: ShoppingBag, // Need to import ShoppingBag
+      roles: ['client']
     },
   ];
 

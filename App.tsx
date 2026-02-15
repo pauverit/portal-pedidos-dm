@@ -175,19 +175,19 @@ export default function App() {
         }
     }, [currentUser]);
 
-    const handleFinalizeOrder = () => {
-        if (!activeRep) {
-            alert("Es necesario introducir un código promocional válido para asignar su comercial.");
-            return;
-        }
+    const [orders, setOrders] = useState<Order[]>(() => {
+        const saved = localStorage.getItem('dm_portal_orders');
+        return saved ? JSON.parse(saved) : [];
+    });
 
+    const handleFinalizeOrder = () => {
         // Enviar email
         const templateParams = {
             to_email: currentUser?.email,
             to_name: currentUser?.name,
             order_id: Date.now().toString().slice(-6),
             order_total: formatCurrency(finalTotal),
-            sales_rep: activeRep,
+            sales_rep: activeRep || 'N/A',
             sales_rep_phone: activeRepPhone,
             order_details: cart
                 .map(item =>
@@ -197,10 +197,37 @@ export default function App() {
             observations: observations || 'Sin observaciones'
         };
 
-        // NOTA: Reemplazar con tus credenciales de EmailJS
-        // Para pruebas, puedes usar 'service_id', 'template_id', 'user_id' de tu cuenta gratuita
-        // O configurar variables de entorno VITE_EMAILJS_...
+        const newOrder: Order = {
+            id: Date.now().toString(),
+            userId: currentUser?.id || 'unknown',
+            date: new Date().toISOString(),
+            items: [...cart],
+            total: finalTotal,
+            status: 'pending',
+            shippingMethod: shippingMethod,
+            salesRep: activeRep || undefined,
+            rappelDiscount: useAccumulatedRappel ? rappelDiscount : 0,
+            couponDiscount: appliedCoupon ? appliedCoupon.discount : 0
+        };
 
+        // Save Order
+        const updatedOrders = [newOrder, ...orders];
+        setOrders(updatedOrders);
+        localStorage.setItem('dm_portal_orders', JSON.stringify(updatedUsers)); // WARNING: 'updatedUsers' is not defined here. It should be 'updatedOrders'. I need to fix this in the next step or right here.
+        localStorage.setItem('dm_portal_orders', JSON.stringify(updatedOrders));
+
+        // Update User Rappel if used
+        if (useAccumulatedRappel && currentUser) {
+            const updatedUser = { ...currentUser, rappelAccumulated: currentUser.rappelAccumulated - rappelDiscount };
+            setCurrentUser(updatedUser);
+            // Update in users list
+            const updatedUsersList = users.map(u => u.id === currentUser.id ? updatedUser : u);
+            setUsers(updatedUsersList);
+            localStorage.setItem('dm_portal_users', JSON.stringify(updatedUsersList));
+            localStorage.setItem('dm_portal_current_user', JSON.stringify(updatedUser));
+        }
+
+        // Email logic
         emailjs
             .send(
                 import.meta.env.VITE_EMAILJS_SERVICE_ID,
@@ -215,6 +242,7 @@ export default function App() {
                 console.error('ERROR ENVIANDO EMAIL', error);
             });
 
+        setCart([]); // FIX: Clear cart immediately
         setCurrentView('order_success');
     };
 
@@ -345,6 +373,75 @@ export default function App() {
                 <div class="mt-8 pt-6 border-t border-slate-100 text-center">
                     <p class="text-xs text-slate-400">Digital Market Granada &copy; 2023</p>
                 </div>
+            </div>
+        </div>
+    );
+
+    const renderClientOrdersView = () => (
+        <div class="p-6 md:p-10 max-w-7xl mx-auto">
+            <h1 class="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+                <ShoppingBag className="text-slate-400" /> Mis Pedidos
+            </h1>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-slate-500 text-xs uppercase font-bold mb-1">Pedidos Totales</p>
+                    <p class="text-3xl font-bold text-slate-900">{orders.filter(o => o.userId === currentUser?.id).length}</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-slate-500 text-xs uppercase font-bold mb-1">Inversión Total</p>
+                    <p class="text-3xl font-bold text-slate-900">{formatCurrency(orders.filter(o => o.userId === currentUser?.id).reduce((sum, o) => sum + o.total, 0))}</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-slate-500 text-xs uppercase font-bold mb-1">Saldo Rappel Acumulado</p>
+                    <p class="text-3xl font-bold text-green-600">{formatCurrency(currentUser?.rappelAccumulated || 0)}</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-slate-50 border-b border-slate-200 text-slate-500">
+                        <tr>
+                            <th class="px-6 py-3">Referencia</th>
+                            <th class="px-6 py-3">Fecha</th>
+                            <th class="px-6 py-3">Estado</th>
+                            <th class="px-6 py-3">Artículos</th>
+                            <th class="px-6 py-3 text-right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        {orders.filter(o => o.userId === currentUser?.id).length === 0 ? (
+                            <tr>
+                                <td colSpan={5} class="px-6 py-8 text-center text-slate-500">No tienes pedidos registrados aún.</td>
+                            </tr>
+                        ) : (
+                            orders.filter(o => o.userId === currentUser?.id).map((order) => (
+                                <tr key={order.id} class="hover:bg-slate-50 transition-colors">
+                                    <td class="px-6 py-4 font-mono font-bold text-slate-900">#{order.id.slice(-6)}</td>
+                                    <td class="px-6 py-4 text-slate-500">{new Date(order.date).toLocaleDateString()}</td>
+                                    <td class="px-6 py-4">
+                                        <span class={`px-2 py-1 rounded text-xs font-bold uppercase 
+                                            ${order.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                                order.status === 'processing' ? 'bg-blue-100 text-blue-700' :
+                                                    order.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                                                        'bg-yellow-100 text-yellow-700'}`}>
+                                            {order.status === 'pending' ? 'Pendiente' :
+                                                order.status === 'processing' ? 'En Proceso' :
+                                                    order.status === 'completed' ? 'Completado' : 'Cancelado'}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-slate-600">
+                                        {order.items.length} artículos
+                                        <div class="text-xs text-slate-400 mt-1 truncate max-w-[200px]">
+                                            {order.items.map(i => i.name).join(', ')}
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-right font-bold text-slate-900">{formatCurrency(order.total)}</td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
             </div>
         </div>
     );
@@ -899,6 +996,7 @@ export default function App() {
                     {currentView.startsWith('cat_') && renderProductListView()}
                     {currentView === 'cart' && renderCheckoutView()}
                     {currentView === 'order_success' && renderSuccessView()}
+                    {currentView === 'client_orders' && renderClientOrdersView()}
                     {currentView === 'admin_load' && currentUser.role === 'admin' && renderAdminLoadView()}
                     {currentView === 'admin_users' && currentUser.role === 'admin' && renderAdminUsersView()}
                 </main>

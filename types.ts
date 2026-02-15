@@ -45,3 +45,16 @@ export interface SalesRep {
   name: string;
   phone: string;
 }
+
+export interface Order {
+  id: string;
+  userId: string;
+  date: string;
+  items: CartItem[];
+  total: number;
+  status: 'pending' | 'processing' | 'completed' | 'cancelled';
+  shippingMethod: 'agency' | 'own';
+  salesRep?: string;
+  rappelDiscount: number;
+  couponDiscount: number;
+}
