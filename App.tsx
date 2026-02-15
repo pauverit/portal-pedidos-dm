@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import emailjs from '@emailjs/browser';
 import { Sidebar } from './components/Sidebar';
+import { AdminBulkLoad } from './components/AdminBulkLoad';
 import { INITIAL_PRODUCTS, SALES_REPS, SALES_REPS_PHONES, DEFAULT_USERS } from './constants';
 import { Product, CartItem, User } from './types';
 import {
@@ -20,7 +21,10 @@ export default function App() {
         return saved ? JSON.parse(saved) : DEFAULT_USERS;
     });
 
-    const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [currentUser, setCurrentUser] = useState<User | null>(() => {
+        const saved = localStorage.getItem('dm_portal_current_user');
+        return saved ? JSON.parse(saved) : null;
+    });
     const [currentView, setCurrentView] = useState('login');
     const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
     const [cart, setCart] = useState<CartItem[]>([]);
@@ -42,10 +46,10 @@ export default function App() {
     // Mobile Menu State
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    // Admin Bulk Load State
-    const [bulkRows, setBulkRows] = useState<Partial<Product>[]>(
-        Array(10).fill({ name: '', reference: '', price: 0, category: 'flexible', width: 0, length: 0 })
-    );
+    // Admin Bulk Load Logic
+    const handleBulkSave = (newProducts: Product[]) => {
+        setProducts(prev => [...prev, ...newProducts]);
+    };
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
@@ -54,6 +58,7 @@ export default function App() {
 
         if (foundUser) {
             setCurrentUser(foundUser);
+            localStorage.setItem('dm_portal_current_user', JSON.stringify(foundUser));
             setCurrentView(foundUser.role === 'admin' ? 'admin_users' : 'dashboard');
             setLoginError('');
         } else {
@@ -63,6 +68,7 @@ export default function App() {
 
     const handleLogout = () => {
         setCurrentUser(null);
+        localStorage.removeItem('dm_portal_current_user');
         setUsername('');
         setPassword('');
         setCart([]);
@@ -106,25 +112,68 @@ export default function App() {
     const clearCart = () => setCart([]);
 
     // --- CHECKOUT CALCULATIONS ---
+    const [couponCode, setCouponCode] = useState('');
+    const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
+
     const cartTotal = cart.reduce((sum, item) => sum + (item.calculatedPrice * item.quantity), 0);
     const shippingCost = shippingMethod === 'agency' ? 6.00 : 0.00;
-    const newRappelGenerated = cartTotal * 0.05;
-    const rappelDiscount = useAccumulatedRappel && currentUser ? Math.min(cartTotal, currentUser.rappelAccumulated) : 0;
-    const subtotalAfterDiscount = cartTotal - rappelDiscount;
+
+    // RAPPEL SYSTEM: Changed to 3% default accumulation
+    const newRappelGenerated = cartTotal * 0.03;
+
+    // COUPON LOGIC
+    const calculateDiscount = () => {
+        if (!appliedCoupon) return 0;
+        return appliedCoupon.discount;
+    };
+
+    const discountAmount = calculateDiscount();
+
+    const rappelDiscount = useAccumulatedRappel && currentUser ? Math.min(cartTotal - discountAmount, currentUser.rappelAccumulated) : 0;
+    const subtotalAfterDiscount = cartTotal - discountAmount - rappelDiscount;
     const tax = subtotalAfterDiscount * 0.21;
     const finalTotal = subtotalAfterDiscount + tax + shippingCost;
 
-    const validatePromo = () => {
-        const code = promoCode.toLowerCase();
-        if (SALES_REPS[code]) {
-            setActiveRep(SALES_REPS[code]);
-            setActiveRepPhone(SALES_REPS_PHONES[code] || '958 000 000');
+    const applyCoupon = () => {
+        const code = couponCode.toUpperCase().trim();
+
+        if (code === 'PEDIDOINICIAL') {
+            // Logic: 5% discount
+            // TODO: Check if user already used it (mocked for now)
+            if (currentUser?.usedCoupons?.includes('PEDIDOINICIAL')) {
+                alert('Este cupón ya ha sido usado.');
+                return;
+            }
+            setAppliedCoupon({ code, discount: cartTotal * 0.05 });
+            alert('Cupón de Bienvenida aplicado: 5% Dto.');
+        } else if (code === 'RAPPEL3') {
+            // Logic: 3% discount if total > 900
+            if (cartTotal > 900) {
+                setAppliedCoupon({ code, discount: cartTotal * 0.03 });
+                alert('Cupón RAPPEL3 aplicado: 3% Dto adicional.');
+            } else {
+                alert('Este cupón solo es válido para pedidos superiores a 900€');
+                setAppliedCoupon(null);
+            }
         } else {
-            setActiveRep(null);
-            setActiveRepPhone('');
-            alert("Código no válido");
+            alert('Cupón no válido');
+            setAppliedCoupon(null);
         }
     };
+
+    // Auto-assign Sales Rep
+    useEffect(() => {
+        if (currentUser?.salesRep) {
+            setActiveRep(currentUser.salesRep);
+            // Try to find phone
+            const repKey = Object.keys(SALES_REPS).find(key => SALES_REPS[key] === currentUser.salesRep);
+            if (repKey) {
+                setActiveRepPhone(SALES_REPS_PHONES[repKey]);
+            } else {
+                setActiveRepPhone('958 000 000'); // Default
+            }
+        }
+    }, [currentUser]);
 
     const handleFinalizeOrder = () => {
         if (!activeRep) {
@@ -170,32 +219,18 @@ export default function App() {
     };
 
     // --- ADMIN LOGIC ---
-    const handleBulkChange = (index: number, field: string, value: any) => {
-        const newRows = [...bulkRows];
-        newRows[index] = { ...newRows[index], [field]: value };
-        setBulkRows(newRows);
-    };
 
-    const saveBulkProducts = () => {
-        const validProducts = bulkRows.filter(r => r.name && r.price).map((r, i) => ({
-            ...r,
-            id: `new-${Date.now()}-${i}`,
-            unit: r.category === 'flexible' ? 'bobina' : 'ud',
-            isFlexible: r.category === 'flexible',
-            pricePerM2: r.category === 'flexible' ? r.price : undefined
-        } as Product));
-
-        setProducts([...products, ...validProducts]);
-        setBulkRows(Array(10).fill({ name: '', reference: '', price: 0, category: 'flexible', width: 0, length: 0 }));
-        alert("Productos cargados correctamente");
-    };
 
     // --- USER MANAGEMENT (ADMIN) ---
-    const [newUser, setNewUser] = useState({ username: '', password: '', name: '', email: '', phone: '' });
+    // --- USER MANAGEMENT (ADMIN) ---
+    const [newUser, setNewUser] = useState({ username: '', password: '', name: '', email: '', phone: '', delegation: '', salesRep: '' });
 
     const handleAddUser = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newUser.username || !newUser.password || !newUser.name) return;
+        if (!newUser.username || !newUser.password || !newUser.name || !newUser.delegation || !newUser.salesRep) {
+            alert('Por favor rellena todos los campos obligatorios inc. Delegación y Comercial.');
+            return;
+        }
 
         const userToAdd: User = {
             id: `client-${Date.now()}`,
@@ -205,15 +240,18 @@ export default function App() {
             username: newUser.username,
             password: newUser.password,
             phone: newUser.phone,
+            delegation: newUser.delegation,
+            salesRep: newUser.salesRep,
             rappelAccumulated: 0,
-            registrationDate: new Date().toISOString()
+            registrationDate: new Date().toISOString(),
+            usedCoupons: []
         };
 
         const updatedUsers = [...users, userToAdd];
         setUsers(updatedUsers);
         localStorage.setItem('dm_portal_users', JSON.stringify(updatedUsers));
 
-        setNewUser({ username: '', password: '', name: '', email: '', phone: '' });
+        setNewUser({ username: '', password: '', name: '', email: '', phone: '', delegation: '', salesRep: '' });
         alert('Cliente registrado correctamente');
     };
 
@@ -265,69 +303,7 @@ export default function App() {
     );
 
     const renderAdminLoadView = () => (
-        <div class="p-6 md:p-10 max-w-7xl mx-auto">
-            <h1 class="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
-                <Settings className="text-slate-400" /> Carga de Materiales
-            </h1>
-
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left">
-                        <thead class="bg-slate-50 border-b border-slate-200 text-slate-500">
-                            <tr>
-                                <th class="px-4 py-3 w-12">#</th>
-                                <th class="px-4 py-3">Referencia</th>
-                                <th class="px-4 py-3">Nombre</th>
-                                <th class="px-4 py-3">Cat.</th>
-                                <th class="px-4 py-3">Precio</th>
-                                <th class="px-4 py-3">Ancho</th>
-                                <th class="px-4 py-3">Largo</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            {bulkRows.map((row, idx) => (
-                                <tr key={idx} class="hover:bg-slate-50">
-                                    <td class="px-4 py-2 text-slate-400 font-mono">{idx + 1}</td>
-                                    <td class="px-4 py-2">
-                                        <input type="text" class="w-full bg-transparent border-b border-transparent focus:border-slate-400 outline-none text-slate-900"
-                                            placeholder="REF" value={row.reference} onChange={e => handleBulkChange(idx, 'reference', e.target.value)} />
-                                    </td>
-                                    <td class="px-4 py-2">
-                                        <input type="text" class="w-full bg-transparent border-b border-transparent focus:border-slate-400 outline-none text-slate-900"
-                                            placeholder="Nombre" value={row.name} onChange={e => handleBulkChange(idx, 'name', e.target.value)} />
-                                    </td>
-                                    <td class="px-4 py-2">
-                                        <select class="bg-transparent outline-none text-slate-600" value={row.category} onChange={e => handleBulkChange(idx, 'category', e.target.value)}>
-                                            <option value="flexible">Flexible</option>
-                                            <option value="rigid">Rígido</option>
-                                            <option value="accessory">Accesorio</option>
-                                            <option value="ink">Tinta</option>
-                                        </select>
-                                    </td>
-                                    <td class="px-4 py-2">
-                                        <input type="number" class="w-16 bg-transparent border-b border-transparent focus:border-slate-400 outline-none text-slate-900"
-                                            placeholder="0.00" value={row.price} onChange={e => handleBulkChange(idx, 'price', parseFloat(e.target.value))} />
-                                    </td>
-                                    <td class="px-4 py-2">
-                                        <input type="number" class="w-16 bg-transparent border-b border-slate-200 outline-none text-slate-900"
-                                            value={row.width} onChange={e => handleBulkChange(idx, 'width', parseFloat(e.target.value))} disabled={row.category !== 'flexible'} />
-                                    </td>
-                                    <td class="px-4 py-2">
-                                        <input type="number" class="w-16 bg-transparent border-b border-slate-200 outline-none text-slate-900"
-                                            value={row.length} onChange={e => handleBulkChange(idx, 'length', parseFloat(e.target.value))} disabled={row.category !== 'flexible'} />
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="flex justify-end">
-                <button onClick={saveBulkProducts} class="bg-slate-900 text-white px-6 py-3 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-800 transition-colors">
-                    <Save size={18} /> Guardar Productos
-                </button>
-            </div>
-        </div>
+        <AdminBulkLoad onSave={handleBulkSave} />
     );
 
     const renderAdminUsersView = () => (
@@ -373,6 +349,23 @@ export default function App() {
                         <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Teléfono</label>
                         <input required type="tel" value={newUser.phone} onChange={e => setNewUser({ ...newUser, phone: e.target.value })}
                             class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none" placeholder="ej. 600 000 000" />
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Delegación / Dirección de Entrega</label>
+                        <input required type="text" value={newUser.delegation} onChange={e => setNewUser({ ...newUser, delegation: e.target.value })}
+                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none" placeholder="ej. Polígono Juncaril, C/ Baza 12" />
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Comercial Asignado</label>
+                        <select required value={newUser.salesRep} onChange={e => setNewUser({ ...newUser, salesRep: e.target.value })}
+                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none text-slate-900">
+                            <option value="">Seleccionar Comercial...</option>
+                            {Object.values(SALES_REPS).map(rep => (
+                                <option key={rep} value={rep}>{rep}</option>
+                            ))}
+                        </select>
                     </div>
 
                     <div class="md:col-span-2 mt-6 flex justify-end">
@@ -561,31 +554,41 @@ export default function App() {
 
             <h1 class="text-2xl font-bold text-slate-900 mb-6">Finalizar Pedido</h1>
 
-            {/* 1. Código Promo */}
+            {/* 1. Código Promocional (Opcional) */}
             <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 mb-6">
                 <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
                     <div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-xs">1</div>
-                    Código Promocional / Comercial
+                    Cupones y Descuentos
                 </h3>
                 <div class="flex gap-3">
                     <input
                         type="text"
-                        placeholder="Ej. josem5"
-                        value={promoCode}
-                        onChange={(e) => setPromoCode(e.target.value)}
-                        disabled={!!activeRep}
+                        placeholder="Código Promocional (Opcional)"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value)}
+                        disabled={!!appliedCoupon}
                         class="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none uppercase text-slate-900"
                     />
-                    {!activeRep ? (
-                        <button onClick={validatePromo} class="bg-slate-900 text-white px-6 font-bold rounded-lg hover:bg-slate-800">
+                    {!appliedCoupon ? (
+                        <button onClick={applyCoupon} class="bg-slate-900 text-white px-6 font-bold rounded-lg hover:bg-slate-800">
                             Aplicar
                         </button>
                     ) : (
-                        <button onClick={() => { setActiveRep(null); setActiveRepPhone(''); setPromoCode(''); }} class="bg-green-100 text-green-700 px-6 font-bold rounded-lg flex items-center gap-2">
-                            <Check size={18} /> {activeRep}
+                        <button onClick={() => { setAppliedCoupon(null); setCouponCode(''); }} class="bg-green-100 text-green-700 px-6 font-bold rounded-lg flex items-center gap-2">
+                            <Check size={18} /> {appliedCoupon.code}
                         </button>
                     )}
                 </div>
+                {appliedCoupon && <p class="text-green-600 text-sm mt-2 font-bold">Descuento aplicado: -{formatCurrency(appliedCoupon.discount)}</p>}
+            </div>
+
+            {/* Info Comercial */}
+            <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-bold text-blue-800 uppercase">Comercial Asignado</p>
+                    <p class="text-blue-900 font-bold text-lg">{activeRep || 'Sin asignar'}</p>
+                </div>
+                {activeRep && <div class="bg-white px-3 py-1 rounded text-blue-900 font-mono text-sm">{activeRepPhone}</div>}
             </div>
 
             {/* 2. Método de Envío */}

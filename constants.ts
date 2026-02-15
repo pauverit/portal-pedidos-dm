@@ -17,7 +17,10 @@ export const DEMO_USER: User = {
   role: 'client',
   rappelAccumulated: 45.50,
   username: 'demo',
-  password: 'demo'
+  password: 'demo',
+  salesRep: 'Javier',
+  delegation: 'Pol. Ind. Juncaril',
+  usedCoupons: []
 };
 
 export const DEFAULT_USERS: User[] = [ADMIN_USER, DEMO_USER];

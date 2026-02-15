@@ -34,6 +34,10 @@ export interface User {
   password?: string;
   phone?: string;
   registrationDate?: string;
+  // B2B Specifics
+  salesRep?: string;
+  delegation?: string;
+  usedCoupons?: string[];
 }
 
 export interface SalesRep {
