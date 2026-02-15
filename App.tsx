@@ -711,10 +711,12 @@ export default function App() {
                     Resumen Económico
                 </h3>
 
-                <div class="bg-blue-50 border border-blue-100 p-3 rounded-lg flex justify-between items-center text-blue-800 text-sm">
-                    <span class="font-medium">Beneficio generado (3%):</span>
-                    <span class="font-bold">+{formatCurrency(newRappelGenerated)}</span>
-                </div>
+                {appliedCoupon?.code === 'RAPPEL3' && (
+                    <div class="bg-blue-50 border border-blue-100 p-3 rounded-lg flex justify-between items-center text-blue-800 text-sm">
+                        <span class="font-medium">Beneficio generado (3%):</span>
+                        <span class="font-bold">+{formatCurrency(newRappelGenerated)}</span>
+                    </div>
+                )}
 
                 {currentUser && currentUser.rappelAccumulated > 0 && appliedCoupon?.code === 'RAPPEL3' && (
                     <div class="border-t border-slate-100 pt-4">
@@ -757,10 +759,10 @@ export default function App() {
                 <div class="max-w-3xl mx-auto">
                     <button
                         onClick={handleFinalizeOrder}
-                        disabled={!activeRep}
+                        disabled={cart.length === 0}
                         class="w-full bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all"
                     >
-                        {activeRep ? 'CONFIRMAR PEDIDO' : 'INTRODUCE CÓDIGO PROMO'} <CheckCircle size={20} />
+                        CONFIRMAR PEDIDO <CheckCircle size={20} />
                     </button>
                 </div>
             </div>
