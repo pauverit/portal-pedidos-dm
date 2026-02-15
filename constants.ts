@@ -5,7 +5,9 @@ export const ADMIN_USER: User = {
   id: 'ADMIN-001',
   email: 'admin@digitalmarket.com',
   role: 'admin',
-  rappelAccumulated: 0
+  rappelAccumulated: 0,
+  username: 'admin',
+  password: 'admin' // In a real app, this should be hashed
 };
 
 export const DEMO_USER: User = {
@@ -13,8 +15,12 @@ export const DEMO_USER: User = {
   id: '#C-DEMO',
   email: 'demo@cliente.com',
   role: 'client',
-  rappelAccumulated: 45.50
+  rappelAccumulated: 45.50,
+  username: 'demo',
+  password: 'demo'
 };
+
+export const DEFAULT_USERS: User[] = [ADMIN_USER, DEMO_USER];
 
 // Mapa de códigos a nombres
 export const SALES_REPS: Record<string, string> = {
@@ -24,7 +30,7 @@ export const SALES_REPS: Record<string, string> = {
   'mariano5': 'Mariano',
   'julian5': 'Julian',
   'jorge5': 'Jorge',
-  'demo5': 'Comercial General' 
+  'demo5': 'Comercial General'
 };
 
 // Mapa de códigos a teléfonos
@@ -46,7 +52,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     reference: 'LPB-137-50',
     category: 'flexible',
     subcategory: 'laminados',
-    price: 215.77, 
+    price: 215.77,
     unit: 'bobina',
     isFlexible: true,
     width: 1.37,

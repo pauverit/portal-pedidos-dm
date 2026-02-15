@@ -29,6 +29,11 @@ export interface User {
   email: string;
   role: 'admin' | 'client';
   rappelAccumulated: number;
+  // Auth fields
+  username?: string;
+  password?: string;
+  phone?: string;
+  registrationDate?: string;
 }
 
 export interface SalesRep {
