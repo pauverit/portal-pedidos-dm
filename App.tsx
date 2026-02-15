@@ -180,6 +180,8 @@ export default function App() {
         return saved ? JSON.parse(saved) : [];
     });
 
+    const [lastOrder, setLastOrder] = useState<Order | null>(null);
+
     const handleFinalizeOrder = () => {
         // Enviar email
         const templateParams = {
@@ -214,6 +216,9 @@ export default function App() {
         const updatedOrders = [newOrder, ...orders];
         setOrders(updatedOrders);
         localStorage.setItem('dm_portal_orders', JSON.stringify(updatedOrders));
+
+        // Set last order for success view
+        setLastOrder(newOrder);
 
         // Update User Rappel if used
         if (useAccumulatedRappel && currentUser) {
@@ -866,63 +871,64 @@ export default function App() {
     );
 
     const renderSuccessView = () => (
-        <div class="p-6 md:p-10 max-w-2xl mx-auto flex flex-col items-center justify-center min-h-[80vh] text-center">
-            <div class="h-24 w-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
-                <CheckCircle size={48} />
-            </div>
-            <h1 class="text-3xl font-bold text-slate-900 mb-2">¡Pedido Confirmado!</h1>
-            <p class="text-slate-500 mb-8 max-w-md">Hemos enviado un correo electrónico con el detalle de tu pedido a <span class="font-bold text-slate-700">digitalmarketgranada@gmail.com</span></p>
-
-            <div class="w-full bg-white border border-slate-200 rounded-xl p-6 text-left mb-8 shadow-sm">
-                <h3 class="font-bold text-slate-900 mb-4 border-b border-slate-100 pb-2">Resumen Rápido</h3>
-                <div class="space-y-3 text-sm">
-                    <div class="flex justify-between">
-                        <span class="text-slate-500">Referencia Pedido:</span>
-                        <span class="font-mono font-bold">#{Date.now().toString().slice(-6)}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-slate-500">Total:</span>
-                        <span class="font-bold text-slate-900">{formatCurrency(finalTotal)}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-slate-500">Comercial:</span>
-                        <span class="font-bold text-slate-900">{activeRep}</span>
-                    </div>
-                    {observations && (
-                        <div class="pt-2 mt-2 border-t border-slate-100">
-                            <span class="text-slate-500 block mb-1 text-xs uppercase">Observaciones:</span>
-                            <p class="text-slate-700 italic bg-slate-50 p-2 rounded">{observations}</p>
-                        </div>
-                    )}
+    const renderSuccessView = () => (
+            <div class="p-6 md:p-10 max-w-2xl mx-auto flex flex-col items-center justify-center min-h-[80vh] text-center">
+                <div class="h-24 w-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
+                    <CheckCircle size={48} />
                 </div>
-            </div>
+                <h1 class="text-3xl font-bold text-slate-900 mb-2">¡Pedido Confirmado!</h1>
+                <p class="text-slate-500 mb-8 max-w-md">Hemos enviado un correo electrónico con el detalle de tu pedido a <span class="font-bold text-slate-700">{currentUser?.email}</span></p>
 
-            {activeRep && (
-                <div class="bg-slate-900 text-white rounded-xl p-6 w-full max-w-md mb-6">
-                    <p class="text-slate-400 text-xs uppercase tracking-wider font-bold mb-2">Contacto Comercial</p>
-                    <div class="flex items-center gap-4">
-                        <div class="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center">
-                            <Phone size={24} />
+                <div class="w-full bg-white border border-slate-200 rounded-xl p-6 text-left mb-8 shadow-sm">
+                    <h3 class="font-bold text-slate-900 mb-4 border-b border-slate-100 pb-2">Resumen Rápido</h3>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Referencia Pedido:</span>
+                            <span class="font-mono font-bold">#{lastOrder?.id.slice(-6)}</span>
                         </div>
-                        <div class="text-left">
-                            <p class="font-bold text-lg">{activeRep}</p>
-                            <p class="text-slate-300">{activeRepPhone}</p>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Total:</span>
+                            <span class="font-bold text-slate-900">{formatCurrency(lastOrder?.total || 0)}</span>
                         </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Comercial:</span>
+                            <span class="font-bold text-slate-900">{lastOrder?.salesRep || 'N/A'}</span>
+                        </div>
+                        {observations && (
+                            <div class="pt-2 mt-2 border-t border-slate-100">
+                                <span class="text-slate-500 block mb-1 text-xs uppercase">Observaciones:</span>
+                                <p class="text-slate-700 italic bg-slate-50 p-2 rounded">{observations}</p>
+                            </div>
+                        )}
                     </div>
-                    <p class="text-xs text-slate-400 mt-4 pt-4 border-t border-white/10">
-                        Si necesitas añadir algo extra al pedido que no aparece en la web, contacta directamente con tu comercial.
-                    </p>
                 </div>
-            )}
 
-            <button
-                onClick={() => { clearCart(); setCurrentView('dashboard'); }}
-                class="px-8 py-3 bg-white border border-slate-300 text-slate-700 font-bold rounded-lg hover:bg-slate-50 transition-colors"
-            >
-                Volver al Inicio
-            </button>
-        </div>
-    );
+                {lastOrder?.salesRep && (
+                    <div class="bg-slate-900 text-white rounded-xl p-6 w-full max-w-md mb-6">
+                        <p class="text-slate-400 text-xs uppercase tracking-wider font-bold mb-2">Contacto Comercial</p>
+                        <div class="flex items-center gap-4">
+                            <div class="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center">
+                                <Phone size={24} />
+                            </div>
+                            <div class="text-left">
+                                <p class="font-bold text-lg">{lastOrder.salesRep}</p>
+                                <p class="text-slate-300">{Object.keys(SALES_REPS).find(k => SALES_REPS[k] === lastOrder.salesRep) ? SALES_REPS_PHONES[Object.keys(SALES_REPS).find(k => SALES_REPS[k] === lastOrder.salesRep)!] : '958 000 000'}</p>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-4 pt-4 border-t border-white/10">
+                            Si necesitas añadir algo extra al pedido que no aparece en la web, contacta directamente con tu comercial.
+                        </p>
+                    </div>
+                )}
+
+                <button
+                    onClick={() => { clearCart(); setCurrentView('dashboard'); setLastOrder(null); setObservations(''); }}
+                    class="px-8 py-3 bg-white border border-slate-300 text-slate-700 font-bold rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                    Volver al Inicio
+                </button>
+            </div>
+        );
 
     const renderDashboardView = () => (
         <div class="p-6 md:p-10 max-w-7xl mx-auto">
