@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { LayoutDashboard, ShoppingCart, Settings, LogOut, Printer, Database, UserCircle, ChevronDown, ChevronRight, Layers, Box, Wrench, UserPlus, X, ShoppingBag, Scroll } from 'lucide-react';
 import { User } from '../types';
 

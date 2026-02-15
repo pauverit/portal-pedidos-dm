@@ -3,11 +3,11 @@ import emailjs from '@emailjs/browser';
 import { Sidebar } from './components/Sidebar';
 import { AdminBulkLoad } from './components/AdminBulkLoad';
 import { INITIAL_PRODUCTS, SALES_REPS, SALES_REPS_PHONES, DEFAULT_USERS } from './constants';
-import { Product, CartItem, User } from './types';
+import { Product, CartItem, User, Order } from './types';
 import {
     Search, Filter, ShoppingCart, Plus, Minus, Check, ArrowRight,
     MapPin, Printer, Download, CreditCard, ChevronRight, AlertCircle, Trash2, ArrowLeft,
-    CheckCircle, Settings, Save, Lock, Truck, Phone, Mail, FileText, UserPlus, Menu
+    CheckCircle, Settings, Save, Lock, Truck, Phone, Mail, FileText, UserPlus, Menu, ShoppingBag
 } from 'lucide-react';
 
 const formatCurrency = (value: number) =>
@@ -213,7 +213,6 @@ export default function App() {
         // Save Order
         const updatedOrders = [newOrder, ...orders];
         setOrders(updatedOrders);
-        localStorage.setItem('dm_portal_orders', JSON.stringify(updatedUsers)); // WARNING: 'updatedUsers' is not defined here. It should be 'updatedOrders'. I need to fix this in the next step or right here.
         localStorage.setItem('dm_portal_orders', JSON.stringify(updatedOrders));
 
         // Update User Rappel if used
