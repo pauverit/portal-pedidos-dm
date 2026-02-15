@@ -6,7 +6,7 @@ import { Product, CartItem, User } from './types';
 import {
     Search, Filter, ShoppingCart, Plus, Minus, Check, ArrowRight,
     MapPin, Printer, Download, CreditCard, ChevronRight, AlertCircle, Trash2, ArrowLeft,
-    CheckCircle, Settings, Save, Lock, Truck, Phone, Mail, FileText, UserPlus
+    CheckCircle, Settings, Save, Lock, Truck, Phone, Mail, FileText, UserPlus, Menu
 } from 'lucide-react';
 
 const formatCurrency = (value: number) =>
@@ -38,6 +38,9 @@ export default function App() {
     // Login Form
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+
+    // Mobile Menu State
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // Admin Bulk Load State
     const [bulkRows, setBulkRows] = useState<Partial<Product>[]>(
@@ -424,26 +427,37 @@ export default function App() {
                 targetSubCategory = parts[2];
             }
 
-            switch (targetCategory) {
-                case 'flexible': title = 'Materiales Flexibles'; break;
-                case 'rigid': title = 'Soportes Rígidos'; break;
-                case 'accessory': title = 'Accesorios & Herramientas'; break;
-                case 'ink': title = 'Tintas & Consumibles'; break;
-                default: title = 'Catálogo';
-            }
-            if (targetSubCategory) {
-                title += ` / ${targetSubCategory.charAt(0).toUpperCase() + targetSubCategory.slice(1)}`;
+            // Global Search Logic: If search query exists, ignore category filters
+            if (searchQuery) {
+                title = `Resultados de búsqueda: "${searchQuery}"`;
+            } else {
+                switch (targetCategory) {
+                    case 'flexible': title = 'Materiales Flexibles'; break;
+                    case 'rigid': title = 'Soportes Rígidos'; break;
+                    case 'accessory': title = 'Accesorios & Herramientas'; break;
+                    case 'ink': title = 'Tintas & Consumibles'; break;
+                    default: title = 'Catálogo';
+                }
+                if (targetSubCategory) {
+                    title += ` / ${targetSubCategory.charAt(0).toUpperCase() + targetSubCategory.slice(1)}`;
+                }
             }
         } else {
             return null; // Should not happen based on Sidebar
         }
 
         const filteredProducts = products.filter(p => {
-            const matchCategory = p.category === targetCategory;
-            const matchSub = targetSubCategory ? p.subcategory === targetSubCategory : true;
             const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 p.reference.toLowerCase().includes(searchQuery.toLowerCase());
-            return matchCategory && matchSub && matchSearch;
+
+            // If searching, ignore category match. If not searching, enforce category match.
+            if (searchQuery) {
+                return matchSearch;
+            }
+
+            const matchCategory = p.category === targetCategory;
+            const matchSub = targetSubCategory ? p.subcategory === targetSubCategory : true;
+            return matchCategory && matchSub;
         });
 
         return (
@@ -788,11 +802,16 @@ export default function App() {
                 setCurrentView={setCurrentView}
                 cartCount={cart.reduce((a, b) => a + b.quantity, 0)}
                 currentUser={currentUser}
+                isOpen={isMobileMenuOpen}
+                onClose={() => setIsMobileMenuOpen(false)}
             />
 
             <div class="flex-1 flex flex-col h-screen overflow-y-auto">
                 <header class="md:hidden bg-white border-b border-slate-200 p-4 sticky top-0 z-30 flex items-center justify-between shadow-sm">
                     <div class="flex items-center gap-2">
+                        <button onClick={() => setIsMobileMenuOpen(true)} class="text-slate-700 hover:text-slate-900 mr-2">
+                            <Menu size={24} />
+                        </button>
                         <img src="/logo.png" alt="DigitalMarket" class="h-8 w-auto" />
                         <span class="font-bold text-sm truncate max-w-[150px]">{currentUser?.name}</span>
                     </div>
