@@ -223,7 +223,9 @@ export default function App() {
 
     // --- USER MANAGEMENT (ADMIN) ---
     // --- USER MANAGEMENT (ADMIN) ---
-    const [newUser, setNewUser] = useState({ username: '', password: '', name: '', email: '', phone: '', delegation: '', salesRep: '' });
+    // --- USER MANAGEMENT (ADMIN) ---
+    const [newUser, setNewUser] = useState({ id: '', username: '', password: '', name: '', email: '', phone: '', delegation: '', salesRep: '' });
+    const [isEditing, setIsEditing] = useState(false);
 
     const handleAddUser = (e: React.FormEvent) => {
         e.preventDefault();
@@ -232,27 +234,72 @@ export default function App() {
             return;
         }
 
-        const userToAdd: User = {
-            id: `client-${Date.now()}`,
-            name: newUser.name,
-            email: newUser.email,
-            role: 'client',
-            username: newUser.username,
-            password: newUser.password,
-            phone: newUser.phone,
-            delegation: newUser.delegation,
-            salesRep: newUser.salesRep,
-            rappelAccumulated: 0,
-            registrationDate: new Date().toISOString(),
-            usedCoupons: []
-        };
+        if (isEditing) {
+            // Update existing user
+            const updatedUsers = users.map(u => {
+                if (u.id === newUser.id) {
+                    return {
+                        ...u,
+                        name: newUser.name,
+                        email: newUser.email,
+                        username: newUser.username,
+                        password: newUser.password,
+                        phone: newUser.phone,
+                        delegation: newUser.delegation,
+                        salesRep: newUser.salesRep
+                    };
+                }
+                return u;
+            });
+            setUsers(updatedUsers);
+            localStorage.setItem('dm_portal_users', JSON.stringify(updatedUsers));
+            alert('Cliente actualizado correctamente');
+            setIsEditing(false);
+        } else {
+            // Create new user
+            const userToAdd: User = {
+                id: `client-${Date.now()}`,
+                name: newUser.name,
+                email: newUser.email,
+                role: 'client',
+                username: newUser.username,
+                password: newUser.password,
+                phone: newUser.phone,
+                delegation: newUser.delegation,
+                salesRep: newUser.salesRep,
+                rappelAccumulated: 0,
+                registrationDate: new Date().toISOString(),
+                usedCoupons: []
+            };
+            const updatedUsers = [...users, userToAdd];
+            setUsers(updatedUsers);
+            localStorage.setItem('dm_portal_users', JSON.stringify(updatedUsers));
+            alert('Cliente registrado correctamente');
+        }
 
-        const updatedUsers = [...users, userToAdd];
-        setUsers(updatedUsers);
-        localStorage.setItem('dm_portal_users', JSON.stringify(updatedUsers));
+        // Reset form
+        setNewUser({ id: '', username: '', password: '', name: '', email: '', phone: '', delegation: '', salesRep: '' });
+    };
 
-        setNewUser({ username: '', password: '', name: '', email: '', phone: '', delegation: '', salesRep: '' });
-        alert('Cliente registrado correctamente');
+    const handleEditUser = (user: User) => {
+        setNewUser({
+            id: user.id || '',
+            username: user.username,
+            password: user.password || '',
+            name: user.name,
+            email: user.email,
+            phone: user.phone || '',
+            delegation: user.delegation || '',
+            salesRep: user.salesRep || ''
+        });
+        setIsEditing(true);
+        // Scroll to form (optional, but good UX)
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleCancelEdit = () => {
+        setNewUser({ id: '', username: '', password: '', name: '', email: '', phone: '', delegation: '', salesRep: '' });
+        setIsEditing(false);
     };
 
     // --- VIEW RENDERERS ---
@@ -308,11 +355,18 @@ export default function App() {
 
     const renderAdminUsersView = () => (
         <div class="p-6 md:p-10 max-w-4xl mx-auto">
-            <h1 class="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
-                <UserPlus className="text-slate-400" /> Alta de Nuevo Cliente
-            </h1>
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold text-slate-900 flex items-center gap-3">
+                    <UserPlus className="text-slate-400" /> {isEditing ? 'Editar Cliente' : 'Alta de Nuevo Cliente'}
+                </h1>
+                {isEditing && (
+                    <button onClick={handleCancelEdit} class="text-sm text-red-500 font-bold underline">
+                        Cancelar Edición
+                    </button>
+                )}
+            </div>
 
-            <div class="bg-white rounded-xl shadow-lg border border-slate-200 p-8">
+            <div class={isEditing ? "bg-yellow-50 rounded-xl shadow-lg border border-yellow-200 p-8 transition-colors" : "bg-white rounded-xl shadow-lg border border-slate-200 p-8 transition-colors"}>
                 <form onSubmit={handleAddUser} class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="md:col-span-2">
                         <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Credenciales de Acceso</h3>
@@ -321,12 +375,12 @@ export default function App() {
                     <div>
                         <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Usuario de Acceso</label>
                         <input required type="text" value={newUser.username} onChange={e => setNewUser({ ...newUser, username: e.target.value })}
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none" placeholder="ej. cliente1" />
+                            class="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none" placeholder="ej. cliente1" />
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Contraseña</label>
                         <input required type="text" value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })}
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none" placeholder="ej. 123456" />
+                            class="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none" placeholder="ej. 123456" />
                         <p class="text-[10px] text-slate-400 mt-1">Comparte estas credenciales con el cliente.</p>
                     </div>
 
@@ -337,30 +391,30 @@ export default function App() {
                     <div class="md:col-span-2">
                         <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nombre Fiscal / Comercial</label>
                         <input required type="text" value={newUser.name} onChange={e => setNewUser({ ...newUser, name: e.target.value })}
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none" placeholder="ej. Reformas y Construcciones S.L." />
+                            class="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none" placeholder="ej. Reformas y Construcciones S.L." />
                     </div>
 
                     <div>
                         <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Email</label>
                         <input required type="email" value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })}
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none" placeholder="ej. contabilidad@empresa.com" />
+                            class="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none" placeholder="ej. contabilidad@empresa.com" />
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Teléfono</label>
                         <input required type="tel" value={newUser.phone} onChange={e => setNewUser({ ...newUser, phone: e.target.value })}
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none" placeholder="ej. 600 000 000" />
+                            class="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none" placeholder="ej. 600 000 000" />
                     </div>
 
                     <div class="md:col-span-2">
                         <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Delegación / Dirección de Entrega</label>
                         <input required type="text" value={newUser.delegation} onChange={e => setNewUser({ ...newUser, delegation: e.target.value })}
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none" placeholder="ej. Polígono Juncaril, C/ Baza 12" />
+                            class="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none" placeholder="ej. Polígono Juncaril, C/ Baza 12" />
                     </div>
 
                     <div class="md:col-span-2">
                         <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Comercial Asignado</label>
                         <select required value={newUser.salesRep} onChange={e => setNewUser({ ...newUser, salesRep: e.target.value })}
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none text-slate-900">
+                            class="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none text-slate-900">
                             <option value="">Seleccionar Comercial...</option>
                             {Object.values(SALES_REPS).map(rep => (
                                 <option key={rep} value={rep}>{rep}</option>
@@ -368,9 +422,14 @@ export default function App() {
                         </select>
                     </div>
 
-                    <div class="md:col-span-2 mt-6 flex justify-end">
+                    <div class="md:col-span-2 mt-6 flex justify-end gap-3">
+                        {isEditing && (
+                            <button type="button" onClick={handleCancelEdit} class="px-6 py-3 rounded-lg font-bold text-slate-500 hover:bg-slate-100 transition-colors">
+                                Cancelar
+                            </button>
+                        )}
                         <button type="submit" class="bg-slate-900 text-white px-8 py-3 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-lg active:scale-95">
-                            <UserPlus size={20} /> Registrar Cliente
+                            <UserPlus size={20} /> {isEditing ? 'Guardar Cambios' : 'Registrar Cliente'}
                         </button>
                     </div>
                 </form>
@@ -384,8 +443,8 @@ export default function App() {
                             <tr>
                                 <th class="px-6 py-3">Nombre</th>
                                 <th class="px-6 py-3">Usuario</th>
-                                <th class="px-6 py-3">Email</th>
                                 <th class="px-6 py-3">Rappels</th>
+                                <th class="px-6 py-3 text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
@@ -393,8 +452,12 @@ export default function App() {
                                 <tr key={idx} class="hover:bg-slate-50">
                                     <td class="px-6 py-3 font-medium text-slate-900">{user.name}</td>
                                     <td class="px-6 py-3 font-mono text-slate-500">{user.username}</td>
-                                    <td class="px-6 py-3 text-slate-500">{user.email}</td>
                                     <td class="px-6 py-3 font-bold text-slate-900">{formatCurrency(user.rappelAccumulated)}</td>
+                                    <td class="px-6 py-3 text-right">
+                                        <button onClick={() => handleEditUser(user)} class="text-blue-600 hover:text-blue-800 font-bold text-xs bg-blue-50 px-3 py-1 rounded">
+                                            Editar
+                                        </button>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
@@ -649,11 +712,11 @@ export default function App() {
                 </h3>
 
                 <div class="bg-blue-50 border border-blue-100 p-3 rounded-lg flex justify-between items-center text-blue-800 text-sm">
-                    <span class="font-medium">Beneficio generado (5%):</span>
+                    <span class="font-medium">Beneficio generado (3%):</span>
                     <span class="font-bold">+{formatCurrency(newRappelGenerated)}</span>
                 </div>
 
-                {currentUser && currentUser.rappelAccumulated > 0 && (
+                {currentUser && currentUser.rappelAccumulated > 0 && appliedCoupon?.code === 'RAPPEL3' && (
                     <div class="border-t border-slate-100 pt-4">
                         <label class="flex items-center justify-between cursor-pointer p-2 hover:bg-slate-50 rounded select-none">
                             <div class="flex items-center gap-3">
