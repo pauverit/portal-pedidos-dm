@@ -16,11 +16,7 @@ const formatCurrency = (value: number) =>
 
 export default function App() {
     // --- STATE MANAGEMENT ---
-    // User persistence using LocalStorage
-    const [users, setUsers] = useState<User[]>(() => {
-        const saved = localStorage.getItem('dm_portal_users');
-        return saved ? JSON.parse(saved) : DEFAULT_USERS;
-    });
+    const [users, setUsers] = useState<User[]>(DEFAULT_USERS);
 
     const [currentUser, setCurrentUser] = useState<User | null>(() => {
         const saved = localStorage.getItem('dm_portal_current_user');
@@ -28,6 +24,72 @@ export default function App() {
     });
     const [currentView, setCurrentView] = useState('login');
     const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
+
+    // Load data from Supabase
+    useEffect(() => {
+        const loadInitialData = async () => {
+            if (!supabase) return;
+
+            try {
+                // Load Products
+                const { data: dbProducts, error: prodError } = await supabase
+                    .from('products')
+                    .select('*')
+                    .order('name');
+
+                if (prodError) {
+                    console.warn('Could not load products from Supabase, using defaults:', prodError);
+                } else if (dbProducts && dbProducts.length > 0) {
+                    const mappedProducts: Product[] = dbProducts.map(p => ({
+                        id: p.id,
+                        name: p.name,
+                        reference: p.reference,
+                        category: p.category as any,
+                        subcategory: p.subcategory,
+                        price: Number(p.price) || 0,
+                        unit: p.unit || 'ud',
+                        isFlexible: p.is_flexible,
+                        width: Number(p.width),
+                        length: Number(p.length),
+                        pricePerM2: Number(p.price_per_m2),
+                        volume: p.volume,
+                        inStock: p.in_stock,
+                        brand: p.brand as any
+                    }));
+                    setProducts(mappedProducts);
+                }
+
+                // Load Clients
+                const { data: dbClients, error: clientError } = await supabase
+                    .from('clients')
+                    .select('*');
+
+                if (clientError) {
+                    console.warn('Could not load clients from Supabase:', clientError);
+                } else if (dbClients) {
+                    const mappedClients: User[] = dbClients.map(c => ({
+                        id: c.id,
+                        name: c.company_name,
+                        email: c.email,
+                        role: 'client',
+                        username: c.username,
+                        password: c.password,
+                        phone: c.phone,
+                        rappelAccumulated: Number(c.rappel_accumulated) || 0,
+                        delegation: c.delegation,
+                        salesRep: c.sales_rep,
+                        registrationDate: c.created_at
+                    }));
+                    // Merge with default admin
+                    setUsers([DEFAULT_USERS[0], ...mappedClients]);
+                }
+            } catch (err) {
+                console.error('Error loading Supabase data:', err);
+            }
+        };
+
+        loadInitialData();
+    }, []);
     const [cart, setCart] = useState<CartItem[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -48,8 +110,57 @@ export default function App() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // Admin Bulk Load Logic
-    const handleBulkSave = (newProducts: Product[]) => {
-        setProducts(prev => [...prev, ...newProducts]);
+    const handleBulkSave = async (newProducts: Product[]) => {
+        if (!supabase) return;
+
+        try {
+            const productsToInsert = newProducts.map(p => ({
+                reference: p.reference,
+                name: p.name,
+                category: p.category,
+                subcategory: p.subcategory,
+                price: p.price,
+                price_per_m2: p.pricePerM2,
+                unit: p.unit,
+                is_flexible: p.isFlexible,
+                width: p.width,
+                length: p.length,
+                brand: p.brand,
+                in_stock: p.inStock
+            }));
+
+            const { error } = await supabase
+                .from('products')
+                .upsert(productsToInsert, { onConflict: 'reference' });
+
+            if (error) throw error;
+
+            // Refresh local state
+            const { data: refreshedProds } = await supabase.from('products').select('*').order('name');
+            if (refreshedProds) {
+                setProducts(refreshedProds.map(p => ({
+                    id: p.id,
+                    name: p.name,
+                    reference: p.reference,
+                    category: p.category as any,
+                    subcategory: p.subcategory,
+                    price: Number(p.price) || 0,
+                    unit: p.unit || 'ud',
+                    isFlexible: p.is_flexible,
+                    width: Number(p.width),
+                    length: Number(p.length),
+                    pricePerM2: Number(p.price_per_m2),
+                    volume: p.volume,
+                    inStock: p.in_stock,
+                    brand: p.brand as any
+                })));
+            }
+
+            alert('Materiales guardados correctamente en Supabase.');
+        } catch (error: any) {
+            console.error('Error saving products:', error);
+            alert(`Error al guardar productos: ${error.message}`);
+        }
     };
 
     const handleLogin = (e: React.FormEvent) => {
@@ -358,58 +469,70 @@ export default function App() {
     const [newUser, setNewUser] = useState({ id: '', username: '', password: '', name: '', email: '', phone: '', delegation: '', salesRep: '' });
     const [isEditing, setIsEditing] = useState(false);
 
-    const handleAddUser = (e: React.FormEvent) => {
+    const handleAddUser = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newUser.username || !newUser.password || !newUser.name || !newUser.delegation || !newUser.salesRep) {
             alert('Por favor rellena todos los campos obligatorios inc. Delegación y Comercial.');
             return;
         }
 
-        if (isEditing) {
-            // Update existing user
-            const updatedUsers = users.map(u => {
-                if (u.id === newUser.id) {
-                    return {
-                        ...u,
-                        name: newUser.name,
-                        email: newUser.email,
-                        username: newUser.username,
-                        password: newUser.password,
-                        phone: newUser.phone,
-                        delegation: newUser.delegation,
-                        salesRep: newUser.salesRep
-                    };
-                }
-                return u;
-            });
-            setUsers(updatedUsers);
-            localStorage.setItem('dm_portal_users', JSON.stringify(updatedUsers));
-            alert('Cliente actualizado correctamente');
-            setIsEditing(false);
-        } else {
-            // Create new user
-            const userToAdd: User = {
-                id: `client-${Date.now()}`,
-                name: newUser.name,
-                email: newUser.email,
-                role: 'client',
-                username: newUser.username,
-                password: newUser.password,
-                phone: newUser.phone,
-                delegation: newUser.delegation,
-                salesRep: newUser.salesRep,
-                rappelAccumulated: 0,
-                registrationDate: new Date().toISOString(),
-                usedCoupons: []
-            };
-            const updatedUsers = [...users, userToAdd];
-            setUsers(updatedUsers);
-            localStorage.setItem('dm_portal_users', JSON.stringify(updatedUsers));
-            alert('Cliente registrado correctamente');
+        if (!supabase) {
+            alert('Supabase no está conectado.');
+            return;
         }
 
-        // Reset form
-        setNewUser({ id: '', username: '', password: '', name: '', email: '', phone: '', delegation: '', salesRep: '' });
+        try {
+            const clientData = {
+                username: newUser.username,
+                password: newUser.password,
+                email: newUser.email,
+                company_name: newUser.name,
+                phone: newUser.phone,
+                delegation: newUser.delegation,
+                sales_rep: newUser.salesRep,
+                rappel_accumulated: 0
+            };
+
+            const { data: client, error: clientError } = await supabase
+                .from('clients')
+                .upsert(clientData, { onConflict: 'email' })
+                .select()
+                .single();
+
+            if (clientError) throw clientError;
+
+            // Update local state
+            const newUserObj: User = {
+                id: client.id,
+                name: client.company_name,
+                email: client.email,
+                role: 'client',
+                username: client.username,
+                password: client.password,
+                phone: client.phone,
+                delegation: client.delegation,
+                salesRep: client.sales_rep,
+                rappelAccumulated: Number(client.rappel_accumulated) || 0,
+                registrationDate: client.created_at,
+                usedCoupons: []
+            };
+
+            if (isEditing) {
+                setUsers(prev => prev.map(u => u.id === client.id ? newUserObj : u));
+                alert('Cliente actualizado en Supabase correctamente');
+                setIsEditing(false);
+            } else {
+                setUsers(prev => [...prev, newUserObj]);
+                alert('Cliente registrado en Supabase correctamente');
+            }
+
+            // Reset form
+            setNewUser({ id: '', username: '', password: '', name: '', email: '', phone: '', delegation: '', salesRep: '' });
+
+        } catch (error: any) {
+            console.error('Error saving user:', error);
+            alert(`Error al guardar cliente: ${error.message}`);
+        }
     };
 
     const handleEditUser = (user: User) => {
