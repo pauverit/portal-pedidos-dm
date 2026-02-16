@@ -8,7 +8,7 @@ import { Product, CartItem, User, Order } from './types';
 import {
     Search, Filter, ShoppingCart, Plus, Minus, Check, ArrowRight,
     MapPin, Printer, Download, CreditCard, ChevronRight, AlertCircle, Trash2, ArrowLeft,
-    CheckCircle, Settings, Save, Lock, Truck, Phone, Mail, FileText, UserPlus, Menu, ShoppingBag, LayoutDashboard, LogOut
+    CheckCircle, Settings, Save, Lock, Truck, Phone, Mail, FileText, UserPlus, Menu, ShoppingBag, LayoutDashboard, LogOut, X
 } from 'lucide-react';
 
 const formatCurrency = (value: number) =>
