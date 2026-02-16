@@ -963,7 +963,27 @@ export default function App() {
             <div className="p-4 md:p-6 max-w-7xl mx-auto w-full pb-32">
                 <div className="mb-6">
                     <h1 className="text-xl md:text-2xl font-bold text-slate-900">{title}</h1>
-                    <p className="text-slate-500 text-sm">Catálogo actualizado. Precios netos.</p>
+                    <div className="mt-2 flex items-center gap-4">
+                        <div className="relative flex-1 max-w-md">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                            <input
+                                type="text"
+                                placeholder="Buscar por referencia o descripción..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-900 outline-none"
+                            />
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery('')}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                >
+                                    <X size={14} />
+                                </button>
+                            )}
+                        </div>
+                        <p className="text-slate-500 text-sm hidden md:block">Catálogo actualizado. Precios netos.</p>
+                    </div>
                 </div>
 
                 <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
