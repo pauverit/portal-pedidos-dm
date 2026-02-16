@@ -201,7 +201,7 @@ export default function App() {
             alert('Materiales guardados correctamente en Supabase.');
         } catch (error: any) {
             console.error('Error saving products:', error);
-            alert(`Error al guardar productos: ${error.message}`);
+            alert(`Error al guardar productos: ${error.message || JSON.stringify(error)}`);
         }
     };
 
