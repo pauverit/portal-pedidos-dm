@@ -891,28 +891,53 @@ export default function App() {
     );
 
     const renderProductListView = () => {
-        // Logic to parse currentView for filtering
-        // Example: 'cat_flexible_vinilos' -> category: flexible, subcategory: vinilos
-        // Example: 'cat_ink_all' -> category: ink
-
-        let targetCategory = '';
-        let targetSubCategory = '';
-        let title = '';
-
-        if (currentView.startsWith('cat_')) {
-            const parts = currentView.split('_');
-            targetCategory = parts[1];
-            if (parts.length > 2) {
-                const sub = parts.slice(2).join('_');
-                if (sub !== 'all') {
-                    targetSubCategory = sub;
-                }
+        const filteredProducts = products.filter(p => {
+            // Global search filter
+            if (searchQuery.trim().length > 0) {
+                const query = searchQuery.toLowerCase();
+                return (
+                    p.name.toLowerCase().includes(query) ||
+                    p.reference.toLowerCase().includes(query) ||
+                    (p.subcategory || '').toLowerCase().includes(query)
+                );
             }
 
-            // Global Search Logic: If search query exists, ignore category filters
-            if (searchQuery) {
-                title = `Resultados de búsqueda: "${searchQuery}"`;
+            // Normal Category/Subcategory filter
+            let targetCategory = '';
+            let targetSubCategory = '';
+
+            if (currentView.startsWith('cat_')) {
+                const parts = currentView.split('_');
+                targetCategory = parts[1];
+                if (parts.length > 2) {
+                    const sub = parts.slice(2).join('_');
+                    if (sub !== 'all') {
+                        targetSubCategory = sub;
+                    }
+                }
             } else {
+                return false;
+            }
+
+            const matchCategory = p.category === targetCategory;
+            const matchSub = targetSubCategory ? p.subcategory === targetSubCategory : true;
+
+            return matchCategory && matchSub;
+        });
+
+        // Determine title
+        let title = '';
+        if (searchQuery) {
+            title = `Resultados de búsqueda: "${searchQuery}"`;
+        } else {
+            let targetCategory = currentView.split('_')[1];
+            let targetSubCategory = '';
+            if (currentView.startsWith('cat_')) {
+                const parts = currentView.split('_');
+                if (parts.length > 2) {
+                    const sub = parts.slice(2).join('_');
+                    if (sub !== 'all') targetSubCategory = sub;
+                }
                 switch (targetCategory) {
                     case 'flexible': title = 'Materiales Flexibles'; break;
                     case 'rigid': title = 'Soportes Rígidos'; break;
@@ -922,128 +947,106 @@ export default function App() {
                     default: title = 'Catálogo';
                 }
                 if (targetSubCategory) {
-                    title += ` / ${targetSubCategory.charAt(0).toUpperCase() + targetSubCategory.slice(1)}`;
+                    title += ` / ${targetSubCategory.charAt(0).toUpperCase() + targetSubCategory.slice(1).replace(/_/g, ' ')}`;
                 }
             }
-        } else {
-            return null; // Should not happen based on Sidebar
         }
 
-        const filteredProducts = products.filter(p => {
-            const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                p.reference.toLowerCase().includes(searchQuery.toLowerCase());
-
-            // If searching, ignore category match. If not searching, enforce category match.
-            if (searchQuery) {
-                return matchSearch;
-            }
-
-            const matchCategory = p.category === targetCategory;
-            const matchSub = targetSubCategory ? p.subcategory === targetSubCategory : true;
-            return matchCategory && matchSub;
-        });
-
         return (
-            <div className="p-6 md:p-10 max-w-7xl mx-auto">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900 capitalize">{title}</h1>
-                        <p className="text-slate-500 text-sm mt-1">Catálogo actualizado. Precios netos.</p>
-                    </div>
-                    <div className="relative max-w-xs w-full">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                        <input
-                            type="text"
-                            placeholder="Buscar referencia..."
-                            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-transparent text-slate-900"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                    </div>
+            <div className="p-4 md:p-6 max-w-7xl mx-auto w-full pb-32">
+                <div className="mb-6">
+                    <h1 className="text-xl md:text-2xl font-bold text-slate-900">{title}</h1>
+                    <p className="text-slate-500 text-sm">Catálogo actualizado. Precios netos.</p>
                 </div>
 
-                {filteredProducts.length === 0 ? (
-                    <div className="text-center py-20 bg-white rounded-xl border border-slate-200 border-dashed">
-                        <p className="text-slate-400">No se han encontrado productos en esta categoría.</p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredProducts.map(p => {
-                            // Calculate effective price
-                            const product = getEffectiveProduct(p, currentUser);
+                <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-medium">
+                                <tr>
+                                    <th className="px-4 py-3 w-16">Ref</th>
+                                    <th className="px-4 py-3">Nombre / Descripción</th>
+                                    <th className="px-4 py-3 w-32">Formato</th>
+                                    <th className="px-4 py-3 w-28 text-right">Precio</th>
+                                    <th className="px-4 py-3 w-32 text-center">Cantidad</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {filteredProducts.map(product => {
+                                    const cartItem = cart.find(item => item.id === product.id);
+                                    const quantity = cartItem ? cartItem.quantity : 0;
 
-                            // Check if item is in cart
-                            const cartItem = cart.find(item => item.id === product.id);
-                            const quantity = cartItem ? cartItem.quantity : 0;
-
-                            return (
-                                <div key={product.id} className="bg-white border border-slate-200 rounded-xl p-5 hover:shadow-md transition-shadow flex flex-col justify-between">
-                                    <div>
-                                        <div className="flex justify-between items-start mb-2">
-                                            <div className="flex flex-col gap-1">
-                                                <span className="inline-block px-2 py-1 bg-slate-100 text-slate-600 text-[10px] font-bold uppercase rounded tracking-wider w-fit">{product.reference}</span>
-                                                {product.brand && <span className="inline-block px-2 py-1 bg-blue-50 text-blue-700 text-[10px] font-bold uppercase rounded tracking-wider w-fit">{product.brand}</span>}
-                                            </div>
-                                            {product.category === 'ink' && <span className="text-green-600 text-xs font-bold flex items-center gap-1"><CheckCircle size={12} /> Stock</span>}
-                                        </div>
-                                        <h3 className="font-bold text-slate-900 text-lg mb-1 leading-tight">{product.name}</h3>
-
-                                        {product.isFlexible ? (
-                                            <div className="mt-4 bg-slate-50 p-3 rounded-lg text-sm space-y-2 border border-slate-100">
-                                                <div className="flex justify-between">
-                                                    <span className="text-slate-500">Formato:</span>
-                                                    <span className="font-mono font-bold text-slate-700">{product.width}m x {product.length}m</span>
+                                    return (
+                                        <tr key={product.id} className="hover:bg-slate-50 transition-colors group">
+                                            <td className="px-4 py-2 align-middle">
+                                                <span className="font-mono text-xs text-slate-500 bg-slate-100 px-1 py-0.5 rounded">
+                                                    {product.reference}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-2 align-middle">
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-slate-800 text-sm">{product.name}</span>
+                                                    <span className="text-xs text-slate-400">{product.brand || 'DM'}</span>
                                                 </div>
-                                                <div className="flex justify-between border-t border-slate-200 pt-2">
-                                                    <span className="text-slate-500">Precio m²:</span>
-                                                    <span className="font-bold text-slate-900">
-                                                        {currentUser?.hidePrices ? 'Consultar' : formatCurrency(product.pricePerM2!)}
-                                                    </span>
+                                            </td>
+                                            <td className="px-4 py-2 align-middle text-xs text-slate-500">
+                                                {product.isFlexible ? (
+                                                    <div className="flex flex-col">
+                                                        <span>{product.width}m x {product.length}m</span>
+                                                        <span className="text-[10px] text-slate-400">
+                                                            ({currentUser?.hidePrices ? 'Consultar' : formatCurrency(product.pricePerM2!)}/m²)
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <span>{product.category === 'ink' ? product.volume : product.unit}</span>
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-2 align-middle text-right">
+                                                <span className="font-bold text-slate-900">
+                                                    {currentUser?.hidePrices ? 'Consultar' : formatCurrency(product.price)}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-2 align-middle">
+                                                <div className="flex items-center justify-center gap-1">
+                                                    {quantity === 0 ? (
+                                                        <button
+                                                            onClick={() => addToCart(product)}
+                                                            className="bg-slate-900 hover:bg-slate-800 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-sm transition-transform active:scale-95 opacity-0 group-hover:opacity-100"
+                                                            style={{ opacity: 1 }}
+                                                        >
+                                                            <Plus size={16} />
+                                                        </button>
+                                                    ) : (
+                                                        <div className="flex items-center bg-slate-900 rounded-full shadow-sm overflow-hidden h-8">
+                                                            <button
+                                                                onClick={() => updateQuantity(product.id, -1)}
+                                                                className="h-full px-2 flex items-center justify-center text-white hover:bg-slate-700"
+                                                            >
+                                                                <Minus size={12} />
+                                                            </button>
+                                                            <span className="text-white font-bold min-w-[20px] text-center text-xs">{quantity}</span>
+                                                            <button
+                                                                onClick={() => addToCart(product)}
+                                                                className="h-full px-2 flex items-center justify-center text-white hover:bg-slate-700"
+                                                            >
+                                                                <Plus size={12} />
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            </div>
-                                        ) : (
-                                            <p className="text-slate-500 text-sm mt-2">{product.category === 'ink' ? product.volume : product.unit}</p>
-                                        )}
-                                    </div>
-
-                                    <div className="mt-6 flex items-end justify-between">
-                                        <div>
-                                            <p className="text-xs text-slate-400 uppercase">Precio Unidad</p>
-                                            <p className="text-xl font-bold text-slate-900">
-                                                {currentUser?.hidePrices ? 'Consultar' : formatCurrency(product.price)}
-                                            </p>
-                                        </div>
-
-                                        {quantity === 0 ? (
-                                            <button
-                                                onClick={() => addToCart(product)}
-                                                className="bg-slate-900 hover:bg-slate-800 text-white h-10 w-10 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-95"
-                                            >
-                                                <Plus size={20} />
-                                            </button>
-                                        ) : (
-                                            <div className="flex items-center bg-slate-900 rounded-full shadow-lg overflow-hidden h-10">
-                                                <button
-                                                    onClick={() => updateQuantity(product.id, -1)}
-                                                    className="h-full px-3 flex items-center justify-center text-white hover:bg-slate-700 transition-colors"
-                                                >
-                                                    <Minus size={16} />
-                                                </button>
-                                                <span className="text-white font-bold min-w-[20px] text-center text-sm">{quantity}</span>
-                                                <button
-                                                    onClick={() => addToCart(product)}
-                                                    className="h-full px-3 flex items-center justify-center text-white hover:bg-slate-700 transition-colors"
-                                                >
-                                                    <Plus size={16} />
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
                     </div>
-                )}
+                    {filteredProducts.length === 0 && (
+                        <div className="p-8 text-center text-slate-500">
+                            No hay productos en esta categoría.
+                        </div>
+                    )}
+                </div>
             </div>
         );
     };

@@ -133,7 +133,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
       )}
 
       <div className={`
-            fixed md:sticky top-0 h-screen bg-white border-r border-slate-200 z-50 w-64 transition-transform duration-300 ease-in-out
+            fixed md:sticky top-0 h-[100dvh] md:h-screen bg-white border-r border-slate-200 z-50 w-64 transition-transform duration-300 ease-in-out flex flex-col
             ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}>
         <div className="p-6 border-b border-slate-100 flex items-center justify-between">
