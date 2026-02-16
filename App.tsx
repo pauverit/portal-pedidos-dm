@@ -204,7 +204,15 @@ export default function App() {
                 .select()
                 .single();
 
-            if (clientError || !client) throw clientError;
+            if (clientError) {
+                console.error('❌ ERROR creating/updating client:', clientError);
+                throw new Error(`Client error: ${clientError.message}`);
+            }
+            if (!client) {
+                throw new Error('No client data returned from upsert');
+            }
+
+            console.log('✅ Client upserted successfully:', client);
 
             // 2️⃣ CREAR PEDIDO
             const { data: order, error: orderError } = await supabase
@@ -219,7 +227,15 @@ export default function App() {
                 .select()
                 .single();
 
-            if (orderError || !order) throw orderError;
+            if (orderError) {
+                console.error('❌ ERROR creating order:', orderError);
+                throw new Error(`Order error: ${orderError.message}`);
+            }
+            if (!order) {
+                throw new Error('No order data returned from insert');
+            }
+
+            console.log('✅ Order created successfully:', order);
 
             // 3️⃣ LÍNEAS DE PEDIDO
             const orderLines = cart.map(item => ({
@@ -255,9 +271,9 @@ export default function App() {
                 order_total: formatCurrency(finalTotal),
                 sales_rep: activeRep || 'N/A',
                 sales_rep_phone: activeRepPhone,
-                order_details: orderLines
-                    .map(l =>
-                        `${l.reference} | ${l.name} | ${l.quantity} x ${formatCurrency(l.unit_price)} = ${formatCurrency(l.total_price)}`
+                order_details: cart
+                    .map(item =>
+                        `${item.reference} | ${item.name} | ${item.quantity} x ${formatCurrency(item.calculatedPrice)} = ${formatCurrency(item.calculatedPrice * item.quantity)}`
                     )
                     .join('\n'),
                 observations: observations || 'Sin observaciones'
@@ -288,9 +304,19 @@ export default function App() {
             setObservations('');
             setCurrentView('order_success');
 
-        } catch (error) {
+        } catch (error: any) {
             console.error('❌ ERROR FINALIZANDO PEDIDO:', error);
-            alert('Error al guardar el pedido en el sistema.');
+
+            // Show more specific error message
+            let errorMessage = 'Error al guardar el pedido en el sistema.';
+            if (error.message) {
+                errorMessage += `\n\nDetalles: ${error.message}`;
+            }
+            if (error.hint) {
+                errorMessage += `\n\nSugerencia: ${error.hint}`;
+            }
+
+            alert(errorMessage);
         }
     };
 
