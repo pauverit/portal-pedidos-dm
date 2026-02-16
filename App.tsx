@@ -905,6 +905,7 @@ export default function App() {
                 return (
                     p.name.toLowerCase().includes(query) ||
                     p.reference.toLowerCase().includes(query) ||
+                    (p.brand || '').toLowerCase().includes(query) ||
                     (p.subcategory || '').toLowerCase().includes(query)
                 );
             }
