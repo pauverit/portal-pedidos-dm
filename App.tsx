@@ -214,7 +214,6 @@ export default function App() {
                 order_number: orderNumber,
                 total: finalTotal,
                 sales_rep: activeRep,
-                shipping_method: shippingMethod,
                 observations
             })
             .select()
@@ -223,7 +222,7 @@ export default function App() {
         if (orderError || !order) throw orderError;
 
         // 3️⃣ LÍNEAS DE PEDIDO
-        const orderLines = cart.map(item => ({
+    const orderLines = cart.map(item => ({
     order_id: order.id,
     product_id: item.id,
     quantity: item.quantity,
@@ -246,6 +245,7 @@ console.log('✅ Líneas insertadas:', insertedLines);
 if (!insertedLines || insertedLines.length === 0) {
     throw new Error('No se insertaron líneas de pedido');
 }
+
 
         // 4️⃣ EMAIL
         const templateParams = {
