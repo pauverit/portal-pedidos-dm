@@ -30,7 +30,24 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave }) => {
         if (lower.includes('rigid') || lower.includes('rígid')) return 'rigid';
         if (lower.includes('tinta') || lower.includes('ink')) return 'ink';
         if (lower.includes('acce') || lower.includes('herr')) return 'accessory';
+        if (lower.includes('display') || lower.includes('expo')) return 'display';
         return null;
+    };
+
+    const normalizeSubcategory = (sub: string): string => {
+        let normalized = sub.toLowerCase().trim();
+        // Replace spaces and special chars with underscores
+        normalized = normalized.replace(/[\s\/\\]+/g, '_');
+        // Remove accents
+        normalized = normalized.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+        // Custom mappings for specific known cases
+        if (normalized.includes('corte') && normalized.includes('color')) return 'corte_colores';
+        if (normalized.includes('l600') || normalized.includes('l700')) return 'l600_700';
+        if (normalized.includes('l800') || normalized.includes('r530')) return 'l800'; // Merged category
+        if (normalized.includes('l570') || normalized.includes('375')) return 'l570_375';
+
+        return normalized;
     };
 
     const parseData = () => {
@@ -45,7 +62,8 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave }) => {
             const reference = cols[0] || '';
             const name = cols[1] || '';
             const rawCategory = cols[2] || '';
-            const subcategory = cols[3] || 'general';
+            const rawSubcategory = cols[3] || 'general';
+            const subcategory = normalizeSubcategory(rawSubcategory);
 
             // Price parsing: handle "25,50 €" or "25.50"
             const priceStr = (cols[4] || '0').replace('€', '').replace(',', '.').trim();
@@ -78,10 +96,8 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave }) => {
             }
 
             const rawBrand = (cols[7] || '').trim().toUpperCase();
-            let brand: 'ATP' | 'TMK' | 'FEDRIGONI' | 'DM' = 'DM';
-            if (['ATP', 'TMK', 'FEDRIGONI'].includes(rawBrand)) {
-                brand = rawBrand as any;
-            }
+            // Allow any brand, simplified logic
+            const brand = rawBrand || 'DM';
 
             return {
                 reference,
