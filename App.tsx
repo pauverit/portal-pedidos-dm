@@ -14,6 +14,32 @@ import {
 const formatCurrency = (value: number) =>
     new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
 
+// Helper to calculate effective price for a user
+const getEffectiveProduct = (product: Product, user: User | null): Product => {
+    if (!user || !user.customPrices) return product;
+
+    // Check if there is a custom price for this reference
+    const customPrice = user.customPrices[product.reference];
+
+    if (customPrice !== undefined) {
+        // Create a copy with the custom price
+        // If flexible, custom price usually overrides the base price or pricePerM2?
+        // Requirement: "a ciertos clientes se le vende la lona a 1.05€ el m2"
+        // So for flexible, it overrides pricePerM2. For rigid/others, it overrides price.
+
+        return {
+            ...product,
+            price: product.isFlexible ? 0 : customPrice,
+            pricePerM2: product.isFlexible ? customPrice : undefined,
+            // If we want to be safe and clear:
+            // price: customPrice, 
+            // but logic below uses pricePerM2 for flexible.
+        };
+    }
+
+    return product;
+};
+
 export default function App() {
     // --- STATE MANAGEMENT ---
     const [users, setUsers] = useState<User[]>(DEFAULT_USERS);
@@ -78,7 +104,9 @@ export default function App() {
                         rappelAccumulated: Number(c.rappel_accumulated) || 0,
                         delegation: c.delegation,
                         salesRep: c.sales_rep,
-                        registrationDate: c.created_at
+                        registrationDate: c.created_at,
+                        hidePrices: c.hide_prices || false,
+                        customPrices: c.custom_prices || {}
                     }));
                     // Merge with default admin
                     setUsers([DEFAULT_USERS[0], ...mappedClients]);
@@ -128,6 +156,20 @@ export default function App() {
                 brand: p.brand,
                 in_stock: p.inStock
             }));
+
+            if (newProducts.length === 0) {
+                // Special case: Delete All
+                const { error: deleteError } = await supabase
+                    .from('products')
+                    .delete()
+                    .neq('id', '000000'); // Delete all rows where id is not something impossible (basically all)
+
+                if (deleteError) throw deleteError;
+
+                setProducts([]);
+                alert('Catálogo eliminado correctamente.');
+                return;
+            }
 
             const { error } = await supabase
                 .from('products')
@@ -194,10 +236,12 @@ export default function App() {
     // --- CART LOGIC ---
     const addToCart = (product: Product, quantity = 1) => {
         setCart(prev => {
-            const existing = prev.find(item => item.id === product.id);
-            const calculatedPrice = product.isFlexible
-                ? (product.width! * product.length! * product.pricePerM2!)
-                : product.price;
+            const effectiveProduct = getEffectiveProduct(product, currentUser);
+
+            const existing = prev.find(item => item.id === effectiveProduct.id);
+            const calculatedPrice = effectiveProduct.isFlexible
+                ? (effectiveProduct.width! * effectiveProduct.length! * effectiveProduct.pricePerM2!)
+                : effectiveProduct.price;
 
             if (existing) {
                 return prev.map(item =>
@@ -466,7 +510,11 @@ export default function App() {
     // --- USER MANAGEMENT (ADMIN) ---
     // --- USER MANAGEMENT (ADMIN) ---
     // --- USER MANAGEMENT (ADMIN) ---
-    const [newUser, setNewUser] = useState({ id: '', username: '', password: '', name: '', email: '', phone: '', delegation: '', salesRep: '' });
+    const [newUser, setNewUser] = useState({
+        id: '', username: '', password: '', name: '', email: '', phone: '', delegation: '', salesRep: '',
+        hidePrices: false,
+        customPricesText: ''
+    });
     const [isEditing, setIsEditing] = useState(false);
 
     const handleAddUser = async (e: React.FormEvent) => {
@@ -490,7 +538,9 @@ export default function App() {
                 phone: newUser.phone,
                 delegation: newUser.delegation,
                 sales_rep: newUser.salesRep,
-                rappel_accumulated: 0
+                rappel_accumulated: 0,
+                hide_prices: newUser.hidePrices,
+                custom_prices: parseCustomPrices(newUser.customPricesText)
             };
 
             const { data: client, error: clientError } = await supabase
@@ -514,6 +564,8 @@ export default function App() {
                 salesRep: client.sales_rep,
                 rappelAccumulated: Number(client.rappel_accumulated) || 0,
                 registrationDate: client.created_at,
+                hidePrices: client.hide_prices || false,
+                customPrices: client.custom_prices || {},
                 usedCoupons: []
             };
 
@@ -527,7 +579,7 @@ export default function App() {
             }
 
             // Reset form
-            setNewUser({ id: '', username: '', password: '', name: '', email: '', phone: '', delegation: '', salesRep: '' });
+            setNewUser({ id: '', username: '', password: '', name: '', email: '', phone: '', delegation: '', salesRep: '', hidePrices: false, customPricesText: '' });
 
         } catch (error: any) {
             console.error('Error saving user:', error);
@@ -539,12 +591,12 @@ export default function App() {
         setNewUser({
             id: user.id || '',
             username: user.username,
-            password: user.password || '',
-            name: user.name,
             email: user.email,
             phone: user.phone || '',
             delegation: user.delegation || '',
-            salesRep: user.salesRep || ''
+            salesRep: user.salesRep || '',
+            hidePrices: user.hidePrices || false,
+            customPricesText: user.customPrices ? Object.entries(user.customPrices).map(([ref, price]) => `${ref} ${price}`).join('\n') : ''
         });
         setIsEditing(true);
         // Scroll to form (optional, but good UX)
@@ -552,8 +604,26 @@ export default function App() {
     };
 
     const handleCancelEdit = () => {
-        setNewUser({ id: '', username: '', password: '', name: '', email: '', phone: '', delegation: '', salesRep: '' });
+        setNewUser({ id: '', username: '', password: '', name: '', email: '', phone: '', delegation: '', salesRep: '', hidePrices: false, customPricesText: '' });
         setIsEditing(false);
+    };
+
+    const parseCustomPrices = (text: string): Record<string, number> => {
+        const prices: Record<string, number> = {};
+        if (!text) return prices;
+
+        text.split('\n').forEach(line => {
+            const parts = line.trim().split(/\s+/);
+            if (parts.length >= 2) {
+                const ref = parts[0];
+                const priceStr = parts[1].replace(',', '.');
+                const price = parseFloat(priceStr);
+                if (ref && !isNaN(price)) {
+                    prices[ref] = price;
+                }
+            }
+        });
+        return prices;
     };
 
     // --- VIEW RENDERERS ---
@@ -745,6 +815,36 @@ export default function App() {
                         </select>
                     </div>
 
+                    <div className="md:col-span-2 mt-4">
+                        <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Configuración de Precios</h3>
+                    </div>
+
+                    <div className="md:col-span-2 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                        <label className="flex items-center gap-3 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={newUser.hidePrices}
+                                onChange={e => setNewUser({ ...newUser, hidePrices: e.target.checked })}
+                                className="w-5 h-5 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                            />
+                            <div>
+                                <span className="font-bold text-slate-900 text-sm">Ocultar Precios en el Catálogo</span>
+                                <p className="text-xs text-slate-500">El cliente verá el catálogo sin precios, ideal para comerciales o clientes especiales.</p>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div className="md:col-span-2">
+                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Precios Personalizados (REF PRECIO)</label>
+                        <textarea
+                            value={newUser.customPricesText}
+                            onChange={e => setNewUser({ ...newUser, customPricesText: e.target.value })}
+                            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none font-mono text-sm h-32"
+                            placeholder={"REF123 10.50\nREF456 5.00"}
+                        />
+                        <p className="text-xs text-slate-400 mt-1">Introduce una referencia y un precio por línea. El precio debe usar punto (.) para decimales.</p>
+                    </div>
+
                     <div className="md:col-span-2 mt-6 flex justify-end gap-3">
                         {isEditing && (
                             <button type="button" onClick={handleCancelEdit} className="px-6 py-3 rounded-lg font-bold text-slate-500 hover:bg-slate-100 transition-colors">
@@ -864,7 +964,10 @@ export default function App() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredProducts.map(product => {
+                        {filteredProducts.map(p => {
+                            // Calculate effective price
+                            const product = getEffectiveProduct(p, currentUser);
+
                             // Check if item is in cart
                             const cartItem = cart.find(item => item.id === product.id);
                             const quantity = cartItem ? cartItem.quantity : 0;
@@ -889,7 +992,9 @@ export default function App() {
                                                 </div>
                                                 <div className="flex justify-between border-t border-slate-200 pt-2">
                                                     <span className="text-slate-500">Precio m²:</span>
-                                                    <span className="font-bold text-slate-900">{formatCurrency(product.pricePerM2!)}</span>
+                                                    <span className="font-bold text-slate-900">
+                                                        {currentUser?.hidePrices ? 'Consultar' : formatCurrency(product.pricePerM2!)}
+                                                    </span>
                                                 </div>
                                             </div>
                                         ) : (
@@ -900,7 +1005,9 @@ export default function App() {
                                     <div className="mt-6 flex items-end justify-between">
                                         <div>
                                             <p className="text-xs text-slate-400 uppercase">Precio Unidad</p>
-                                            <p className="text-xl font-bold text-slate-900">{formatCurrency(product.price)}</p>
+                                            <p className="text-xl font-bold text-slate-900">
+                                                {currentUser?.hidePrices ? 'Consultar' : formatCurrency(product.price)}
+                                            </p>
                                         </div>
 
                                         {quantity === 0 ? (
@@ -1037,47 +1144,59 @@ export default function App() {
                     Resumen Económico
                 </h3>
 
-                {appliedCoupon?.code === 'RAPPEL3' && (
-                    <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg flex justify-between items-center text-blue-800 text-sm">
-                        <span className="font-medium">Beneficio generado (3%):</span>
-                        <span className="font-bold">+{formatCurrency(newRappelGenerated)}</span>
+                {currentUser?.hidePrices ? (
+                    <div className="bg-slate-50 p-6 text-center border border-slate-200 rounded-lg">
+                        <p className="font-bold text-slate-900 mb-2">Precios Ocultos</p>
+                        <p className="text-sm text-slate-500">
+                            Su configuración actual no muestra los costes en pantalla.
+                            El pedido se tramitará y valorará internamente con sus tarifas y condiciones vigentes.
+                        </p>
                     </div>
-                )}
-
-                {currentUser && currentUser.rappelAccumulated > 0 && appliedCoupon?.code === 'RAPPEL3' && (
-                    <div className="border-t border-slate-100 pt-4">
-                        <label className="flex items-center justify-between cursor-pointer p-2 hover:bg-slate-50 rounded select-none">
-                            <div className="flex items-center gap-3">
-                                <input
-                                    type="checkbox"
-                                    checked={useAccumulatedRappel}
-                                    onChange={(e) => setUseAccumulatedRappel(e.target.checked)}
-                                    className="w-5 h-5 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
-                                />
-                                <div>
-                                    <p className="text-sm font-bold text-slate-700">Canjear saldo acumulado</p>
-                                    <p className="text-xs text-slate-500">Disponible: {formatCurrency(currentUser.rappelAccumulated)}</p>
-                                </div>
+                ) : (
+                    <>
+                        {appliedCoupon?.code === 'RAPPEL3' && (
+                            <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg flex justify-between items-center text-blue-800 text-sm">
+                                <span className="font-medium">Beneficio generado (3%):</span>
+                                <span className="font-bold">+{formatCurrency(newRappelGenerated)}</span>
                             </div>
-                            {useAccumulatedRappel && <span className="text-green-600 font-bold">-{formatCurrency(rappelDiscount)}</span>}
-                        </label>
-                    </div>
+                        )}
+
+                        {currentUser && currentUser.rappelAccumulated > 0 && appliedCoupon?.code === 'RAPPEL3' && (
+                            <div className="border-t border-slate-100 pt-4">
+                                <label className="flex items-center justify-between cursor-pointer p-2 hover:bg-slate-50 rounded select-none">
+                                    <div className="flex items-center gap-3">
+                                        <input
+                                            type="checkbox"
+                                            checked={useAccumulatedRappel}
+                                            onChange={(e) => setUseAccumulatedRappel(e.target.checked)}
+                                            className="w-5 h-5 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                                        />
+                                        <div>
+                                            <p className="text-sm font-bold text-slate-700">Canjear saldo acumulado</p>
+                                            <p className="text-xs text-slate-500">Disponible: {formatCurrency(currentUser.rappelAccumulated)}</p>
+                                        </div>
+                                    </div>
+                                    {useAccumulatedRappel && <span className="text-green-600 font-bold">-{formatCurrency(rappelDiscount)}</span>}
+                                </label>
+                            </div>
+                        )}
+
+                        <div className="h-px bg-slate-200 my-2"></div>
+
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-sm text-slate-500"><span>Subtotal Productos</span> <span>{formatCurrency(cartTotal)}</span></div>
+                            {shippingCost > 0 && <div className="flex justify-between text-sm text-slate-500"><span>Envío</span> <span>{formatCurrency(shippingCost)}</span></div>}
+                            {useAccumulatedRappel && <div className="flex justify-between text-sm text-green-600 font-medium"><span>Descuento Rappel</span> <span>-{formatCurrency(rappelDiscount)}</span></div>}
+                            <div className="flex justify-between text-sm text-slate-500"><span>IVA (21%)</span> <span>{formatCurrency(tax)}</span></div>
+                        </div>
+
+                        <div className="h-px bg-slate-900 my-2"></div>
+                        <div className="flex justify-between items-end">
+                            <span className="font-bold text-slate-900">TOTAL A PAGAR</span>
+                            <span className="text-3xl font-black text-slate-900">{formatCurrency(finalTotal)}</span>
+                        </div>
+                    </>
                 )}
-
-                <div className="h-px bg-slate-200 my-2"></div>
-
-                <div className="space-y-2">
-                    <div className="flex justify-between text-sm text-slate-500"><span>Subtotal Productos</span> <span>{formatCurrency(cartTotal)}</span></div>
-                    {shippingCost > 0 && <div className="flex justify-between text-sm text-slate-500"><span>Envío</span> <span>{formatCurrency(shippingCost)}</span></div>}
-                    {useAccumulatedRappel && <div className="flex justify-between text-sm text-green-600 font-medium"><span>Descuento Rappel</span> <span>-{formatCurrency(rappelDiscount)}</span></div>}
-                    <div className="flex justify-between text-sm text-slate-500"><span>IVA (21%)</span> <span>{formatCurrency(tax)}</span></div>
-                </div>
-
-                <div className="h-px bg-slate-900 my-2"></div>
-                <div className="flex justify-between items-end">
-                    <span className="font-bold text-slate-900">TOTAL A PAGAR</span>
-                    <span className="text-3xl font-black text-slate-900">{formatCurrency(finalTotal)}</span>
-                </div>
             </div>
 
             {/* Footer Action */}

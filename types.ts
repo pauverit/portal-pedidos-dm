@@ -39,6 +39,9 @@ export interface User {
   salesRep?: string;
   delegation?: string;
   usedCoupons?: string[];
+  // Pricing
+  hidePrices?: boolean;
+  customPrices?: Record<string, number>; // Map reference -> price
 }
 
 export interface SalesRep {

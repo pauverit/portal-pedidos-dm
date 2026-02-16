@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, AlertCircle, CheckCircle, X } from 'lucide-react';
+import { Save, AlertCircle, CheckCircle, X, Trash2 } from 'lucide-react';
 import { Product, ProductCategory } from '../types';
 
 interface AdminBulkLoadProps {
@@ -150,18 +150,35 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave }) => {
 
     return (
         <div className="p-6 md:p-10 max-w-7xl mx-auto">
-            <h1 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
-                <Save className="text-slate-400" /> Carga Masiva (Excel)
-            </h1>
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+                    <Save className="text-slate-400" /> Carga Masiva (Excel)
+                </h1>
+                <button
+                    onClick={() => {
+                        if (confirm('¿ESTÁS SEGURO? Esto eliminará TODOS los productos actuales. Esta acción no se puede deshacer.')) {
+                            if (confirm('CONFIRMACIÓN FINAL: ¿Borrar todo el catálogo?')) {
+                                onSave([]); // Empty array triggers deletion in parent handleBulkSave special logic
+                            }
+                        }
+                    }}
+                    className="bg-red-100 text-red-600 px-4 py-2 rounded hover:bg-red-200 text-sm font-bold flex items-center gap-2"
+                >
+                    <Trash2 size={16} /> Eliminar Catálogo Completo
+                </button>
+            </div>
 
             {!showPreview ? (
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                     <div className="mb-4 bg-blue-50 text-blue-800 p-4 rounded-lg text-sm border border-blue-100">
                         <p className="font-bold mb-2">Instrucciones:</p>
                         <p className="mb-2">Copia las columnas de tu Excel y pégalas aquí. El orden <strong>EXACTO</strong> debe ser:</p>
-                        <code className="bg-white px-2 py-1 rounded border border-blue-200 block text-xs md:text-sm overflow-x-auto">
+                        <code className="bg-white px-2 py-1 rounded border border-blue-200 block text-xs md:text-sm overflow-x-auto select-all">
                             REF | NOMBRE | CATEGORÍA | SUBCATEGORÍA | PRECIO | ANCHO | LARGO | MARCA
                         </code>
+                        <p className="text-xs text-blue-600 mt-2">
+                            * Copia la cabecera anterior para usarla como guía en tu Excel.
+                        </p>
                         <ul className="list-disc pl-5 mt-2 space-y-1">
                             <li><strong>Categoría:</strong> Flexible, Rígido, Tinta, Accesorio.</li>
                             <li><strong>Precio:</strong> Para flexibles es €/m². Para el resto es precio unidad.</li>
