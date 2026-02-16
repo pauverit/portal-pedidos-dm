@@ -146,14 +146,14 @@ export default function App() {
                 reference: p.reference,
                 name: p.name,
                 category: p.category,
-                subcategory: p.subcategory,
-                price: p.price,
-                price_per_m2: p.pricePerM2,
-                unit: p.unit,
-                is_flexible: p.isFlexible,
-                width: p.width,
-                length: p.length,
-                brand: p.brand,
+                subcategory: p.subcategory || null,
+                price: Number.isFinite(p.price) ? p.price : 0,
+                price_per_m2: Number.isFinite(p.pricePerM2) ? p.pricePerM2 : null,
+                unit: p.unit || 'ud',
+                is_flexible: p.isFlexible || false,
+                width: Number.isFinite(p.width) ? p.width : null,
+                length: Number.isFinite(p.length) ? p.length : null,
+                brand: p.brand || null,
                 in_stock: p.inStock
             }));
 
@@ -201,7 +201,7 @@ export default function App() {
             alert('Materiales guardados correctamente en Supabase.');
         } catch (error: any) {
             console.error('Error saving products:', error);
-            alert(`Error al guardar productos: ${error.message || JSON.stringify(error)}`);
+            alert(`Error al guardar productos: ${error.message || JSON.stringify(error, null, 2)}`);
         }
     };
 
