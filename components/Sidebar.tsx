@@ -37,6 +37,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
         { id: 'cat_flexible_lonas', label: 'Lonas' },
         { id: 'cat_flexible_papeles', label: 'Papeles' },
         { id: 'cat_flexible_textiles', label: 'Textiles' },
+        { id: 'cat_flexible_lienzos', label: 'Lienzos' },
+        { id: 'cat_flexible_corte_colores', label: 'Corte Colores' },
         { id: 'cat_flexible_otros', label: 'Otros' },
       ]
     },
