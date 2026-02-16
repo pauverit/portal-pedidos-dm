@@ -224,20 +224,28 @@ export default function App() {
 
         // 3️⃣ LÍNEAS DE PEDIDO
         const orderLines = cart.map(item => ({
-            order_id: order.id,
-            product_id: item.id,
-            reference: item.reference,
-            name: item.name,
-            quantity: item.quantity,
-            unit_price: item.calculatedPrice,
-            total_price: item.calculatedPrice * item.quantity
-        }));
+    order_id: order.id,
+    product_id: item.id,
+    quantity: item.quantity,
+    unit_price: item.calculatedPrice,
+    total_price: item.calculatedPrice * item.quantity
+}));
 
-        const { error: linesError } = await supabase
-            .from('order_lines')
-            .insert(orderLines);
+const { data: insertedLines, error: linesError } = await supabase
+    .from('order_lines')
+    .insert(orderLines)
+    .select();
 
-        if (linesError) throw linesError;
+if (linesError) {
+    console.error('❌ ERROR order_lines:', linesError);
+    throw linesError;
+}
+
+console.log('✅ Líneas insertadas:', insertedLines);
+
+if (!insertedLines || insertedLines.length === 0) {
+    throw new Error('No se insertaron líneas de pedido');
+}
 
         // 4️⃣ EMAIL
         const templateParams = {
