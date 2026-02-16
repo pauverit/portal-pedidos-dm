@@ -104,6 +104,42 @@ export const INITIAL_PRODUCTS: Product[] = [
     inStock: true,
     brand: 'DM'
   },
+  {
+    id: 'ink_l600',
+    name: 'Tinta Latex HP 792 Negro',
+    reference: 'CN705A',
+    category: 'ink',
+    subcategory: 'l600_700',
+    price: 145.00,
+    unit: 'ud',
+    volume: '775 ml',
+    inStock: true,
+    brand: 'DM'
+  },
+  {
+    id: 'ink_l800',
+    name: 'Tinta Latex HP 871C Cian',
+    reference: 'G0Y82A',
+    category: 'ink',
+    subcategory: 'l800',
+    price: 180.50,
+    unit: 'ud',
+    volume: '3 litros',
+    inStock: true,
+    brand: 'DM'
+  },
+  {
+    id: 'ink_dtf',
+    name: 'Tinta DTF Blanca',
+    reference: 'DTF-WH-1L',
+    category: 'ink',
+    subcategory: 'dtf',
+    price: 65.00,
+    unit: 'botella',
+    volume: '1 litro',
+    inStock: true,
+    brand: 'DM'
+  },
   // --- RIGIDOS ---
   {
     id: '6',

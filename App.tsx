@@ -902,8 +902,11 @@ export default function App() {
         if (currentView.startsWith('cat_')) {
             const parts = currentView.split('_');
             targetCategory = parts[1];
-            if (parts[2] && parts[2] !== 'all') {
-                targetSubCategory = parts[2];
+            if (parts.length > 2) {
+                const sub = parts.slice(2).join('_');
+                if (sub !== 'all') {
+                    targetSubCategory = sub;
+                }
             }
 
             // Global Search Logic: If search query exists, ignore category filters

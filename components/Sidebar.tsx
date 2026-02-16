@@ -69,7 +69,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
       id: 'cat_ink_all',
       label: 'Tintas & Consumibles',
       icon: Printer,
-      roles: ['client', 'admin']
+      roles: ['client', 'admin'],
+      subItems: [
+        { id: 'cat_ink_l600_700', label: 'L600 / L700 Series' },
+        { id: 'cat_ink_l800', label: 'L800 Series' },
+        { id: 'cat_ink_l300', label: 'L300 Series' },
+        { id: 'cat_ink_l570_375', label: 'L570 / 375' },
+        { id: 'cat_ink_r1000', label: 'R1000' },
+        { id: 'cat_ink_r2000', label: 'R2000' },
+        { id: 'cat_ink_l1500', label: 'L1500' },
+        { id: 'cat_ink_fs50', label: 'FS50' },
+        { id: 'cat_ink_fs70', label: 'FS70' },
+        { id: 'cat_ink_r530', label: 'R530' },
+        { id: 'cat_ink_dtf', label: 'DTF' },
+        { id: 'cat_ink_dtf_uv', label: 'DTF UV' },
+        { id: 'cat_ink_uv', label: 'UV' },
+        { id: 'cat_ink_otros', label: 'Otros' },
+      ]
     },
     {
       id: 'admin_load',
