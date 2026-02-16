@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from './lib/supabase';
 import emailjs from '@emailjs/browser';
 import { Sidebar } from './components/Sidebar';
 import { AdminBulkLoad } from './components/AdminBulkLoad';
@@ -182,73 +183,111 @@ export default function App() {
 
     const [lastOrder, setLastOrder] = useState<Order | null>(null);
 
-    const handleFinalizeOrder = () => {
-        // Enviar email
+    const handleFinalizeOrder = async () => {
+    if (!currentUser) return;
+
+    try {
+        const orderNumber = Date.now().toString().slice(-6);
+
+        // 1️⃣ UPSERT CLIENTE
+        const { data: client, error: clientError } = await supabase
+            .from('clients')
+            .upsert(
+                {
+                    username: currentUser.username,
+                    email: currentUser.email,
+                    phone: currentUser.phone,
+                    company_name: currentUser.name
+                },
+                { onConflict: 'email' }
+            )
+            .select()
+            .single();
+
+        if (clientError || !client) throw clientError;
+
+        // 2️⃣ CREAR PEDIDO
+        const { data: order, error: orderError } = await supabase
+            .from('orders')
+            .insert({
+                client_id: client.id,
+                order_number: orderNumber,
+                total: finalTotal,
+                sales_rep: activeRep,
+                shipping_method: shippingMethod,
+                observations
+            })
+            .select()
+            .single();
+
+        if (orderError || !order) throw orderError;
+
+        // 3️⃣ LÍNEAS DE PEDIDO
+        const orderLines = cart.map(item => ({
+            order_id: order.id,
+            product_id: item.id,
+            reference: item.reference,
+            name: item.name,
+            quantity: item.quantity,
+            unit_price: item.calculatedPrice,
+            total_price: item.calculatedPrice * item.quantity
+        }));
+
+        const { error: linesError } = await supabase
+            .from('order_lines')
+            .insert(orderLines);
+
+        if (linesError) throw linesError;
+
+        // 4️⃣ EMAIL
         const templateParams = {
-            to_email: currentUser?.email,
-            to_name: currentUser?.name,
-            order_id: Date.now().toString().slice(-6),
+            to_email: currentUser.email,
+            to_name: currentUser.name,
+            order_id: orderNumber,
             order_total: formatCurrency(finalTotal),
             sales_rep: activeRep || 'N/A',
             sales_rep_phone: activeRepPhone,
-            order_details: cart
-                .map(item =>
-                    `${item.reference} | ${item.name} | ${item.quantity} x ${formatCurrency(item.calculatedPrice)} = ${formatCurrency(item.calculatedPrice * item.quantity)}`
+            order_details: orderLines
+                .map(l =>
+                    `${l.reference} | ${l.name} | ${l.quantity} x ${formatCurrency(l.unit_price)} = ${formatCurrency(l.total_price)}`
                 )
                 .join('\n'),
             observations: observations || 'Sin observaciones'
         };
 
-        const newOrder: Order = {
-            id: Date.now().toString(),
-            userId: currentUser?.id || 'unknown',
+        await emailjs.send(
+            import.meta.env.VITE_EMAILJS_SERVICE_ID,
+            import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+            templateParams,
+            import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+        );
+
+        // 5️⃣ UI
+        setLastOrder({
+            id: order.id,
+            userId: currentUser.id,
             date: new Date().toISOString(),
             items: [...cart],
             total: finalTotal,
             status: 'pending',
-            shippingMethod: shippingMethod,
+            shippingMethod,
             salesRep: activeRep || undefined,
             rappelDiscount: useAccumulatedRappel ? rappelDiscount : 0,
             couponDiscount: appliedCoupon ? appliedCoupon.discount : 0
-        };
+        });
 
-        // Save Order
-        const updatedOrders = [newOrder, ...orders];
-        setOrders(updatedOrders);
-        localStorage.setItem('dm_portal_orders', JSON.stringify(updatedOrders));
-
-        // Set last order for success view
-        setLastOrder(newOrder);
-
-        // Update User Rappel if used
-        if (useAccumulatedRappel && currentUser) {
-            const updatedUser = { ...currentUser, rappelAccumulated: currentUser.rappelAccumulated - rappelDiscount };
-            setCurrentUser(updatedUser);
-            // Update in users list
-            const updatedUsersList = users.map(u => u.id === currentUser.id ? updatedUser : u);
-            setUsers(updatedUsersList);
-            localStorage.setItem('dm_portal_users', JSON.stringify(updatedUsersList));
-            localStorage.setItem('dm_portal_current_user', JSON.stringify(updatedUser));
-        }
-
-        // Email logic
-        emailjs
-            .send(
-                import.meta.env.VITE_EMAILJS_SERVICE_ID,
-                import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
-                templateParams,
-                import.meta.env.VITE_EMAILJS_PUBLIC_KEY
-            )
-            .then((response) => {
-                console.log('EMAIL ENVIADO OK', response.status, response.text);
-            })
-            .catch((error) => {
-                console.error('ERROR ENVIANDO EMAIL', error);
-            });
-
-        setCart([]); // FIX: Clear cart immediately
+        setCart([]);
+        setObservations('');
         setCurrentView('order_success');
-    };
+
+    } catch (error) {
+        console.error('❌ ERROR FINALIZANDO PEDIDO:', error);
+        alert('Error al guardar el pedido en el sistema.');
+    }
+};
+
+};
+
 
     // --- ADMIN LOGIC ---
 
