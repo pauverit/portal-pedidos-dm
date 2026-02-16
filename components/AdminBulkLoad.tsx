@@ -87,6 +87,10 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave }) => {
                 width = parseFloat(widthStr);
                 length = parseFloat(lengthStr);
 
+                // Normalization: Width is usually in cm (e.g. 137, 106, 160). Convert to meters if > 4
+                // Length is usually in meters (e.g. 50, 100). Keep as is.
+                if (width > 4) width = width / 100;
+
                 if (width <= 0 || length <= 0) {
                     itemsErrors.push('Flexible requiere Ancho y Largo');
                 }
@@ -141,13 +145,14 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave }) => {
             // "If Flexible: Price is treated as €/m2" -> Map input price to pricePerM2
             // "If Not Flexible: Price is treated as Unitary" -> Map input price to price
 
-            pricePerM2: item.category === 'flexible' ? item.price : undefined,
-            price: item.category === 'flexible' ? 0 : item.price, // Base price 0 for flexible? calculating on fly?
-            // Actually standard 'product.price' is usually the unit price. 
-            // In App.tsx: calculatedPrice = product.isFlexible ? (...) : product.price
-            // So for flexible, 'price' property might be irrelevant OR it might be the roll price.
-            // Let's set 'price' to calculated roll price for consistency if needed, but App.tsx seems to ignore it for flexible.
-            // Let's safe-guard it.
+            // Logic Change per User Request:
+            // Excel Price = Unit Price (Total Roll Price)
+            // Price per m² = Unit Price / (Width * Length)
+
+            price: item.price,
+            pricePerM2: (item.category === 'flexible' && item.width > 0 && item.length > 0)
+                ? (item.price / (item.width * item.length))
+                : undefined,
 
             unit: item.category === 'flexible' ? 'bobina' : 'ud',
             isFlexible: item.category === 'flexible',
@@ -197,8 +202,8 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave }) => {
                         </p>
                         <ul className="list-disc pl-5 mt-2 space-y-1">
                             <li><strong>Categoría:</strong> Flexible, Rígido, Tinta, Accesorio.</li>
-                            <li><strong>Precio:</strong> Para flexibles es €/m². Para el resto es precio unidad.</li>
-                            <li><strong>Ancho/Largo:</strong> Solo obligatorio para Flexibles.</li>
+                            <li><strong>Precio:</strong> Para flexibles es el <strong>PRECIO TOTAL DE LA BOBINA</strong>. El sistema calculará el precio m².</li>
+                            <li><strong>Ancho/Largo:</strong> Solo obligatorio para Flexibles (en cm o m).</li>
                             <li><strong>Marca:</strong> (Opcional) ATP, TMK, FEDRIGONI. Si se omite, se asigna DM.</li>
                         </ul>
                     </div>
@@ -276,8 +281,18 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave }) => {
                                                     {item.category}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-2 font-mono">
-                                                {item.price.toFixed(2)} {item.category === 'flexible' ? '€/m²' : '€'}
+                                            <td className="px-4 py-2 font-mono text-xs">
+                                                {item.category === 'flexible' ? (
+                                                    <div>
+                                                        <span className="font-bold">{item.price.toFixed(2)} €</span>
+                                                        <br />
+                                                        <span className="text-slate-500">
+                                                            {((item.price) / (item.width * item.length)).toFixed(2)} €/m²
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <span>{item.price.toFixed(2)} €</span>
+                                                )}
                                             </td>
                                             <td className="px-4 py-2 text-xs">
                                                 {item.category === 'flexible' ? `${item.width}x${item.length}m` : '-'}
