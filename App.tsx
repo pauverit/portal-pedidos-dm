@@ -196,6 +196,19 @@ export default function App() {
             console.log('Current user:', currentUser.email);
             console.log('Cart items:', cart.length);
 
+            // 🧪 TEST: Verify Supabase connection first
+            console.log('🔍 Testing Supabase connection...');
+            const { data: testData, error: testError } = await supabase
+                .from('clients')
+                .select('count')
+                .limit(1);
+
+            if (testError) {
+                console.error('❌ Supabase connection test FAILED:', testError);
+                throw new Error(`No se puede conectar a Supabase: ${testError.message}\n\nVerifica que la URL y la clave anónima sean correctas en Vercel.`);
+            }
+            console.log('✅ Supabase connection test PASSED');
+
             const orderNumber = Date.now().toString().slice(-6);
 
             // 1️⃣ UPSERT CLIENTE
