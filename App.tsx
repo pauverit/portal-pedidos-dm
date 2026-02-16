@@ -212,17 +212,21 @@ export default function App() {
             const orderNumber = Date.now().toString().slice(-6);
 
             // 1️⃣ UPSERT CLIENTE
+            console.log('📝 Creating/updating client...');
+
+            // Preparar datos del cliente (solo campos definidos)
+            const clientData: any = {
+                email: currentUser.email,
+                company_name: currentUser.name || currentUser.email.split('@')[0]
+            };
+
+            // Solo añadir campos opcionales si están definidos
+            if (currentUser.username) clientData.username = currentUser.username;
+            if (currentUser.phone) clientData.phone = currentUser.phone;
+
             const { data: client, error: clientError } = await supabase
                 .from('clients')
-                .upsert(
-                    {
-                        username: currentUser.username,
-                        email: currentUser.email,
-                        phone: currentUser.phone,
-                        company_name: currentUser.name
-                    },
-                    { onConflict: 'email' }
-                )
+                .upsert(clientData, { onConflict: 'email' })
                 .select()
                 .single();
 
