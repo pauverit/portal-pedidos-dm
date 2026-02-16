@@ -8,7 +8,7 @@ import { Product, CartItem, User, Order } from './types';
 import {
     Search, Filter, ShoppingCart, Plus, Minus, Check, ArrowRight,
     MapPin, Printer, Download, CreditCard, ChevronRight, AlertCircle, Trash2, ArrowLeft,
-    CheckCircle, Settings, Save, Lock, Truck, Phone, Mail, FileText, UserPlus, Menu, ShoppingBag
+    CheckCircle, Settings, Save, Lock, Truck, Phone, Mail, FileText, UserPlus, Menu, ShoppingBag, LayoutDashboard, LogOut
 } from 'lucide-react';
 
 const formatCurrency = (value: number) =>
@@ -184,117 +184,117 @@ export default function App() {
     const [lastOrder, setLastOrder] = useState<Order | null>(null);
 
     const handleFinalizeOrder = async () => {
-    if (!currentUser) return;
+        if (!currentUser) return;
 
-    try {
-        const orderNumber = Date.now().toString().slice(-6);
+        try {
+            const orderNumber = Date.now().toString().slice(-6);
 
-        // 1️⃣ UPSERT CLIENTE
-        const { data: client, error: clientError } = await supabase
-            .from('clients')
-            .upsert(
-                {
-                    username: currentUser.username,
-                    email: currentUser.email,
-                    phone: currentUser.phone,
-                    company_name: currentUser.name
-                },
-                { onConflict: 'email' }
-            )
-            .select()
-            .single();
-
-        if (clientError || !client) throw clientError;
-
-        // 2️⃣ CREAR PEDIDO
-        const { data: order, error: orderError } = await supabase
-            .from('orders')
-            .insert({
-                client_id: client.id,
-                order_number: orderNumber,
-                total: finalTotal,
-                sales_rep: activeRep,
-                observations
-            })
-            .select()
-            .single();
-
-        if (orderError || !order) throw orderError;
-
-        // 3️⃣ LÍNEAS DE PEDIDO
-    const orderLines = cart.map(item => ({
-    order_id: order.id,
-    product_id: item.id,
-    quantity: item.quantity,
-    unit_price: item.calculatedPrice,
-    total_price: item.calculatedPrice * item.quantity
-}));
-
-const { data: insertedLines, error: linesError } = await supabase
-    .from('order_lines')
-    .insert(orderLines)
-    .select();
-
-if (linesError) {
-    console.error('❌ ERROR order_lines:', linesError);
-    throw linesError;
-}
-
-console.log('✅ Líneas insertadas:', insertedLines);
-
-if (!insertedLines || insertedLines.length === 0) {
-    throw new Error('No se insertaron líneas de pedido');
-}
-
-
-        // 4️⃣ EMAIL
-        const templateParams = {
-            to_email: currentUser.email,
-            to_name: currentUser.name,
-            order_id: orderNumber,
-            order_total: formatCurrency(finalTotal),
-            sales_rep: activeRep || 'N/A',
-            sales_rep_phone: activeRepPhone,
-            order_details: orderLines
-                .map(l =>
-                    `${l.reference} | ${l.name} | ${l.quantity} x ${formatCurrency(l.unit_price)} = ${formatCurrency(l.total_price)}`
+            // 1️⃣ UPSERT CLIENTE
+            const { data: client, error: clientError } = await supabase
+                .from('clients')
+                .upsert(
+                    {
+                        username: currentUser.username,
+                        email: currentUser.email,
+                        phone: currentUser.phone,
+                        company_name: currentUser.name
+                    },
+                    { onConflict: 'email' }
                 )
-                .join('\n'),
-            observations: observations || 'Sin observaciones'
-        };
+                .select()
+                .single();
 
-        await emailjs.send(
-            import.meta.env.VITE_EMAILJS_SERVICE_ID,
-            import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
-            templateParams,
-            import.meta.env.VITE_EMAILJS_PUBLIC_KEY
-        );
+            if (clientError || !client) throw clientError;
 
-        // 5️⃣ UI
-        setLastOrder({
-            id: order.id,
-            userId: currentUser.id,
-            date: new Date().toISOString(),
-            items: [...cart],
-            total: finalTotal,
-            status: 'pending',
-            shippingMethod,
-            salesRep: activeRep || undefined,
-            rappelDiscount: useAccumulatedRappel ? rappelDiscount : 0,
-            couponDiscount: appliedCoupon ? appliedCoupon.discount : 0
-        });
+            // 2️⃣ CREAR PEDIDO
+            const { data: order, error: orderError } = await supabase
+                .from('orders')
+                .insert({
+                    client_id: client.id,
+                    order_number: orderNumber,
+                    total: finalTotal,
+                    sales_rep: activeRep,
+                    observations
+                })
+                .select()
+                .single();
 
-        setCart([]);
-        setObservations('');
-        setCurrentView('order_success');
+            if (orderError || !order) throw orderError;
 
-    } catch (error) {
-        console.error('❌ ERROR FINALIZANDO PEDIDO:', error);
-        alert('Error al guardar el pedido en el sistema.');
-    }
-};
+            // 3️⃣ LÍNEAS DE PEDIDO
+            const orderLines = cart.map(item => ({
+                order_id: order.id,
+                product_id: item.id,
+                quantity: item.quantity,
+                unit_price: item.calculatedPrice,
+                total_price: item.calculatedPrice * item.quantity
+            }));
 
-};
+            const { data: insertedLines, error: linesError } = await supabase
+                .from('order_lines')
+                .insert(orderLines)
+                .select();
+
+            if (linesError) {
+                console.error('❌ ERROR order_lines:', linesError);
+                throw linesError;
+            }
+
+            console.log('✅ Líneas insertadas:', insertedLines);
+
+            if (!insertedLines || insertedLines.length === 0) {
+                throw new Error('No se insertaron líneas de pedido');
+            }
+
+
+            // 4️⃣ EMAIL
+            const templateParams = {
+                to_email: currentUser.email,
+                to_name: currentUser.name,
+                order_id: orderNumber,
+                order_total: formatCurrency(finalTotal),
+                sales_rep: activeRep || 'N/A',
+                sales_rep_phone: activeRepPhone,
+                order_details: orderLines
+                    .map(l =>
+                        `${l.reference} | ${l.name} | ${l.quantity} x ${formatCurrency(l.unit_price)} = ${formatCurrency(l.total_price)}`
+                    )
+                    .join('\n'),
+                observations: observations || 'Sin observaciones'
+            };
+
+            await emailjs.send(
+                import.meta.env.VITE_EMAILJS_SERVICE_ID,
+                import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+                templateParams,
+                import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+            );
+
+            // 5️⃣ UI
+            setLastOrder({
+                id: order.id,
+                userId: currentUser.id,
+                date: new Date().toISOString(),
+                items: [...cart],
+                total: finalTotal,
+                status: 'pending',
+                shippingMethod,
+                salesRep: activeRep || undefined,
+                rappelDiscount: useAccumulatedRappel ? rappelDiscount : 0,
+                couponDiscount: appliedCoupon ? appliedCoupon.discount : 0
+            });
+
+            setCart([]);
+            setObservations('');
+            setCurrentView('order_success');
+
+        } catch (error) {
+            console.error('❌ ERROR FINALIZANDO PEDIDO:', error);
+            alert('Error al guardar el pedido en el sistema.');
+        }
+    };
+
+
 
 
     // --- ADMIN LOGIC ---
@@ -1059,5 +1059,4 @@ if (!insertedLines || insertedLines.length === 0) {
     );
 }
 
-// Helper icons
-import { LayoutDashboard, LogOut } from 'lucide-react';
+
