@@ -187,6 +187,15 @@ export default function App() {
         if (!currentUser) return;
 
         try {
+            // Validate Supabase is initialized
+            if (!supabase) {
+                throw new Error('Supabase client is not initialized. Please check your environment variables in Vercel.');
+            }
+
+            console.log('🚀 Starting order submission...');
+            console.log('Current user:', currentUser.email);
+            console.log('Cart items:', cart.length);
+
             const orderNumber = Date.now().toString().slice(-6);
 
             // 1️⃣ UPSERT CLIENTE
