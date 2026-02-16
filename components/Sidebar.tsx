@@ -98,33 +98,33 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
       {/* Mobile Overlay */}
       {isOpen && (
         <div
-          class="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
           onClick={onClose}
         />
       )}
 
-      <div class={`
+      <div className={`
             fixed md:sticky top-0 h-screen bg-white border-r border-slate-200 z-50 w-64 transition-transform duration-300 ease-in-out
             ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}>
-        <div class="p-6 border-b border-slate-100 flex items-center justify-between">
-          <img src="/logo.png" alt="DigitalMarket" class="max-h-12 w-auto" />
-          <button onClick={onClose} class="md:hidden text-slate-400 hover:text-slate-900">
+        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+          <img src="/logo.png" alt="DigitalMarket" className="max-h-12 w-auto" />
+          <button onClick={onClose} className="md:hidden text-slate-400 hover:text-slate-900">
             <X size={24} />
           </button>
         </div>
 
-        <div class="px-6 py-4">
-          <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-100">
-            <UserCircle class="text-slate-400" size={24} />
-            <div class="overflow-hidden">
-              <p class="text-xs font-bold text-slate-900 truncate">{currentUser?.name}</p>
-              <p class="text-[10px] text-slate-500 uppercase tracking-wider">{currentUser?.role === 'admin' ? 'Administrador' : 'Cliente B2B'}</p>
+        <div className="px-6 py-4">
+          <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-100">
+            <UserCircle className="text-slate-400" size={24} />
+            <div className="overflow-hidden">
+              <p className="text-xs font-bold text-slate-900 truncate">{currentUser?.name}</p>
+              <p className="text-[10px] text-slate-500 uppercase tracking-wider">{currentUser?.role === 'admin' ? 'Administrador' : 'Cliente B2B'}</p>
             </div>
           </div>
         </div>
 
-        <nav class="flex-1 px-4 space-y-1 overflow-y-auto no-scrollbar">
+        <nav className="flex-1 px-4 space-y-1 overflow-y-auto no-scrollbar">
           {filteredItems.map((item) => {
             const hasSubItems = item.subItems && item.subItems.length > 0;
             const isActive = currentView === item.id || (hasSubItems && item.subItems?.some(sub => sub.id === currentView));
@@ -140,12 +140,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
                       setCurrentView(item.id);
                     }
                   }}
-                  class={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition-colors mb-1 ${isActive && !hasSubItems
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition-colors mb-1 ${isActive && !hasSubItems
                     ? 'bg-slate-900 text-white shadow-md'
                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                     }`}
                 >
-                  <div class="flex items-center gap-3">
+                  <div className="flex items-center gap-3">
                     <item.icon size={20} />
                     {item.label}
                   </div>
@@ -156,7 +156,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
 
                 {/* Submenu */}
                 {hasSubItems && isExpanded && (
-                  <div class="ml-9 space-y-1 mb-2 border-l border-slate-200 pl-2">
+                  <div className="ml-9 space-y-1 mb-2 border-l border-slate-200 pl-2">
                     {item.subItems?.map(sub => (
                       <button
                         key={sub.id}
@@ -164,7 +164,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
                           setCurrentView(sub.id);
                           onClose();
                         }}
-                        class={`w-full flex items-center px-4 py-2 rounded-lg text-sm transition-colors ${currentView === sub.id
+                        className={`w-full flex items-center px-4 py-2 rounded-lg text-sm transition-colors ${currentView === sub.id
                           ? 'text-slate-900 font-bold bg-slate-100'
                           : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                           }`}
@@ -179,20 +179,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
           })}
         </nav>
 
-        <div class="p-4 border-t border-slate-100">
+        <div className="p-4 border-t border-slate-100">
           {currentUser?.role === 'client' && (
             <button
               onClick={() => {
                 setCurrentView('cart');
                 onClose();
               }}
-              class={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors mb-2 ${currentView === 'cart' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50'
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors mb-2 ${currentView === 'cart' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50'
                 }`}
             >
-              <div class="relative">
+              <div className="relative">
                 <ShoppingCart size={20} />
                 {cartCount > 0 && (
-                  <span class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full">
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full">
                     {cartCount}
                   </span>
                 )}
@@ -202,7 +202,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
           )}
           <button
             onClick={() => setCurrentView('login')}
-            class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors">
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors">
             <LogOut size={20} />
             Cerrar Sesión
           </button>
@@ -211,5 +211,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
     </>
   );
 };
+
 
 
