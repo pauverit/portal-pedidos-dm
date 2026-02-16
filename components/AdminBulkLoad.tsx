@@ -160,7 +160,7 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave }) => {
                         <p className="font-bold mb-2">Instrucciones:</p>
                         <p className="mb-2">Copia las columnas de tu Excel y pégalas aquí. El orden <strong>EXACTO</strong> debe ser:</p>
                         <code className="bg-white px-2 py-1 rounded border border-blue-200 block text-xs md:text-sm overflow-x-auto">
-                            REF | NOMBRE | CATEGORÍA | SUBCATEGORÍA | PRECIO | ANCHO | LARGO
+                            REF | NOMBRE | CATEGORÍA | SUBCATEGORÍA | PRECIO | ANCHO | LARGO | MARCA
                         </code>
                         <ul className="list-disc pl-5 mt-2 space-y-1">
                             <li><strong>Categoría:</strong> Flexible, Rígido, Tinta, Accesorio.</li>
