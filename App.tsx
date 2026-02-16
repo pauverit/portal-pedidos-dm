@@ -918,6 +918,7 @@ export default function App() {
                     case 'rigid': title = 'Soportes Rígidos'; break;
                     case 'accessory': title = 'Accesorios & Herramientas'; break;
                     case 'ink': title = 'Tintas & Consumibles'; break;
+                    case 'display': title = 'Displays & Expositores'; break;
                     default: title = 'Catálogo';
                 }
                 if (targetSubCategory) {

@@ -1,4 +1,4 @@
-export type ProductCategory = 'rigid' | 'flexible' | 'ink' | 'accessory';
+export type ProductCategory = 'rigid' | 'flexible' | 'ink' | 'accessory' | 'display';
 
 export interface Product {
   id: string;
@@ -16,7 +16,7 @@ export interface Product {
   // Ink specific
   volume?: string;
   inStock?: boolean;
-  brand?: 'ATP' | 'TMK' | 'FEDRIGONI' | 'DM';
+  brand?: string;
 }
 
 export interface CartItem extends Product {

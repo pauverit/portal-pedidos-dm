@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, ShoppingCart, Settings, LogOut, Printer, Database, UserCircle, ChevronDown, ChevronRight, Layers, Box, Wrench, UserPlus, X, ShoppingBag, Scroll } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Settings, LogOut, Printer, Database, UserCircle, ChevronDown, ChevronRight, Layers, Box, Wrench, UserPlus, X, ShoppingBag, Scroll, Monitor } from 'lucide-react';
 import { User } from '../types';
 
 interface SidebarProps {
@@ -37,6 +37,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
         { id: 'cat_flexible_lonas', label: 'Lonas' },
         { id: 'cat_flexible_papeles', label: 'Papeles' },
         { id: 'cat_flexible_textiles', label: 'Textiles' },
+        { id: 'cat_flexible_otros', label: 'Otros' },
       ]
     },
     {
@@ -63,6 +64,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
         { id: 'cat_accessory_refuerzos', label: 'Refuerzos' },
         { id: 'cat_accessory_adhesivos', label: 'Adhesivos' },
         { id: 'cat_accessory_otros', label: 'Otros' },
+      ]
+    },
+    {
+      id: 'display',
+      label: 'Displays',
+      icon: Monitor,
+      roles: ['client', 'admin'],
+      subItems: [
+        { id: 'cat_display_rollups', label: 'Roll-ups' },
+        { id: 'cat_display_xban', label: 'X-Banners' },
+        { id: 'cat_display_muros', label: 'Muros Pop-up' },
+        { id: 'cat_display_mostradores', label: 'Mostradores' },
+        { id: 'cat_display_otros', label: 'Otros' },
       ]
     },
     {
