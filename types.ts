@@ -16,6 +16,7 @@ export interface Product {
   // Ink specific
   volume?: string;
   inStock?: boolean;
+  brand?: 'ATP' | 'TMK' | 'FEDRIGONI' | 'DM';
 }
 
 export interface CartItem extends Product {

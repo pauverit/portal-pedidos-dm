@@ -14,6 +14,7 @@ interface ParsedItem {
     price: number;
     width: number;
     length: number;
+    brand: 'ATP' | 'TMK' | 'FEDRIGONI' | 'DM';
     isValid: boolean;
     errors: string[];
 }
@@ -73,8 +74,13 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave }) => {
                 }
             } else {
                 // Non-flexible items ignore width/length
-                width = 0;
                 length = 0;
+            }
+
+            const rawBrand = (cols[7] || '').trim().toUpperCase();
+            let brand: 'ATP' | 'TMK' | 'FEDRIGONI' | 'DM' = 'DM';
+            if (['ATP', 'TMK', 'FEDRIGONI'].includes(rawBrand)) {
+                brand = rawBrand as any;
             }
 
             return {
@@ -85,6 +91,7 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave }) => {
                 price,
                 width,
                 length,
+                brand,
                 isValid: itemsErrors.length === 0,
                 errors: itemsErrors
             };
@@ -130,7 +137,8 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave }) => {
             isFlexible: item.category === 'flexible',
             width: item.category === 'flexible' ? item.width : undefined,
             length: item.category === 'flexible' ? item.length : undefined,
-            inStock: true
+            inStock: true,
+            brand: item.brand
         }));
 
         onSave(newProducts);
@@ -158,6 +166,7 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave }) => {
                             <li><strong>Categoría:</strong> Flexible, Rígido, Tinta, Accesorio.</li>
                             <li><strong>Precio:</strong> Para flexibles es €/m². Para el resto es precio unidad.</li>
                             <li><strong>Ancho/Largo:</strong> Solo obligatorio para Flexibles.</li>
+                            <li><strong>Marca:</strong> (Opcional) ATP, TMK, FEDRIGONI. Si se omite, se asigna DM.</li>
                         </ul>
                     </div>
 
@@ -205,6 +214,7 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave }) => {
                                         <th className="px-4 py-3">Cat.</th>
                                         <th className="px-4 py-3">Precio</th>
                                         <th className="px-4 py-3">Dim.</th>
+                                        <th className="px-4 py-3">Marca</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
@@ -239,6 +249,7 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave }) => {
                                             <td className="px-4 py-2 text-xs">
                                                 {item.category === 'flexible' ? `${item.width}x${item.length}m` : '-'}
                                             </td>
+                                            <td className="px-4 py-2 text-xs font-bold text-slate-600">{item.brand}</td>
                                         </tr>
                                     ))}
                                 </tbody>

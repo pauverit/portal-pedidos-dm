@@ -60,7 +60,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     isFlexible: true,
     width: 1.37,
     length: 50,
-    pricePerM2: 3.15
+    pricePerM2: 3.15,
+    brand: 'ATP'
   },
   {
     id: '2',
@@ -73,7 +74,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     isFlexible: true,
     width: 1.05,
     length: 50,
-    pricePerM2: 1.85
+    pricePerM2: 1.85,
+    brand: 'TMK'
   },
   {
     id: '3',
@@ -86,7 +88,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     isFlexible: true,
     width: 1.60,
     length: 50,
-    pricePerM2: 0.95
+    pricePerM2: 0.95,
+    brand: 'FEDRIGONI'
   },
   // --- TINTAS ---
   {
@@ -98,7 +101,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     price: 12.45,
     unit: 'ud',
     volume: '120 ml',
-    inStock: true
+    inStock: true,
+    brand: 'DM'
   },
   // --- RIGIDOS ---
   {
@@ -109,7 +113,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     subcategory: 'pvc',
     price: 45.50,
     unit: 'plancha',
-    isFlexible: false
+    isFlexible: false,
+    brand: 'DM'
   },
   {
     id: '7',
@@ -119,7 +124,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     subcategory: 'composite',
     price: 89.90,
     unit: 'plancha',
-    isFlexible: false
+    isFlexible: false,
+    brand: 'DM'
   },
   // --- ACCESORIOS ---
   {
@@ -130,7 +136,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     subcategory: 'ollados',
     price: 15.00,
     unit: 'pack 500',
-    isFlexible: false
+    isFlexible: false,
+    brand: 'DM'
   },
   {
     id: '9',
@@ -140,6 +147,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     subcategory: 'herramientas',
     price: 4.50,
     unit: 'ud',
-    isFlexible: false
+    isFlexible: false,
+    brand: 'DM'
   }
 ];

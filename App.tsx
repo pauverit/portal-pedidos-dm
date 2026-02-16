@@ -651,7 +651,10 @@ export default function App() {
                                 <div key={product.id} class="bg-white border border-slate-200 rounded-xl p-5 hover:shadow-md transition-shadow flex flex-col justify-between">
                                     <div>
                                         <div class="flex justify-between items-start mb-2">
-                                            <span class="inline-block px-2 py-1 bg-slate-100 text-slate-600 text-[10px] font-bold uppercase rounded tracking-wider">{product.reference}</span>
+                                            <div class="flex flex-col gap-1">
+                                                <span class="inline-block px-2 py-1 bg-slate-100 text-slate-600 text-[10px] font-bold uppercase rounded tracking-wider w-fit">{product.reference}</span>
+                                                {product.brand && <span class="inline-block px-2 py-1 bg-blue-50 text-blue-700 text-[10px] font-bold uppercase rounded tracking-wider w-fit">{product.brand}</span>}
+                                            </div>
                                             {product.category === 'ink' && <span class="text-green-600 text-xs font-bold flex items-center gap-1"><CheckCircle size={12} /> Stock</span>}
                                         </div>
                                         <h3 class="font-bold text-slate-900 text-lg mb-1 leading-tight">{product.name}</h3>
