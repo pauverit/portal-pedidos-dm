@@ -385,18 +385,21 @@ export default function App() {
     // WEIGHT-BASED SHIPPING CALCULATION
     const totalWeight = cart.reduce((sum, item) => sum + ((item.weight || 1) * item.quantity), 0);
 
+    // Calculate Agency Cost (Always calculated for display)
+    let agencyCost = 0;
+    if (cartTotal > 400 && totalWeight <= 25) {
+        agencyCost = 0;
+    } else if (totalWeight <= 25) {
+        agencyCost = 8; // 0-25kg: 8€
+    } else if (totalWeight <= 50) {
+        agencyCost = 12; // 26-50kg: 12€
+    } else {
+        agencyCost = 18; // >50kg: 18€
+    }
+
     let shippingCost = 0;
     if (shippingMethod === 'agency') {
-        // Rule: Free if order > 400€ AND weight <= 25kg
-        if (cartTotal > 400 && totalWeight <= 25) {
-            shippingCost = 0;
-        } else if (totalWeight <= 25) {
-            shippingCost = 8; // 0-25kg: 8€
-        } else if (totalWeight <= 50) {
-            shippingCost = 12; // 26-50kg: 12€
-        } else {
-            shippingCost = 18; // >50kg: 18€
-        }
+        shippingCost = agencyCost;
     }
 
     // RAPPEL SYSTEM: Accumulate 3% if > Threshold (default 800)
@@ -1631,8 +1634,8 @@ export default function App() {
                                     )}
                                 </div>
                             </div>
-                            <span className={`font-bold text-sm ${shippingCost === 0 ? 'text-green-600' : 'text-slate-900'}`}>
-                                {shippingCost === 0 ? 'GRATIS' : `+ ${formatCurrency(shippingCost)}`}
+                            <span className={`font-bold text-sm ${agencyCost === 0 ? 'text-green-600' : 'text-slate-900'}`}>
+                                {agencyCost === 0 ? 'GRATIS' : `+ ${formatCurrency(agencyCost)}`}
                             </span>
                         </div>
                     </label>
@@ -1883,7 +1886,7 @@ export default function App() {
                         <span className="font-bold text-sm truncate max-w-[150px]">{currentUser?.name}</span>
                     </div>
                     <div className="flex gap-4">
-                        {currentUser.role === 'client' && (
+                        {(currentUser.role === 'client' || currentUser.role === 'admin') && (
                             <button onClick={() => setCurrentView('cart')} className="relative p-1">
                                 <ShoppingCart size={24} />
                                 {cart.length > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center font-bold">{cart.length}</span>}
@@ -1894,7 +1897,7 @@ export default function App() {
                 </header>
 
                 <main className="flex-1">
-                    {currentView === 'dashboard' && renderDashboardView()}
+                    {currentView === 'dashboard' && (currentUser.role === 'client' || currentUser.role === 'admin') && renderDashboardView()}
                     {currentView.startsWith('cat_') && renderProductListView()}
                     {currentView === 'cart' && renderCheckoutView()}
                     {currentView === 'order_success' && renderSuccessView()}

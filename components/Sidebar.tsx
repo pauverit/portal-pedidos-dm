@@ -116,7 +116,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
       id: 'client_orders',
       label: 'Mis Pedidos',
       icon: ShoppingBag, // Need to import ShoppingBag
-      roles: ['client']
+      roles: ['client', 'admin']
     },
   ];
 
@@ -209,7 +209,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
         </nav>
 
         <div className="p-4 border-t border-slate-100">
-          {currentUser?.role === 'client' && (
+          {(currentUser?.role === 'client' || currentUser?.role === 'admin') && (
             <button
               onClick={() => {
                 setCurrentView('cart');
