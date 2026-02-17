@@ -238,7 +238,16 @@ export default function App() {
                     })
                     .eq('id', product.id);
 
-                if (error) throw error;
+                if (error) {
+                    console.error('[DEBUG] Supabase Error updating product:', product.id, error);
+                    console.error('[DEBUG] Failed Payload:', {
+                        name: product.name,
+                        description: product.description || null,
+                        price: Number.isFinite(product.price) ? product.price : 0,
+                        weight: Number.isFinite(product.weight) ? product.weight : 0
+                    });
+                    throw error;
+                }
             }
 
             // Refresh local state

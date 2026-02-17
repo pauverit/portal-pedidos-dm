@@ -63,8 +63,11 @@ const calculateWeight = (product: Product): number => {
         }
 
         if (dims) {
+            console.log(`[DEBUG] Extracted dims for ${product.reference}: ${dims.width}x${dims.length}`);
             width = dims.width;
             length = dims.length;
+        } else {
+            console.log(`[DEBUG] Could not extract dims for ${product.reference}`);
         }
     }
 
