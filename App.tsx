@@ -120,8 +120,18 @@ export default function App() {
 
         loadInitialData();
     }, []);
-    const [cart, setCart] = useState<CartItem[]>([]);
+    const [cart, setCart] = useState<CartItem[]>(() => {
+        // Load cart from localStorage for current user
+        if (currentUser) {
+            const savedCart = localStorage.getItem(`dm_portal_cart_${currentUser.id}`);
+            return savedCart ? JSON.parse(savedCart) : [];
+        }
+        return [];
+    });
     const [searchQuery, setSearchQuery] = useState('');
+
+    // Logout Modal State
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
 
     // Checkout States
     const [promoCode, setPromoCode] = useState('');
@@ -224,17 +234,49 @@ export default function App() {
         }
     };
 
+    // Save cart to localStorage whenever it changes (per user)
+    useEffect(() => {
+        if (currentUser) {
+            localStorage.setItem(`dm_portal_cart_${currentUser.id}`, JSON.stringify(cart));
+        }
+    }, [cart, currentUser]);
+
+    // Load user's cart when they log in
+    useEffect(() => {
+        if (currentUser) {
+            const savedCart = localStorage.getItem(`dm_portal_cart_${currentUser.id}`);
+            if (savedCart) {
+                setCart(JSON.parse(savedCart));
+            }
+        } else {
+            // Clear cart when logged out
+            setCart([]);
+        }
+    }, [currentUser?.id]);
+
     const handleLogout = () => {
+        // Show custom modal instead of window.confirm
+        setShowLogoutModal(true);
+    }
+
+    const confirmLogout = (clearCart: boolean) => {
+        if (clearCart && currentUser) {
+            // Remove cart from localStorage
+            localStorage.removeItem(`dm_portal_cart_${currentUser.id}`);
+            setCart([]);
+        }
+
+        // Always clear user session
         setCurrentUser(null);
         localStorage.removeItem('dm_portal_current_user');
         setUsername('');
         setPassword('');
-        setCart([]);
         setActiveRep(null);
         setActiveRepPhone('');
         setPromoCode('');
         setObservations('');
         setCurrentView('login');
+        setShowLogoutModal(false);
     }
 
     // --- CART LOGIC ---
@@ -1770,6 +1812,38 @@ export default function App() {
                     {currentView === 'admin_products' && currentUser.role === 'admin' && renderAdminProductsView()}
                 </main>
             </div>
+
+            {/* Custom Logout Confirmation Modal */}
+            {showLogoutModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+                        <h3 className="text-xl font-bold text-slate-900 mb-4">Cerrar Sesión</h3>
+                        <p className="text-slate-600 mb-6">
+                            ¿Qué deseas hacer con tu carrito de compras?
+                        </p>
+                        <div className="flex flex-col gap-3">
+                            <button
+                                onClick={() => confirmLogout(false)}
+                                className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+                            >
+                                💾 Guardar y Salir
+                            </button>
+                            <button
+                                onClick={() => confirmLogout(true)}
+                                className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+                            >
+                                🗑️ Eliminar Carrito
+                            </button>
+                            <button
+                                onClick={() => setShowLogoutModal(false)}
+                                className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 px-6 rounded-lg transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
