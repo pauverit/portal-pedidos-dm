@@ -17,6 +17,7 @@ export interface Product {
   volume?: string;
   inStock?: boolean;
   brand?: string;
+  weight?: number; // Weight in kg
 }
 
 export interface CartItem extends Product {

@@ -80,7 +80,8 @@ export default function App() {
                         pricePerM2: Number(p.price_per_m2),
                         volume: p.volume,
                         inStock: p.in_stock,
-                        brand: p.brand as any
+                        brand: p.brand as any,
+                        weight: Number(p.weight) || 1
                     }));
                     setProducts(mappedProducts);
                 }
@@ -155,7 +156,8 @@ export default function App() {
                 width: Number.isFinite(p.width) ? p.width : null,
                 length: Number.isFinite(p.length) ? p.length : null,
                 brand: p.brand || null,
-                in_stock: p.inStock
+                in_stock: p.inStock,
+                weight: Number.isFinite(p.weight) ? p.weight : 1 // Default 1kg
             }));
 
             if (newProducts.length === 0) {
@@ -195,7 +197,8 @@ export default function App() {
                     pricePerM2: Number(p.price_per_m2),
                     volume: p.volume,
                     inStock: p.in_stock,
-                    brand: p.brand as any
+                    brand: p.brand as any,
+                    weight: Number(p.weight) || 1
                 })));
             }
 
@@ -273,7 +276,23 @@ export default function App() {
     const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
 
     const cartTotal = cart.reduce((sum, item) => sum + (item.calculatedPrice * item.quantity), 0);
-    const shippingCost = shippingMethod === 'agency' ? 6.00 : 0.00;
+
+    // WEIGHT-BASED SHIPPING CALCULATION
+    const totalWeight = cart.reduce((sum, item) => sum + ((item.weight || 1) * item.quantity), 0);
+
+    let shippingCost = 0;
+    if (shippingMethod === 'agency') {
+        // Rule: Free if order > 400€ AND weight <= 25kg
+        if (cartTotal > 400 && totalWeight <= 25) {
+            shippingCost = 0;
+        } else if (totalWeight <= 25) {
+            shippingCost = 8; // 0-25kg: 8€
+        } else if (totalWeight <= 50) {
+            shippingCost = 12; // 26-50kg: 12€
+        } else {
+            shippingCost = 18; // >50kg: 18€
+        }
+    }
 
     // RAPPEL SYSTEM: Accumulate 3% if > Threshold (default 800)
     // Note: User accumulation threshold
@@ -1399,6 +1418,20 @@ export default function App() {
                     <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-xs">2</div>
                     Método de Envío
                 </h3>
+
+                {/* Weight Display */}
+                <div className="mb-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <div className="flex justify-between items-center">
+                        <span className="text-xs font-bold text-slate-700 uppercase">Peso Total del Pedido</span>
+                        <span className="font-bold text-slate-900">{totalWeight.toFixed(2)} kg</span>
+                    </div>
+                    {totalWeight > 25 && (
+                        <p className="text-xs text-orange-600 mt-1">
+                            ⚠️ Este pedido supera los 25kg, no aplica envío gratuito.
+                        </p>
+                    )}
+                </div>
+
                 <div className="space-y-3">
                     <label className="block relative cursor-pointer group">
                         <input type="radio" name="shipping" checked={shippingMethod === 'agency'} onChange={() => setShippingMethod('agency')} className="peer sr-only" />
@@ -1408,9 +1441,14 @@ export default function App() {
                                 <div>
                                     <p className="font-bold text-slate-900 text-sm">ENVÍO POR AGENCIA 24H</p>
                                     <p className="text-xs text-slate-500">Entrega garantizada al día siguiente</p>
+                                    {cartTotal > 400 && totalWeight <= 25 && (
+                                        <p className="text-xs text-green-600 font-bold mt-1">✓ Envío GRATIS (Pedido &gt; 400€ y ≤25kg)</p>
+                                    )}
                                 </div>
                             </div>
-                            <span className="font-bold text-slate-900 text-sm">+ 6,00 €</span>
+                            <span className={`font-bold text-sm ${shippingCost === 0 ? 'text-green-600' : 'text-slate-900'}`}>
+                                {shippingCost === 0 ? 'GRATIS' : `+ ${formatCurrency(shippingCost)}`}
+                            </span>
                         </div>
                     </label>
                     <label className="block relative cursor-pointer group">
