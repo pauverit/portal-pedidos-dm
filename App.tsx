@@ -690,13 +690,7 @@ export default function App() {
                     <p className="text-slate-500">Dar de alta nuevos clientes, asignar comerciales y configurar precios personalizados.</p>
                 </div>
 
-                <div onClick={() => setCurrentView('admin_products')} className="bg-white p-8 rounded-xl shadow-lg border border-slate-200 cursor-pointer hover:border-slate-400 transition-all group">
-                    <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                        <ShoppingBag className="text-purple-600" size={24} />
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-2">Gestión de Productos</h3>
-                    <p className="text-slate-500">Editar precios, nombres y gestionar el catálogo de productos.</p>
-                </div>
+
 
                 <div onClick={() => setCurrentView('admin_load')} className="bg-white p-8 rounded-xl shadow-lg border border-slate-200 cursor-pointer hover:border-slate-400 transition-all group">
                     <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
