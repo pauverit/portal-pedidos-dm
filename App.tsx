@@ -3,6 +3,7 @@ import { supabase } from './lib/supabase';
 import emailjs from '@emailjs/browser';
 import { Sidebar } from './components/Sidebar';
 import { AdminBulkLoad } from './components/AdminBulkLoad';
+import { AdminBulkEdit } from './components/AdminBulkEdit';
 import { INITIAL_PRODUCTS, SALES_REPS, SALES_REPS_PHONES, DEFAULT_USERS, SALES_REPS_EMAILS } from './constants';
 import { Product, CartItem, User, Order } from './types';
 import {
@@ -81,7 +82,8 @@ export default function App() {
                         volume: p.volume,
                         inStock: p.in_stock,
                         brand: p.brand as any,
-                        weight: Number(p.weight) || 1
+                        weight: Number(p.weight) || 1,
+                        description: p.description || ''
                     }));
                     setProducts(mappedProducts);
                 }
@@ -216,6 +218,56 @@ export default function App() {
         } catch (error: any) {
             console.error('Error saving products:', error);
             alert(`Error al guardar productos: ${error.message || JSON.stringify(error, null, 2)}`);
+        }
+    };
+
+    // Admin Bulk Edit Logic
+    const handleBulkEditSave = async (updatedProducts: Product[]) => {
+        if (!supabase) return;
+
+        try {
+            // Update all products in batch
+            for (const product of updatedProducts) {
+                const { error } = await supabase
+                    .from('products')
+                    .update({
+                        description: product.description || null,
+                        price: Number.isFinite(product.price) ? product.price : 0,
+                        weight: Number.isFinite(product.weight) ? product.weight : 1
+                    })
+                    .eq('id', product.id);
+
+                if (error) throw error;
+            }
+
+            // Refresh local state
+            const { data: refreshedProds } = await supabase.from('products').select('*').order('name');
+            if (refreshedProds) {
+                setProducts(refreshedProds.map(p => ({
+                    id: p.id,
+                    name: p.name,
+                    reference: p.reference,
+                    category: p.category as any,
+                    subcategory: p.subcategory,
+                    price: Number(p.price) || 0,
+                    unit: p.unit || 'ud',
+                    isFlexible: p.is_flexible,
+                    width: Number(p.width),
+                    length: Number(p.length),
+                    pricePerM2: Number(p.price_per_m2),
+                    volume: p.volume,
+                    inStock: p.in_stock,
+                    brand: p.brand as any,
+                    weight: Number(p.weight) || 1,
+                    description: p.description || ''
+                })));
+            }
+
+            alert('Productos actualizados correctamente.');
+            setCurrentView('admin_dashboard');
+        } catch (error: any) {
+            console.error('Error updating products:', error);
+            alert(`Error al actualizar productos: ${error.message}`);
         }
     };
 
@@ -615,7 +667,7 @@ export default function App() {
         <div className="p-6 md:p-10 max-w-7xl mx-auto">
             <h1 className="text-3xl font-bold text-slate-900 mb-8">Panel de Administración</h1>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div onClick={() => setCurrentView('admin_users')} className="bg-white p-8 rounded-xl shadow-lg border border-slate-200 cursor-pointer hover:border-slate-400 transition-all group">
                     <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                         <UserPlus className="text-blue-600" size={24} />
@@ -638,6 +690,14 @@ export default function App() {
                     </div>
                     <h3 className="text-xl font-bold text-slate-900 mb-2">Carga Masiva</h3>
                     <p className="text-slate-500">Importar productos desde CSV o gestionar el stock masivamente.</p>
+                </div>
+
+                <div onClick={() => setCurrentView('admin_bulk_edit')} className="bg-white p-8 rounded-xl shadow-lg border border-slate-200 cursor-pointer hover:border-slate-400 transition-all group">
+                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <Settings className="text-green-600" size={24} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">Edición Masiva</h3>
+                    <p className="text-slate-500">Modificar descripción, precio y peso de múltiples productos simultáneamente.</p>
                 </div>
             </div>
         </div>
@@ -1004,6 +1064,14 @@ export default function App() {
 
     const renderAdminLoadView = () => (
         <AdminBulkLoad onSave={handleBulkSave} />
+    );
+
+    const renderAdminBulkEditView = () => (
+        <AdminBulkEdit
+            products={products}
+            onSave={handleBulkEditSave}
+            onBack={() => setCurrentView('admin_dashboard')}
+        />
     );
 
     const renderAdminUsersView = () => (
@@ -1807,6 +1875,7 @@ export default function App() {
                     {currentView === 'order_success' && renderSuccessView()}
                     {currentView === 'client_orders' && renderClientOrdersView()}
                     {currentView === 'admin_load' && currentUser.role === 'admin' && renderAdminLoadView()}
+                    {currentView === 'admin_bulk_edit' && currentUser.role === 'admin' && renderAdminBulkEditView()}
                     {currentView === 'admin_dashboard' && currentUser.role === 'admin' && renderAdminDashboardView()}
                     {currentView === 'admin_users' && currentUser.role === 'admin' && renderAdminUsersView()}
                     {currentView === 'admin_products' && currentUser.role === 'admin' && renderAdminProductsView()}

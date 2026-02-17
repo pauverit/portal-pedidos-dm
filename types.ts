@@ -18,6 +18,7 @@ export interface Product {
   inStock?: boolean;
   brand?: string;
   weight?: number; // Weight in kg
+  description?: string; // Product description (for lona weight extraction, etc.)
 }
 
 export interface CartItem extends Product {

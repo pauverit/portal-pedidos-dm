@@ -15,6 +15,8 @@ interface ParsedItem {
     width: number;
     length: number;
     brand: 'ATP' | 'TMK' | 'FEDRIGONI' | 'DM';
+    description: string;
+    weight: number;
     isValid: boolean;
     errors: string[];
 }
@@ -48,6 +50,32 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave }) => {
         if (normalized.includes('l570') || normalized.includes('375')) return 'l570_375';
 
         return normalized;
+    };
+
+    // Helper to calculate weight based on material type
+    const calculateWeight = (name: string, subcat: string, description: string, width: number, length: number): number => {
+        if (width <= 0 || length <= 0) return 0;
+
+        const areaM2 = width * length;
+        let gramsPerM2 = 0;
+
+        const nameLower = name.toLowerCase();
+        const subcatLower = subcat.toLowerCase();
+        const descLower = description.toLowerCase();
+
+        if (nameLower.includes('vinil') || subcatLower.includes('vinil')) {
+            gramsPerM2 = 130;
+        } else if (nameLower.includes('laminad') || subcatLower.includes('laminad')) {
+            gramsPerM2 = 100;
+        } else if (nameLower.includes('lona') || subcatLower.includes('lona')) {
+            // Extract from description if available
+            const match = description.match(/(\d+)\s*gr/i);
+            gramsPerM2 = match ? parseInt(match[1]) : 0;
+        }
+
+        if (gramsPerM2 === 0) return 0;
+
+        return parseFloat(((areaM2 * gramsPerM2) / 1000).toFixed(3)); // Convert grams to kg
     };
 
     const parseData = () => {
@@ -103,6 +131,13 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave }) => {
             // Allow any brand, simplified logic
             const brand = rawBrand || 'DM';
 
+            const description = (cols[8] || '').trim(); // Optional description field
+
+            // Auto-calculate weight for flexible items
+            const calculatedWeight = category === 'flexible'
+                ? calculateWeight(name, subcategory, description, width, length)
+                : 0;
+
             return {
                 reference,
                 name,
@@ -112,6 +147,8 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave }) => {
                 width,
                 length,
                 brand,
+                description,
+                weight: calculatedWeight,
                 isValid: itemsErrors.length === 0,
                 errors: itemsErrors
             };
@@ -159,7 +196,9 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave }) => {
             width: item.category === 'flexible' ? item.width : undefined,
             length: item.category === 'flexible' ? item.length : undefined,
             inStock: true,
-            brand: item.brand
+            brand: item.brand,
+            description: item.description || '',
+            weight: item.weight || 0
         }));
 
         onSave(newProducts);
