@@ -12,17 +12,28 @@ interface EditableProduct extends Product {
     modified?: boolean;
 }
 
-// Helper to extract dimensions from reference (e.g., "12250" -> 1.22m x 50m, or "152X50")
-const extractDimensionsFromReference = (reference: string): { width: number, length: number } | null => {
-    // Pattern 1: Explicit "152x50" or "152X50"
-    const matchX = reference.match(/(\d{3})[xX](\d{2})/);
+// Helper to extract dimensions from string (reference or name)
+const extractDimensionsFromString = (text: string): { width: number, length: number } | null => {
+    if (!text) return null;
+
+    // Pattern 1: Explicit "1.22x50", "1,22x50", "152x50"
+    // Matches: (1.22 or 1,22 or 0.60 or 152) [xX] (50)
+    const matchX = text.match(/(\d+(?:[.,]\d+)?)\s*[xX]\s*(\d+)/);
     if (matchX) {
-        return { width: parseInt(matchX[1]) / 100, length: parseInt(matchX[2]) };
+        let widthRaw = matchX[1].replace(',', '.');
+        let width = parseFloat(widthRaw);
+        let length = parseInt(matchX[2]);
+
+        // Normalize width: if > 10, assume cm and convert to m (e.g. 152cm -> 1.52m)
+        // Unless it's likely meters (e.g. 1.22)
+        if (width >= 10) width = width / 100;
+
+        return { width, length };
     }
 
     // Pattern 2: Combined "12250" (3 digits cm + 2 digits m)
-    // We limit length valid options to standard roll lengths keys to avoid false positives like "03529"
-    const matchCombined = reference.match(/\b(\d{3})(50|25|10|05|30)\b/);
+    // Only applied if text looks like a reference code (no spaces/words attached tightly)
+    const matchCombined = text.match(/\b(\d{3})(50|25|10|05|30)\b/);
     if (matchCombined) {
         return { width: parseInt(matchCombined[1]) / 100, length: parseInt(matchCombined[2]) };
     }
@@ -41,9 +52,16 @@ const calculateWeight = (product: Product): number => {
     let width = product.width;
     let length = product.length;
 
-    // Try to extract dimensions from reference if missing
+    // Try to extract dimensions from reference OR name if missing
     if (!width || !length) {
-        const dims = extractDimensionsFromReference(product.reference);
+        // Try reference first
+        let dims = extractDimensionsFromString(product.reference);
+
+        // If not found in reference, try name
+        if (!dims) {
+            dims = extractDimensionsFromString(product.name);
+        }
+
         if (dims) {
             width = dims.width;
             length = dims.length;
@@ -125,11 +143,23 @@ export const AdminBulkEdit: React.FC<AdminBulkEditProps> = ({ products, onSave, 
             return;
         }
 
-        // Remove the 'modified' flag before saving
-        const cleanProducts = editableProducts.map(({ modified, ...product }) => product);
+        try {
+            // Remove the 'modified' flag before saving
+            const cleanProducts = editableProducts
+                .filter(p => p.modified)
+                .map(({ modified, ...product }) => product);
 
-        onSave(cleanProducts);
-        setSaving(false);
+            console.log('Guardando productos:', cleanProducts);
+            await onSave(cleanProducts);
+
+            // If successful, reset modified flags
+            setEditableProducts(prev => prev.map(p => ({ ...p, modified: false })));
+            setSaving(false);
+        } catch (error: any) {
+            console.error('Error al guardar:', error);
+            alert(`Error al guardar: ${error.message || 'Error desconocido'}`);
+            setSaving(false);
+        }
     };
 
     const modifiedCount = editableProducts.filter(p => p.modified).length;

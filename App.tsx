@@ -231,9 +231,10 @@ export default function App() {
                 const { error } = await supabase
                     .from('products')
                     .update({
+                        name: product.name,
                         description: product.description || null,
                         price: Number.isFinite(product.price) ? product.price : 0,
-                        weight: Number.isFinite(product.weight) ? product.weight : 1
+                        weight: Number.isFinite(product.weight) ? product.weight : 0
                     })
                     .eq('id', product.id);
 

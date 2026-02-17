@@ -101,9 +101,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
       ]
     },
     {
-      id: 'admin_load',
-      label: 'Cargar Materiales',
-      icon: Database,
+      id: 'admin_dashboard',
+      label: 'Panel de Administración',
+      icon: Settings,
       roles: ['admin']
     },
     {
