@@ -92,9 +92,17 @@ const calculateWeight = (product: Product): number => {
         gramsPerM2 = extractLonaWeight(product.description || '');
     }
 
-    if (gramsPerM2 === 0) return product.weight || 0;
+    console.log(`[DEBUG] Material check for '${name}': gramsPerM2 = ${gramsPerM2}`);
 
-    return parseFloat(((areaM2 * gramsPerM2) / 1000).toFixed(3)); // Convert grams to kg
+    if (gramsPerM2 === 0) {
+        console.log(`[DEBUG] Skipping calc for ${product.reference} - 0g/m2`);
+        return product.weight || 0;
+    }
+
+    const finalWeight = parseFloat(((areaM2 * gramsPerM2) / 1000).toFixed(3));
+    console.log(`[DEBUG] Final Calc for ${product.reference}: ${width}x${length}=${areaM2}m2 * ${gramsPerM2}g = ${finalWeight}kg`);
+
+    return finalWeight; // Convert grams to kg
 };
 
 export const AdminBulkEdit: React.FC<AdminBulkEditProps> = ({ products, onSave, onBack }) => {
