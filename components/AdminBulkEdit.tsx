@@ -12,20 +12,56 @@ interface EditableProduct extends Product {
     modified?: boolean;
 }
 
+// Helper to extract dimensions from reference (e.g., "12250" -> 1.22m x 50m, or "152X50")
+const extractDimensionsFromReference = (reference: string): { width: number, length: number } | null => {
+    // Pattern 1: Explicit "152x50" or "152X50"
+    const matchX = reference.match(/(\d{3})[xX](\d{2})/);
+    if (matchX) {
+        return { width: parseInt(matchX[1]) / 100, length: parseInt(matchX[2]) };
+    }
+
+    // Pattern 2: Combined "12250" (3 digits cm + 2 digits m)
+    // We limit length valid options to standard roll lengths keys to avoid false positives like "03529"
+    const matchCombined = reference.match(/\b(\d{3})(50|25|10|05|30)\b/);
+    if (matchCombined) {
+        return { width: parseInt(matchCombined[1]) / 100, length: parseInt(matchCombined[2]) };
+    }
+
+    return null;
+};
+
+const extractLonaWeight = (description: string): number => {
+    // Look for patterns like "280gr", "340 gr/m2", "450gr/m²", etc.
+    const match = description.match(/(\d+)\s*gr/i);
+    return match ? parseInt(match[1]) : 0;
+};
+
 // Helper to calculate weight based on material type
 const calculateWeight = (product: Product): number => {
-    if (!product.isFlexible || !product.width || !product.length) {
+    let width = product.width;
+    let length = product.length;
+
+    // Try to extract dimensions from reference if missing
+    if (!width || !length) {
+        const dims = extractDimensionsFromReference(product.reference);
+        if (dims) {
+            width = dims.width;
+            length = dims.length;
+        }
+    }
+
+    if (!width || !length) {
         return product.weight || 0;
     }
 
-    const areaM2 = product.width * product.length;
+    const areaM2 = width * length;
     let gramsPerM2 = 0;
 
     // Determine weight per m² based on subcategory or name
     const name = product.name.toLowerCase();
     const subcat = product.subcategory?.toLowerCase() || '';
-    const desc = product.description?.toLowerCase() || '';
 
+    // Check for "esmerilado" specifically if needed, but "vinilo" covers it
     if (name.includes('vinil') || subcat.includes('vinil')) {
         gramsPerM2 = 130;
     } else if (name.includes('laminad') || subcat.includes('laminad')) {
@@ -38,12 +74,6 @@ const calculateWeight = (product: Product): number => {
     if (gramsPerM2 === 0) return product.weight || 0;
 
     return parseFloat(((areaM2 * gramsPerM2) / 1000).toFixed(3)); // Convert grams to kg
-};
-
-const extractLonaWeight = (description: string): number => {
-    // Look for patterns like "280gr", "340 gr/m2", "450gr/m²", etc.
-    const match = description.match(/(\d+)\s*gr/i);
-    return match ? parseInt(match[1]) : 0;
 };
 
 export const AdminBulkEdit: React.FC<AdminBulkEditProps> = ({ products, onSave, onBack }) => {
@@ -161,7 +191,7 @@ export const AdminBulkEdit: React.FC<AdminBulkEditProps> = ({ products, onSave, 
                             <tr>
                                 <th className="px-4 py-3 w-32">Referencia</th>
                                 <th className="px-4 py-3 w-48">Nombre</th>
-                                <th className="px-4 py-3 flex-1">Descripción</th>
+                                {/* <th className="px-4 py-3 flex-1">Descripción</th> */}
                                 <th className="px-4 py-3 w-28 text-right">Precio (€)</th>
                                 <th className="px-4 py-3 w-28 text-right">Peso (kg)</th>
                                 <th className="px-4 py-3 w-24 text-center">Auto</th>
@@ -187,11 +217,14 @@ export const AdminBulkEdit: React.FC<AdminBulkEditProps> = ({ products, onSave, 
                                             </div>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <div className="text-slate-700 truncate max-w-[180px]" title={product.name}>
-                                                {product.name}
-                                            </div>
+                                            <input
+                                                type="text"
+                                                value={product.name}
+                                                onChange={(e) => updateProduct(product.id, 'name', e.target.value)}
+                                                className="w-full border border-slate-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
+                                            />
                                         </td>
-                                        <td className="px-4 py-3">
+                                        {/* <td className="px-4 py-3">
                                             <textarea
                                                 value={product.description || ''}
                                                 onChange={(e) => updateProduct(product.id, 'description', e.target.value)}
@@ -199,7 +232,7 @@ export const AdminBulkEdit: React.FC<AdminBulkEditProps> = ({ products, onSave, 
                                                 className="w-full border border-slate-300 rounded px-2 py-1 text-xs resize-none focus:ring-2 focus:ring-slate-900 outline-none"
                                                 rows={2}
                                             />
-                                        </td>
+                                        </td> */}
                                         <td className="px-4 py-3">
                                             <input
                                                 type="number"
