@@ -3,7 +3,7 @@ import { supabase } from './lib/supabase';
 import emailjs from '@emailjs/browser';
 import { Sidebar } from './components/Sidebar';
 import { AdminBulkLoad } from './components/AdminBulkLoad';
-import { INITIAL_PRODUCTS, SALES_REPS, SALES_REPS_PHONES, DEFAULT_USERS } from './constants';
+import { INITIAL_PRODUCTS, SALES_REPS, SALES_REPS_PHONES, DEFAULT_USERS, SALES_REPS_EMAILS } from './constants';
 import { Product, CartItem, User, Order } from './types';
 import {
     Search, Filter, ShoppingCart, Plus, Minus, Check, ArrowRight,
@@ -106,7 +106,8 @@ export default function App() {
                         salesRep: c.sales_rep,
                         registrationDate: c.created_at,
                         hidePrices: c.hide_prices || false,
-                        customPrices: c.custom_prices || {}
+                        customPrices: c.custom_prices || {},
+                        rappelThreshold: Number(c.rappel_threshold) || 800
                     }));
                     // Merge with default admin
                     setUsers([DEFAULT_USERS[0], ...mappedClients]);
@@ -213,7 +214,7 @@ export default function App() {
         if (foundUser) {
             setCurrentUser(foundUser);
             localStorage.setItem('dm_portal_current_user', JSON.stringify(foundUser));
-            setCurrentView(foundUser.role === 'admin' ? 'admin_users' : 'dashboard');
+            setCurrentView(foundUser.role === 'admin' ? 'admin_dashboard' : 'dashboard');
             setLoginError('');
         } else {
             setLoginError('Credenciales incorrectas');
@@ -274,8 +275,9 @@ export default function App() {
     const cartTotal = cart.reduce((sum, item) => sum + (item.calculatedPrice * item.quantity), 0);
     const shippingCost = shippingMethod === 'agency' ? 6.00 : 0.00;
 
-    // RAPPEL SYSTEM: Changed to 3% default accumulation
-    const newRappelGenerated = cartTotal * 0.03;
+    // RAPPEL SYSTEM: Accumulate 3% if > Threshold (default 800)
+    const rappelThreshold = currentUser?.rappelThreshold || 800;
+    const newRappelGenerated = cartTotal > rappelThreshold ? cartTotal * 0.03 : 0;
 
     // COUPON LOGIC
     const calculateDiscount = () => {
@@ -467,10 +469,25 @@ export default function App() {
                 observations: observations || 'Sin observaciones'
             };
 
+            // Determine email destination
+            const salesRepEmail = activeRep && Object.keys(SALES_REPS).find(k => SALES_REPS[k] === activeRep)
+                ? SALES_REPS_EMAILS[Object.keys(SALES_REPS).find(k => SALES_REPS[k] === activeRep)!]
+                : 'info@digitalmarket.com';
+
+            // Send to Client
             await emailjs.send(
                 import.meta.env.VITE_EMAILJS_SERVICE_ID,
                 import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
-                templateParams,
+                { ...templateParams, to_email: currentUser.email }, // Send to client
+                import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+            );
+
+            // Send to Sales Rep (Using same template or different?)
+            // Assuming same template for now, but to different email
+            await emailjs.send(
+                import.meta.env.VITE_EMAILJS_SERVICE_ID,
+                import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+                { ...templateParams, to_email: salesRepEmail }, // Send to Rep
                 import.meta.env.VITE_EMAILJS_PUBLIC_KEY
             );
 
@@ -481,12 +498,26 @@ export default function App() {
                 date: new Date().toISOString(),
                 items: [...cart],
                 total: finalTotal,
-                status: 'pending',
+                status: 'processing', // Should default to Tramitado logic
                 shippingMethod,
                 salesRep: activeRep || undefined,
                 rappelDiscount: useAccumulatedRappel ? rappelDiscount : 0,
                 couponDiscount: appliedCoupon ? appliedCoupon.discount : 0
             });
+
+            // 6️⃣ UPDATE CLIENT RAPPEL
+            // Deduct used rappel and add new rappel
+            const newRappelTotal = (currentUser.rappelAccumulated - (useAccumulatedRappel ? rappelDiscount : 0)) + newRappelGenerated;
+
+            const { error: rappelError } = await supabase
+                .from('clients')
+                .update({ rappel_accumulated: newRappelTotal })
+                .eq('id', currentUser.id);
+
+            if (rappelError) console.error('Error updating rappel:', rappelError);
+
+            // Update local state
+            setCurrentUser({ ...currentUser, rappelAccumulated: newRappelTotal });
 
             setCart([]);
             setObservations('');
@@ -516,12 +547,159 @@ export default function App() {
 
     // --- USER MANAGEMENT (ADMIN) ---
     // --- USER MANAGEMENT (ADMIN) ---
-    // --- USER MANAGEMENT (ADMIN) ---
+    // --- ADMIN DASHBOARD & PRODUCT MANAGEMENT ---
+
+    const renderAdminDashboardView = () => (
+        <div className="p-6 md:p-10 max-w-7xl mx-auto">
+            <h1 className="text-3xl font-bold text-slate-900 mb-8">Panel de Administración</h1>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div onClick={() => setCurrentView('admin_users')} className="bg-white p-8 rounded-xl shadow-lg border border-slate-200 cursor-pointer hover:border-slate-400 transition-all group">
+                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <UserPlus className="text-blue-600" size={24} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">Gestión de Clientes</h3>
+                    <p className="text-slate-500">Dar de alta nuevos clientes, asignar comerciales y configurar precios personalizados.</p>
+                </div>
+
+                <div onClick={() => setCurrentView('admin_products')} className="bg-white p-8 rounded-xl shadow-lg border border-slate-200 cursor-pointer hover:border-slate-400 transition-all group">
+                    <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <ShoppingBag className="text-purple-600" size={24} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">Gestión de Productos</h3>
+                    <p className="text-slate-500">Editar precios, nombres y gestionar el catálogo de productos.</p>
+                </div>
+
+                <div onClick={() => setCurrentView('admin_load')} className="bg-white p-8 rounded-xl shadow-lg border border-slate-200 cursor-pointer hover:border-slate-400 transition-all group">
+                    <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <Download className="text-orange-600" size={24} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">Carga Masiva</h3>
+                    <p className="text-slate-500">Importar productos desde CSV o gestionar el stock masivamente.</p>
+                </div>
+            </div>
+        </div>
+    );
+
+    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
+    const handleUpdateProduct = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingProduct || !supabase) return;
+
+        try {
+            const { error } = await supabase
+                .from('products')
+                .update({
+                    name: editingProduct.name,
+                    price: editingProduct.price,
+                    // Add other fields if editable
+                })
+                .eq('id', editingProduct.id);
+
+            if (error) throw error;
+
+            setProducts(prev => prev.map(p => p.id === editingProduct.id ? editingProduct : p));
+            setEditingProduct(null);
+            alert('Producto actualizado correctamente');
+        } catch (error: any) {
+            console.error('Error updating product:', error);
+            alert('Error al actualizar: ' + error.message);
+        }
+    };
+
+    const renderAdminProductsView = () => (
+        <div className="p-6 md:p-10 max-w-7xl mx-auto pb-32">
+            <button onClick={() => setCurrentView('admin_dashboard')} className="mb-6 text-slate-500 hover:text-slate-900 flex items-center gap-1 text-sm">
+                <ArrowLeft size={16} /> Volver al Panel
+            </button>
+
+            <h1 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+                <ShoppingBag className="text-slate-400" /> Gestión de Productos
+            </h1>
+
+            {/* Search Bar */}
+            <div className="mb-6 relative max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input
+                    type="text"
+                    placeholder="Buscar producto..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-900 outline-none"
+                />
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <table className="w-full text-sm text-left">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500">
+                        <tr>
+                            <th className="px-6 py-3">Ref (No editable)</th>
+                            <th className="px-6 py-3">Nombre</th>
+                            <th className="px-6 py-3 text-right">Precio Base</th>
+                            <th className="px-6 py-3 text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                        {products
+                            .filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.reference.toLowerCase().includes(searchQuery.toLowerCase()))
+                            .map(product => (
+                                <tr key={product.id} className="hover:bg-slate-50">
+                                    <td className="px-6 py-4 font-mono font-bold text-slate-900">{product.reference}</td>
+                                    <td className="px-6 py-4">
+                                        {editingProduct?.id === product.id ? (
+                                            <input
+                                                type="text"
+                                                value={editingProduct.name}
+                                                onChange={e => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                                                className="w-full border border-slate-300 rounded px-2 py-1"
+                                            />
+                                        ) : (
+                                            <span className="text-slate-700">{product.name}</span>
+                                        )}
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        {editingProduct?.id === product.id ? (
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                value={editingProduct.price}
+                                                onChange={e => setEditingProduct({ ...editingProduct, price: parseFloat(e.target.value) })}
+                                                className="w-24 border border-slate-300 rounded px-2 py-1 text-right"
+                                            />
+                                        ) : (
+                                            <span className="font-bold text-slate-900">{formatCurrency(product.price)}</span>
+                                        )}
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        {editingProduct?.id === product.id ? (
+                                            <div className="flex justify-end gap-2">
+                                                <button onClick={handleUpdateProduct} className="text-green-600 hover:text-green-800"><Check size={20} /></button>
+                                                <button onClick={() => setEditingProduct(null)} className="text-red-500 hover:text-red-700"><X size={20} /></button>
+                                            </div>
+                                        ) : (
+                                            <button onClick={() => setEditingProduct(product)} className="text-blue-600 hover:text-blue-800 font-bold text-xs bg-blue-50 px-3 py-1 rounded">
+                                                Editar
+                                            </button>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+
     const [newUser, setNewUser] = useState({
         id: '', username: '', password: '', name: '', email: '', phone: '', delegation: '', salesRep: '',
         hidePrices: false,
-        customPricesText: ''
+        rappelThreshold: 800,
+        customPrices: {} as Record<string, number>
     });
+    const [clientProductSearch, setClientProductSearch] = useState('');
+    const [selectedProductForPrice, setSelectedProductForPrice] = useState<Product | null>(null);
+    const [customPriceInput, setCustomPriceInput] = useState('');
     const [isEditing, setIsEditing] = useState(false);
 
     const handleAddUser = async (e: React.FormEvent) => {
@@ -546,8 +724,9 @@ export default function App() {
                 delegation: newUser.delegation,
                 sales_rep: newUser.salesRep,
                 rappel_accumulated: 0,
+                rappel_threshold: newUser.rappelThreshold,
                 hide_prices: newUser.hidePrices,
-                custom_prices: parseCustomPrices(newUser.customPricesText)
+                custom_prices: newUser.customPrices
             };
 
             const { data: client, error: clientError } = await supabase
@@ -570,6 +749,7 @@ export default function App() {
                 delegation: client.delegation,
                 salesRep: client.sales_rep,
                 rappelAccumulated: Number(client.rappel_accumulated) || 0,
+                rappelThreshold: Number(client.rappel_threshold) || 800,
                 registrationDate: client.created_at,
                 hidePrices: client.hide_prices || false,
                 customPrices: client.custom_prices || {},
@@ -586,7 +766,7 @@ export default function App() {
             }
 
             // Reset form
-            setNewUser({ id: '', username: '', password: '', name: '', email: '', phone: '', delegation: '', salesRep: '', hidePrices: false, customPricesText: '' });
+            setNewUser({ id: '', username: '', password: '', name: '', email: '', phone: '', delegation: '', salesRep: '', hidePrices: false, rappelThreshold: 800, customPrices: {} });
 
         } catch (error: any) {
             console.error('Error saving user:', error);
@@ -603,7 +783,8 @@ export default function App() {
             delegation: user.delegation || '',
             salesRep: user.salesRep || '',
             hidePrices: user.hidePrices || false,
-            customPricesText: user.customPrices ? Object.entries(user.customPrices).map(([ref, price]) => `${ref} ${price}`).join('\n') : ''
+            rappelThreshold: user.rappelAccumulated === 0 ? 800 : (user.rappelThreshold || 800), // Default or existing
+            customPrices: user.customPrices || {}
         });
         setIsEditing(true);
         // Scroll to form (optional, but good UX)
@@ -611,26 +792,36 @@ export default function App() {
     };
 
     const handleCancelEdit = () => {
-        setNewUser({ id: '', username: '', password: '', name: '', email: '', phone: '', delegation: '', salesRep: '', hidePrices: false, customPricesText: '' });
+        setNewUser({ id: '', username: '', password: '', name: '', email: '', phone: '', delegation: '', salesRep: '', hidePrices: false, rappelThreshold: 800, customPrices: {} });
         setIsEditing(false);
     };
 
-    const parseCustomPrices = (text: string): Record<string, number> => {
-        const prices: Record<string, number> = {};
-        if (!text) return prices;
+    const addCustomPrice = () => {
+        if (!selectedProductForPrice || !customPriceInput) return;
+        const price = parseFloat(customPriceInput.replace(',', '.'));
+        if (isNaN(price)) {
+            alert('Precio no válido');
+            return;
+        }
 
-        text.split('\n').forEach(line => {
-            const parts = line.trim().split(/\s+/);
-            if (parts.length >= 2) {
-                const ref = parts[0];
-                const priceStr = parts[1].replace(',', '.');
-                const price = parseFloat(priceStr);
-                if (ref && !isNaN(price)) {
-                    prices[ref] = price;
-                }
+        setNewUser(prev => ({
+            ...prev,
+            customPrices: {
+                ...prev.customPrices,
+                [selectedProductForPrice.reference]: price
             }
+        }));
+        setSelectedProductForPrice(null);
+        setCustomPriceInput('');
+        setClientProductSearch('');
+    };
+
+    const removeCustomPrice = (ref: string) => {
+        setNewUser(prev => {
+            const newPrices = { ...prev.customPrices };
+            delete newPrices[ref];
+            return { ...prev, customPrices: newPrices };
         });
-        return prices;
     };
 
     // --- VIEW RENDERERS ---
@@ -652,7 +843,7 @@ export default function App() {
                             value={username}
                             onChange={e => setUsername(e.target.value)}
                             className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-transparent outline-none transition-all text-slate-900"
-                            placeholder="demo o admin"
+                            placeholder="Introduce tu usuario"
                         />
                     </div>
                     <div>
@@ -729,7 +920,7 @@ export default function App() {
                                                     order.status === 'cancelled' ? 'bg-red-100 text-red-700' :
                                                         'bg-yellow-100 text-yellow-700'}`}>
                                             {order.status === 'pending' ? 'Pendiente' :
-                                                order.status === 'processing' ? 'En Proceso' :
+                                                order.status === 'processing' ? 'Tramitado' : // Changed label
                                                     order.status === 'completed' ? 'Completado' : 'Cancelado'}
                                         </span>
                                     </td>
@@ -841,15 +1032,94 @@ export default function App() {
                         </label>
                     </div>
 
-                    <div className="md:col-span-2">
-                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Precios Personalizados (REF PRECIO)</label>
-                        <textarea
-                            value={newUser.customPricesText}
-                            onChange={e => setNewUser({ ...newUser, customPricesText: e.target.value })}
-                            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none font-mono text-sm h-32"
-                            placeholder={"REF123 10.50\nREF456 5.00"}
+                    <div className="md:col-span-2 mt-4">
+                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Umbral Rappel (€)</label>
+                        <input
+                            type="number"
+                            value={newUser.rappelThreshold}
+                            onChange={e => setNewUser({ ...newUser, rappelThreshold: Number(e.target.value) })}
+                            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none"
+                            placeholder="default: 800"
                         />
-                        <p className="text-xs text-slate-400 mt-1">Introduce una referencia y un precio por línea. El precio debe usar punto (.) para decimales.</p>
+                        <p className="text-xs text-slate-400 mt-1">Cantidad mínima por pedido para generar Rappel del 3%.</p>
+                    </div>
+
+                    <div className="md:col-span-2">
+                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Precios Personalizados</label>
+
+                        <div className="bg-slate-50 p-6 rounded-lg border border-slate-200 mb-4">
+                            <h4 className="text-sm font-bold text-slate-900 mb-4">Añadir Nuevo Precio Especial</h4>
+                            <div className="flex gap-4 items-end">
+                                <div className="flex-1 relative">
+                                    <label className="text-xs text-slate-500 mb-1 block">Buscar Material</label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            value={clientProductSearch}
+                                            onChange={e => { setClientProductSearch(e.target.value); setSelectedProductForPrice(null); }}
+                                            className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-900 outline-none"
+                                            placeholder="Escribe para buscar..."
+                                        />
+                                        {clientProductSearch && !selectedProductForPrice && (
+                                            <div className="absolute top-100 left-0 right-0 bg-white border border-slate-200 shadow-xl rounded-lg max-h-48 overflow-y-auto z-50">
+                                                {products.filter(p => p.name.toLowerCase().includes(clientProductSearch.toLowerCase()) || p.reference.toLowerCase().includes(clientProductSearch.toLowerCase())).map(p => (
+                                                    <div key={p.id} onClick={() => { setSelectedProductForPrice(p); setClientProductSearch(p.name); }} className="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm border-b border-slate-50 last:border-0">
+                                                        <span className="font-bold">{p.reference}</span> - {p.name}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="w-32">
+                                    <label className="text-xs text-slate-500 mb-1 block">Precio Especial</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={customPriceInput}
+                                        onChange={e => setCustomPriceInput(e.target.value)}
+                                        className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-900 outline-none"
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                                <button type="button" onClick={addCustomPrice} disabled={!selectedProductForPrice || !customPriceInput} className="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold text-sm disabled:bg-slate-300">
+                                    Añadir
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* List of custom prices */}
+                        {Object.keys(newUser.customPrices).length > 0 && (
+                            <div className="border border-slate-200 rounded-lg overflow-hidden">
+                                <table className="w-full text-sm text-left">
+                                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500">
+                                        <tr>
+                                            <th className="px-4 py-2">Referencia</th>
+                                            <th className="px-4 py-2">Producto</th>
+                                            <th className="px-4 py-2 text-right">Precio Especial</th>
+                                            <th className="px-4 py-2 text-right">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {Object.entries(newUser.customPrices).map(([ref, price]) => {
+                                            const prod = products.find(p => p.reference === ref);
+                                            return (
+                                                <tr key={ref}>
+                                                    <td className="px-4 py-2 font-mono text-xs">{ref}</td>
+                                                    <td className="px-4 py-2 text-slate-600">{prod ? prod.name : 'Unknown Product'}</td>
+                                                    <td className="px-4 py-2 text-right font-bold">{formatCurrency(price)}</td>
+                                                    <td className="px-4 py-2 text-right">
+                                                        <button type="button" onClick={() => removeCustomPrice(ref)} className="text-red-500 hover:text-red-700">
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </div>
 
                     <div className="md:col-span-2 mt-6 flex justify-end gap-3">
@@ -1381,7 +1651,9 @@ export default function App() {
                     {currentView === 'order_success' && renderSuccessView()}
                     {currentView === 'client_orders' && renderClientOrdersView()}
                     {currentView === 'admin_load' && currentUser.role === 'admin' && renderAdminLoadView()}
+                    {currentView === 'admin_dashboard' && currentUser.role === 'admin' && renderAdminDashboardView()}
                     {currentView === 'admin_users' && currentUser.role === 'admin' && renderAdminUsersView()}
+                    {currentView === 'admin_products' && currentUser.role === 'admin' && renderAdminProductsView()}
                 </main>
             </div>
         </div>

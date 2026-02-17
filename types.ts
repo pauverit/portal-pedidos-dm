@@ -30,6 +30,7 @@ export interface User {
   email: string;
   role: 'admin' | 'client';
   rappelAccumulated: number;
+  rappelThreshold?: number; // New: custom threshold for rappel accumulation
   // Auth fields
   username?: string;
   password?: string;

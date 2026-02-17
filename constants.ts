@@ -47,4 +47,14 @@ export const SALES_REPS_PHONES: Record<string, string> = {
   'demo5': '958 000 000'
 };
 
+export const SALES_REPS_EMAILS: Record<string, string> = {
+  'javi5': 'javier@digitalmarket.com',
+  'josem5': 'josemiguel@digitalmarket.com',
+  'alberto5': 'alberto@digitalmarket.com',
+  'mariano5': 'mariano@digitalmarket.com',
+  'julian5': 'julian@digitalmarket.com',
+  'jorge5': 'jorge@digitalmarket.com',
+  'demo5': 'info@digitalmarket.com'
+};
+
 export const INITIAL_PRODUCTS: Product[] = [];
