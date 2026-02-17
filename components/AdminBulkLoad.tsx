@@ -234,7 +234,7 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave }) => {
                         <p className="font-bold mb-2">Instrucciones:</p>
                         <p className="mb-2">Copia las columnas de tu Excel y pégalas aquí. El orden <strong>EXACTO</strong> debe ser:</p>
                         <code className="bg-white px-2 py-1 rounded border border-blue-200 block text-xs md:text-sm overflow-x-auto select-all">
-                            REF | NOMBRE | CATEGORÍA | SUBCATEGORÍA | PRECIO | ANCHO | LARGO | MARCA
+                            REF | NOMBRE | CATEGORÍA | SUBCATEGORÍA | PRECIO | ANCHO | LARGO | MARCA | DESCRIPCIÓN
                         </code>
                         <p className="text-xs text-blue-600 mt-2">
                             * Copia la cabecera anterior para usarla como guía en tu Excel.
@@ -244,6 +244,7 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave }) => {
                             <li><strong>Precio:</strong> Para flexibles es el <strong>PRECIO TOTAL DE LA BOBINA</strong>. El sistema calculará el precio m².</li>
                             <li><strong>Ancho/Largo:</strong> Solo obligatorio para Flexibles (en cm o m).</li>
                             <li><strong>Marca:</strong> (Opcional) ATP, TMK, FEDRIGONI. Si se omite, se asigna DM.</li>
+                            <li><strong>Descripción:</strong> (Opcional) Útil para extraer el peso de las lonas (ej: "340gr").</li>
                         </ul>
                     </div>
 
@@ -292,6 +293,8 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave }) => {
                                         <th className="px-4 py-3">Precio</th>
                                         <th className="px-4 py-3">Dim.</th>
                                         <th className="px-4 py-3">Marca</th>
+                                        <th className="px-4 py-3 text-right">Peso</th>
+                                        <th className="px-4 py-3">Desc.</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
@@ -337,6 +340,12 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave }) => {
                                                 {item.category === 'flexible' ? `${item.width}x${item.length}m` : '-'}
                                             </td>
                                             <td className="px-4 py-2 text-xs font-bold text-slate-600">{item.brand}</td>
+                                            <td className="px-4 py-2 text-right font-mono text-xs">
+                                                {item.weight > 0 ? `${item.weight.toFixed(3)} kg` : '-'}
+                                            </td>
+                                            <td className="px-4 py-2 text-xs truncate max-w-[150px]" title={item.description}>
+                                                {item.description || '-'}
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>

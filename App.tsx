@@ -1414,20 +1414,34 @@ export default function App() {
                                             <td className="px-4 py-2 align-middle">
                                                 <div className="flex flex-col">
                                                     <span className="font-bold text-slate-800 text-sm">{product.name}</span>
-                                                    <span className="text-xs text-slate-400">{product.brand || 'DM'}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs text-slate-400">{product.brand || 'DM'}</span>
+                                                        {product.description && (
+                                                            <span className="text-xs text-slate-400 border-l border-slate-200 pl-2 italic truncate max-w-[250px]" title={product.description}>
+                                                                {product.description}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td className="px-4 py-2 align-middle text-xs text-slate-500">
-                                                {product.isFlexible ? (
-                                                    <div className="flex flex-col">
-                                                        <span>{product.width}m x {product.length}m</span>
-                                                        <span className="text-[10px] text-slate-400">
-                                                            ({currentUser?.hidePrices ? 'Consultar' : formatCurrency(product.pricePerM2!)}/m²)
+                                                <div className="flex flex-col">
+                                                    {product.isFlexible ? (
+                                                        <>
+                                                            <span>{product.width}m x {product.length}m</span>
+                                                            <span className="text-[10px] text-slate-400">
+                                                                ({currentUser?.hidePrices ? 'Consultar' : formatCurrency(product.pricePerM2!)}/m²)
+                                                            </span>
+                                                        </>
+                                                    ) : (
+                                                        <span>{product.category === 'ink' ? product.volume : product.unit}</span>
+                                                    )}
+                                                    {product.weight > 0 && (
+                                                        <span className="text-[10px] text-purple-600 font-medium">
+                                                            {product.weight.toFixed(2)} kg
                                                         </span>
-                                                    </div>
-                                                ) : (
-                                                    <span>{product.category === 'ink' ? product.volume : product.unit}</span>
-                                                )}
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-4 py-2 align-middle text-right">
                                                 <span className="font-bold text-slate-900">
