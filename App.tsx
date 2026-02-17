@@ -1375,6 +1375,56 @@ export default function App() {
 
             <h1 className="text-2xl font-bold text-slate-900 mb-6">Finalizar Pedido</h1>
 
+            {/* Cart Summary Section */}
+            <div className="bg-slate-50 rounded-xl p-4 md:p-6 border border-slate-200 mb-6">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                        <ShoppingCart size={18} />
+                        Resumen del Carrito ({cart.length} {cart.length === 1 ? 'producto' : 'productos'})
+                    </h3>
+                    <button
+                        onClick={() => setCurrentView('cat_flexible_vinilos')}
+                        className="text-xs font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1 bg-white px-3 py-2 rounded-lg border border-slate-200"
+                    >
+                        <Plus size={14} />
+                        Añadir más productos
+                    </button>
+                </div>
+
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {cart.map(item => (
+                        <div key={item.id} className="bg-white rounded-lg p-3 flex items-center justify-between border border-slate-100">
+                            <div className="flex-1">
+                                <p className="text-sm font-bold text-slate-900">{item.name}</p>
+                                <p className="text-xs text-slate-500 font-mono">{item.reference}</p>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center bg-slate-100 rounded-full px-3 py-1">
+                                    <button
+                                        onClick={() => updateQuantity(item.id, -1)}
+                                        className="text-slate-600 hover:text-slate-900 w-5 h-5 flex items-center justify-center"
+                                    >
+                                        <Minus size={12} />
+                                    </button>
+                                    <span className="mx-2 font-bold text-sm min-w-[20px] text-center">{item.quantity}</span>
+                                    <button
+                                        onClick={() => addToCart(item)}
+                                        className="text-slate-600 hover:text-slate-900 w-5 h-5 flex items-center justify-center"
+                                    >
+                                        <Plus size={12} />
+                                    </button>
+                                </div>
+                                {!currentUser?.hidePrices && (
+                                    <span className="font-bold text-slate-900 text-sm min-w-[80px] text-right">
+                                        {formatCurrency(item.calculatedPrice * item.quantity)}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
             {/* 1. Código Promocional (Opcional) */}
             <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 mb-6">
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
