@@ -232,7 +232,6 @@ export default function App() {
                     .from('products')
                     .update({
                         name: product.name,
-                        description: product.description || null,
                         price: Number.isFinite(product.price) ? product.price : 0,
                         weight: Number.isFinite(product.weight) ? product.weight : 0
                     })
@@ -242,7 +241,6 @@ export default function App() {
                     console.error('[DEBUG] Supabase Error updating product:', product.id, error);
                     console.error('[DEBUG] Failed Payload:', {
                         name: product.name,
-                        description: product.description || null,
                         price: Number.isFinite(product.price) ? product.price : 0,
                         weight: Number.isFinite(product.weight) ? product.weight : 0
                     });
