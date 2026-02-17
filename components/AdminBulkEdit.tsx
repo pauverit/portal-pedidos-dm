@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Search, Calculator, AlertCircle, CheckCircle } from 'lucide-react';
+import { Save, Search, Calculator, AlertCircle, CheckCircle, Layers, Droplet, Box, Filter } from 'lucide-react';
 import { Product } from '../types';
 
 interface AdminBulkEditProps {
@@ -109,21 +109,42 @@ export const AdminBulkEdit: React.FC<AdminBulkEditProps> = ({ products, onSave, 
     const [editableProducts, setEditableProducts] = useState<EditableProduct[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [saving, setSaving] = useState(false);
+    const [editMode, setEditMode] = useState<'flexible' | 'ink' | 'others'>('flexible');
 
     useEffect(() => {
         setEditableProducts(products.map(p => ({ ...p, modified: false })));
     }, [products]);
 
-    const filteredProducts = editableProducts.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.reference.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.description?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredProducts = editableProducts.filter(p => {
+        const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.reference.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.description?.toLowerCase().includes(searchQuery.toLowerCase());
+
+        if (!matchesSearch) return false;
+
+        if (editMode === 'flexible') return p.isFlexible;
+        if (editMode === 'ink') return p.category === 'ink';
+        if (editMode === 'others') return !p.isFlexible && p.category !== 'ink';
+        return true;
+    });
 
     const updateProduct = (id: string, field: keyof Product, value: any) => {
-        setEditableProducts(prev => prev.map(p =>
-            p.id === id ? { ...p, [field]: value, modified: true } : p
-        ));
+        setEditableProducts(prev => prev.map(p => {
+            if (p.id !== id) return p;
+
+            const updated = { ...p, [field]: value, modified: true };
+
+            // Special logic: If editing pricePerM2 in Flexible mode, recalculate Unit Price
+            if (editMode === 'flexible' && field === 'pricePerM2') {
+                const w = p.width || 0;
+                const l = p.length || 0;
+                if (w > 0 && l > 0) {
+                    updated.price = parseFloat((Number(value) * w * l).toFixed(2));
+                }
+            }
+
+            return updated;
+        }));
     };
 
     const autoCalculateWeight = (id: string) => {
@@ -233,6 +254,49 @@ export const AdminBulkEdit: React.FC<AdminBulkEditProps> = ({ products, onSave, 
                 </div>
             )}
 
+            {/* Mode Selection */}
+            <div className="flex gap-4 mb-6">
+                <button
+                    onClick={() => setEditMode('flexible')}
+                    className={`flex-1 p-4 rounded-xl border transition-all flex items-center justify-center gap-3 ${editMode === 'flexible'
+                            ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm'
+                            : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                        }`}
+                >
+                    <Layers size={20} />
+                    <div className="text-left">
+                        <div className="font-bold">Materiales Flexibles</div>
+                        <div className="text-xs opacity-75">Editar Precio por m²</div>
+                    </div>
+                </button>
+                <button
+                    onClick={() => setEditMode('ink')}
+                    className={`flex-1 p-4 rounded-xl border transition-all flex items-center justify-center gap-3 ${editMode === 'ink'
+                            ? 'bg-purple-50 border-purple-200 text-purple-700 shadow-sm'
+                            : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                        }`}
+                >
+                    <Droplet size={20} />
+                    <div className="text-left">
+                        <div className="font-bold">Tintas</div>
+                        <div className="text-xs opacity-75">Editar Precio Unidad</div>
+                    </div>
+                </button>
+                <button
+                    onClick={() => setEditMode('others')}
+                    className={`flex-1 p-4 rounded-xl border transition-all flex items-center justify-center gap-3 ${editMode === 'others'
+                            ? 'bg-slate-100 border-slate-300 text-slate-700 shadow-sm'
+                            : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                        }`}
+                >
+                    <Box size={20} />
+                    <div className="text-left">
+                        <div className="font-bold">Otros Productos</div>
+                        <div className="text-xs opacity-75">Editar Precio Unidad</div>
+                    </div>
+                </button>
+            </div>
+
             {/* Search Bar */}
             <div className="mb-6 relative max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -253,8 +317,14 @@ export const AdminBulkEdit: React.FC<AdminBulkEditProps> = ({ products, onSave, 
                             <tr>
                                 <th className="px-4 py-3 w-32">Referencia</th>
                                 <th className="px-4 py-3 w-48">Nombre</th>
-                                {/* <th className="px-4 py-3 flex-1">Descripción</th> */}
-                                <th className="px-4 py-3 w-28 text-right">Precio (€)</th>
+                                {editMode === 'flexible' ? (
+                                    <>
+                                        <th className="px-4 py-3 w-28 text-right bg-blue-50/50">Precio (€/m²)</th>
+                                        <th className="px-4 py-3 w-28 text-right text-slate-400">Precio Rollo</th>
+                                    </>
+                                ) : (
+                                    <th className="px-4 py-3 w-28 text-right">Precio (€/ud)</th>
+                                )}
                                 <th className="px-4 py-3 w-28 text-right">Peso (kg)</th>
                                 <th className="px-4 py-3 w-24 text-center">Auto</th>
                             </tr>
@@ -295,15 +365,33 @@ export const AdminBulkEdit: React.FC<AdminBulkEditProps> = ({ products, onSave, 
                                                 rows={2}
                                             />
                                         </td> */}
-                                        <td className="px-4 py-3">
-                                            <input
-                                                type="number"
-                                                step="0.01"
-                                                value={product.price}
-                                                onChange={(e) => updateProduct(product.id, 'price', parseFloat(e.target.value) || 0)}
-                                                className="w-24 border border-slate-300 rounded px-2 py-1 text-right focus:ring-2 focus:ring-slate-900 outline-none"
-                                            />
-                                        </td>
+                                        {editMode === 'flexible' ? (
+                                            <>
+                                                <td className="px-4 py-3 bg-blue-50/30">
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        value={product.pricePerM2 || ''}
+                                                        onChange={(e) => updateProduct(product.id, 'pricePerM2', parseFloat(e.target.value) || 0)}
+                                                        className="w-24 border border-blue-200 rounded px-2 py-1 text-right focus:ring-2 focus:ring-blue-500 outline-none font-bold text-blue-900"
+                                                        placeholder="0.00"
+                                                    />
+                                                </td>
+                                                <td className="px-4 py-3 text-right text-slate-400 font-mono text-xs">
+                                                    {product.price?.toFixed(2)}€
+                                                </td>
+                                            </>
+                                        ) : (
+                                            <td className="px-4 py-3">
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    value={product.price}
+                                                    onChange={(e) => updateProduct(product.id, 'price', parseFloat(e.target.value) || 0)}
+                                                    className="w-24 border border-slate-300 rounded px-2 py-1 text-right focus:ring-2 focus:ring-slate-900 outline-none"
+                                                />
+                                            </td>
+                                        )}
                                         <td className="px-4 py-3">
                                             <input
                                                 type="number"
