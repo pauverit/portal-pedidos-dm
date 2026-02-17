@@ -136,9 +136,30 @@ export const AdminBulkEdit: React.FC<AdminBulkEditProps> = ({ products, onSave, 
 
     const autoCalculateAllWeights = () => {
         setEditableProducts(prev => prev.map(p => {
-            const calculatedWeight = calculateWeight(p);
-            if (calculatedWeight > 0 && calculatedWeight !== p.weight) {
-                return { ...p, weight: calculatedWeight, modified: true };
+            let newP = { ...p };
+            let dimsChanged = false;
+
+            // 1. Try to extract dimensions from Reference or Name (Priority)
+            let dims = extractDimensionsFromString(p.reference);
+            if (!dims) {
+                dims = extractDimensionsFromString(p.name);
+            }
+
+            // 2. Auto-fix dimensions if found and different
+            if (dims) {
+                if (dims.width !== p.width || dims.length !== p.length) {
+                    console.log(`[AUTO-FIX] Fixing dims for ${p.reference}: ${p.width}x${p.length} -> ${dims.width}x${dims.length}`);
+                    newP.width = dims.width;
+                    newP.length = dims.length;
+                    dimsChanged = true;
+                }
+            }
+
+            // 3. Calculate weight (using new dimensions if fixed)
+            const calculatedWeight = calculateWeight(newP);
+
+            if ((calculatedWeight > 0 && calculatedWeight !== p.weight) || dimsChanged) {
+                return { ...newP, weight: calculatedWeight, modified: true };
             }
             return p;
         }));

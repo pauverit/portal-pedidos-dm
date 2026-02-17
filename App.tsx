@@ -233,7 +233,9 @@ export default function App() {
                     .update({
                         name: product.name,
                         price: Number.isFinite(product.price) ? product.price : 0,
-                        weight: Number.isFinite(product.weight) ? product.weight : 0
+                        weight: Number.isFinite(product.weight) ? product.weight : 0,
+                        width: Number.isFinite(product.width) ? product.width : 0,
+                        length: Number.isFinite(product.length) ? product.length : 0
                     })
                     .eq('id', product.id);
 
