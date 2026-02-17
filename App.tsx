@@ -276,8 +276,9 @@ export default function App() {
     const shippingCost = shippingMethod === 'agency' ? 6.00 : 0.00;
 
     // RAPPEL SYSTEM: Accumulate 3% if > Threshold (default 800)
-    const rappelThreshold = currentUser?.rappelThreshold || 800;
-    const newRappelGenerated = cartTotal > rappelThreshold ? cartTotal * 0.03 : 0;
+    // Note: User accumulation threshold
+    const rappelAccumulationThreshold = currentUser?.rappelThreshold || 800;
+    const newRappelGenerated = cartTotal > rappelAccumulationThreshold ? cartTotal * 0.03 : 0;
 
     // COUPON LOGIC
     const calculateDiscount = () => {
@@ -1107,7 +1108,7 @@ export default function App() {
                                                 <tr key={ref}>
                                                     <td className="px-4 py-2 font-mono text-xs">{ref}</td>
                                                     <td className="px-4 py-2 text-slate-600">{prod ? prod.name : 'Unknown Product'}</td>
-                                                    <td className="px-4 py-2 text-right font-bold">{formatCurrency(price)}</td>
+                                                    <td className="px-4 py-2 text-right font-bold">{formatCurrency(Number(price))}</td>
                                                     <td className="px-4 py-2 text-right">
                                                         <button type="button" onClick={() => removeCustomPrice(ref)} className="text-red-500 hover:text-red-700">
                                                             <Trash2 size={16} />
@@ -1466,24 +1467,49 @@ export default function App() {
                             </div>
                         )}
 
-                        {currentUser && currentUser.rappelAccumulated > 0 && appliedCoupon?.code === 'RAPPEL3' && (
-                            <div className="border-t border-slate-100 pt-4">
-                                <label className="flex items-center justify-between cursor-pointer p-2 hover:bg-slate-50 rounded select-none">
-                                    <div className="flex items-center gap-3">
-                                        <input
-                                            type="checkbox"
-                                            checked={useAccumulatedRappel}
-                                            onChange={(e) => setUseAccumulatedRappel(e.target.checked)}
-                                            className="w-5 h-5 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
-                                        />
-                                        <div>
-                                            <p className="text-sm font-bold text-slate-700">Canjear saldo acumulado</p>
-                                            <p className="text-xs text-slate-500">Disponible: {formatCurrency(currentUser.rappelAccumulated)}</p>
-                                        </div>
+                        {/* RAPPEL REDEMPTION LOGIC */}
+                        {currentUser && currentUser.rappelAccumulated > 0 && (
+                            (() => {
+                                const earningThreshold = currentUser.rappelThreshold || 800; // Default 800
+                                const redemptionThreshold = earningThreshold * 1.5; // Custom Rule: 150% of earning threshold
+                                const canRedeem = cartTotal >= redemptionThreshold;
+                                const missingForRedemption = redemptionThreshold - cartTotal;
+
+                                return (
+                                    <div className="border-t border-slate-100 pt-4">
+                                        {canRedeem ? (
+                                            <label className="flex items-center justify-between cursor-pointer p-2 hover:bg-slate-50 rounded select-none">
+                                                <div className="flex items-center gap-3">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={useAccumulatedRappel}
+                                                        onChange={(e) => setUseAccumulatedRappel(e.target.checked)}
+                                                        className="w-5 h-5 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                                                    />
+                                                    <div>
+                                                        <p className="text-sm font-bold text-slate-700">Canjear saldo acumulado</p>
+                                                        <p className="text-xs text-slate-500">Disponible: {formatCurrency(currentUser.rappelAccumulated)}</p>
+                                                    </div>
+                                                </div>
+                                                {useAccumulatedRappel && <span className="text-green-600 font-bold">-{formatCurrency(rappelDiscount)}</span>}
+                                            </label>
+                                        ) : (
+                                            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-slate-500">
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <p className="text-xs font-bold text-slate-700 uppercase">Saldo Rappel Disponible</p>
+                                                    <span className="font-bold text-slate-900">{formatCurrency(currentUser.rappelAccumulated)}</span>
+                                                </div>
+                                                <p className="text-xs">
+                                                    Para canjear tu saldo, el pedido mínimo debe ser de <strong>{formatCurrency(redemptionThreshold)}</strong>.
+                                                </p>
+                                                <p className="text-xs text-orange-600 font-bold mt-1">
+                                                    Te faltan {formatCurrency(missingForRedemption)}
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
-                                    {useAccumulatedRappel && <span className="text-green-600 font-bold">-{formatCurrency(rappelDiscount)}</span>}
-                                </label>
-                            </div>
+                                );
+                            })()
                         )}
 
                         <div className="h-px bg-slate-200 my-2"></div>
