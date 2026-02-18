@@ -8,8 +8,8 @@ import { INITIAL_PRODUCTS, SALES_REPS, SALES_REPS_PHONES, DEFAULT_USERS, SALES_R
 import { Product, CartItem, User, Order } from './types';
 import {
     Search, Filter, ShoppingCart, Plus, Minus, Check, ArrowRight,
-    MapPin, Printer, Download, CreditCard, ChevronRight, AlertCircle, Trash2, ArrowLeft,
-    CheckCircle, Settings, Save, Lock, Truck, Phone, Mail, FileText, UserPlus, Menu, ShoppingBag, LayoutDashboard, LogOut, X
+    MapPin, Printer, Download, CreditCard, ChevronRight, ChevronDown, ChevronUp, AlertCircle, Trash2, ArrowLeft,
+    CheckCircle, Settings, Save, Lock, Truck, Phone, Mail, FileText, UserPlus, Menu, ShoppingBag, LayoutDashboard, LogOut, X, Droplets, Layers
 } from 'lucide-react';
 
 const formatCurrency = (value: number) =>
@@ -832,6 +832,13 @@ export default function App() {
     const [customPriceInput, setCustomPriceInput] = useState('');
     const [isEditing, setIsEditing] = useState(false);
 
+    // New states for batch custom prices
+    const [showCustomPricesSection, setShowCustomPricesSection] = useState(false);
+    const [priceTab, setPriceTab] = useState<'inks' | 'flexibles'>('flexibles');
+    const [batchRows, setBatchRows] = useState<Array<{ search: string, product: Product | null, price: string }>>(
+        Array(10).fill(null).map(() => ({ search: '', product: null, price: '' }))
+    );
+
     const handleAddUser = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newUser.username || !newUser.password || !newUser.name || !newUser.delegation || !newUser.salesRep) {
@@ -944,6 +951,47 @@ export default function App() {
         setSelectedProductForPrice(null);
         setCustomPriceInput('');
         setClientProductSearch('');
+    };
+
+    const addBatchCustomPrices = () => {
+        const validRows = batchRows.filter(r => r.product && r.price);
+        if (validRows.length === 0) {
+            alert('No hay filas válidas para añadir.');
+            return;
+        }
+
+        const newPrices = { ...newUser.customPrices };
+        let added = 0;
+        validRows.forEach(row => {
+            const price = parseFloat(row.price.replace(',', '.'));
+            if (!isNaN(price) && row.product) {
+                newPrices[row.product.reference] = price;
+                added++;
+            }
+        });
+
+        setNewUser(prev => ({ ...prev, customPrices: newPrices }));
+        setBatchRows(Array(10).fill(null).map(() => ({ search: '', product: null, price: '' })));
+        alert(`${added} precio(s) especial(es) añadido(s) correctamente.`);
+    };
+
+    const updateBatchRow = (index: number, field: 'search' | 'price', value: string) => {
+        setBatchRows(prev => {
+            const newRows = [...prev];
+            newRows[index] = { ...newRows[index], [field]: value };
+            if (field === 'search') {
+                newRows[index].product = null;
+            }
+            return newRows;
+        });
+    };
+
+    const selectBatchProduct = (index: number, product: Product) => {
+        setBatchRows(prev => {
+            const newRows = [...prev];
+            newRows[index] = { ...newRows[index], product, search: product.name };
+            return newRows;
+        });
     };
 
     const removeCustomPrice = (ref: string) => {
@@ -1183,79 +1231,216 @@ export default function App() {
                     </div>
 
                     <div className="md:col-span-2">
-                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Precios Personalizados</label>
-
-                        <div className="bg-slate-50 p-6 rounded-lg border border-slate-200 mb-4">
-                            <h4 className="text-sm font-bold text-slate-900 mb-4">Añadir Nuevo Precio Especial</h4>
-                            <div className="flex gap-4 items-end">
-                                <div className="flex-1 relative">
-                                    <label className="text-xs text-slate-500 mb-1 block">Buscar Material</label>
-                                    <div className="relative">
-                                        <input
-                                            type="text"
-                                            value={clientProductSearch}
-                                            onChange={e => { setClientProductSearch(e.target.value); setSelectedProductForPrice(null); }}
-                                            className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-900 outline-none"
-                                            placeholder="Escribe para buscar..."
-                                        />
-                                        {clientProductSearch && !selectedProductForPrice && (
-                                            <div className="absolute top-100 left-0 right-0 bg-white border border-slate-200 shadow-xl rounded-lg max-h-48 overflow-y-auto z-50">
-                                                {products.filter(p => p.name.toLowerCase().includes(clientProductSearch.toLowerCase()) || p.reference.toLowerCase().includes(clientProductSearch.toLowerCase())).map(p => (
-                                                    <div key={p.id} onClick={() => { setSelectedProductForPrice(p); setClientProductSearch(p.name); }} className="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm border-b border-slate-50 last:border-0">
-                                                        <span className="font-bold">{p.reference}</span> - {p.name}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="w-32">
-                                    <label className="text-xs text-slate-500 mb-1 block">Precio Especial</label>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        value={customPriceInput}
-                                        onChange={e => setCustomPriceInput(e.target.value)}
-                                        className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-900 outline-none"
-                                        placeholder="0.00"
-                                    />
-                                </div>
-                                <button type="button" onClick={addCustomPrice} disabled={!selectedProductForPrice || !customPriceInput} className="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold text-sm disabled:bg-slate-300">
-                                    Añadir
-                                </button>
+                        {/* Collapsible Header */}
+                        <button
+                            type="button"
+                            onClick={() => setShowCustomPricesSection(!showCustomPricesSection)}
+                            className="w-full flex items-center justify-between bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg px-4 py-3 transition-colors group"
+                        >
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-slate-700 uppercase">Precios Personalizados</span>
+                                {Object.keys(newUser.customPrices).length > 0 && (
+                                    <span className="bg-slate-900 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                        {Object.keys(newUser.customPrices).length}
+                                    </span>
+                                )}
                             </div>
-                        </div>
+                            {showCustomPricesSection ? <ChevronUp size={18} className="text-slate-500" /> : <ChevronDown size={18} className="text-slate-500" />}
+                        </button>
 
-                        {/* List of custom prices */}
-                        {Object.keys(newUser.customPrices).length > 0 && (
-                            <div className="border border-slate-200 rounded-lg overflow-hidden">
-                                <table className="w-full text-sm text-left">
-                                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500">
-                                        <tr>
-                                            <th className="px-4 py-2">Referencia</th>
-                                            <th className="px-4 py-2">Producto</th>
-                                            <th className="px-4 py-2 text-right">Precio Especial</th>
-                                            <th className="px-4 py-2 text-right">Acciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100">
-                                        {Object.entries(newUser.customPrices).map(([ref, price]) => {
-                                            const prod = products.find(p => p.reference === ref);
+                        {/* Collapsible Content */}
+                        {showCustomPricesSection && (
+                            <div className="mt-3 border border-slate-200 rounded-lg overflow-hidden">
+                                {/* Tabs: Tintas / Flexibles */}
+                                <div className="flex border-b border-slate-200">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setPriceTab('flexibles'); setBatchRows(Array(10).fill(null).map(() => ({ search: '', product: null, price: '' }))); }}
+                                        className={`flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${priceTab === 'flexibles'
+                                                ? 'bg-white text-slate-900 border-b-2 border-slate-900'
+                                                : 'bg-slate-50 text-slate-500 hover:text-slate-700'
+                                            }`}
+                                    >
+                                        <Layers size={16} /> Flexibles
+                                        <span className="text-[10px] text-slate-400 font-normal">(€/m²)</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setPriceTab('inks'); setBatchRows(Array(10).fill(null).map(() => ({ search: '', product: null, price: '' }))); }}
+                                        className={`flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${priceTab === 'inks'
+                                                ? 'bg-white text-slate-900 border-b-2 border-slate-900'
+                                                : 'bg-slate-50 text-slate-500 hover:text-slate-700'
+                                            }`}
+                                    >
+                                        <Droplets size={16} /> Tintas
+                                        <span className="text-[10px] text-slate-400 font-normal">(€/ud)</span>
+                                    </button>
+                                </div>
+
+                                {/* Batch Input Area */}
+                                <div className="bg-white p-4">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h4 className="text-sm font-bold text-slate-900">
+                                            Añadir {priceTab === 'flexibles' ? 'Materiales Flexibles' : 'Tintas'}
+                                        </h4>
+                                        <span className="text-[10px] text-slate-400">10 filas disponibles</span>
+                                    </div>
+
+                                    {/* Header Row */}
+                                    <div className="grid grid-cols-12 gap-2 mb-2 px-1">
+                                        <div className="col-span-1 text-[10px] text-slate-400 font-bold">#</div>
+                                        <div className="col-span-7 text-[10px] text-slate-400 font-bold">Material</div>
+                                        <div className="col-span-4 text-[10px] text-slate-400 font-bold text-right">
+                                            Precio {priceTab === 'flexibles' ? '(€/m²)' : '(€/ud)'}
+                                        </div>
+                                    </div>
+
+                                    {/* 10 Batch Rows */}
+                                    <div className="space-y-1.5 max-h-[400px] overflow-y-auto">
+                                        {batchRows.map((row, idx) => {
+                                            const filteredProducts = row.search && !row.product
+                                                ? products.filter(p => {
+                                                    const matchCategory = priceTab === 'flexibles' ? p.isFlexible : p.category === 'ink';
+                                                    const matchSearch = p.name.toLowerCase().includes(row.search.toLowerCase()) || p.reference.toLowerCase().includes(row.search.toLowerCase());
+                                                    return matchCategory && matchSearch;
+                                                })
+                                                : [];
+
                                             return (
-                                                <tr key={ref}>
-                                                    <td className="px-4 py-2 font-mono text-xs">{ref}</td>
-                                                    <td className="px-4 py-2 text-slate-600">{prod ? prod.name : 'Unknown Product'}</td>
-                                                    <td className="px-4 py-2 text-right font-bold">{formatCurrency(Number(price))}</td>
-                                                    <td className="px-4 py-2 text-right">
-                                                        <button type="button" onClick={() => removeCustomPrice(ref)} className="text-red-500 hover:text-red-700">
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    </td>
-                                                </tr>
+                                                <div key={idx} className={`grid grid-cols-12 gap-2 items-center px-1 py-1 rounded transition-colors ${row.product ? 'bg-green-50' : ''}`}>
+                                                    <div className="col-span-1 text-xs text-slate-400 font-mono text-center">{idx + 1}</div>
+                                                    <div className="col-span-7 relative">
+                                                        <input
+                                                            type="text"
+                                                            value={row.search}
+                                                            onChange={e => updateBatchRow(idx, 'search', e.target.value)}
+                                                            className={`w-full px-3 py-1.5 border rounded text-xs focus:ring-2 focus:ring-slate-900 outline-none transition-colors ${row.product ? 'border-green-300 bg-green-50 text-green-900' : 'border-slate-200'
+                                                                }`}
+                                                            placeholder={priceTab === 'flexibles' ? 'Buscar vinilo, lona, laminado...' : 'Buscar tinta...'}
+                                                        />
+                                                        {row.product && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => updateBatchRow(idx, 'search', '')}
+                                                                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500"
+                                                            >
+                                                                <X size={12} />
+                                                            </button>
+                                                        )}
+                                                        {filteredProducts.length > 0 && (
+                                                            <div className="absolute top-full left-0 right-0 bg-white border border-slate-200 shadow-xl rounded-lg max-h-36 overflow-y-auto z-50 mt-1">
+                                                                {filteredProducts.slice(0, 8).map(p => (
+                                                                    <div
+                                                                        key={p.id}
+                                                                        onClick={() => selectBatchProduct(idx, p)}
+                                                                        className="px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-xs border-b border-slate-50 last:border-0 flex items-center justify-between"
+                                                                    >
+                                                                        <div>
+                                                                            <span className="font-bold">{p.reference}</span>
+                                                                            <span className="text-slate-500 ml-1">- {p.name}</span>
+                                                                        </div>
+                                                                        {p.isFlexible && p.pricePerM2 !== undefined && (
+                                                                            <span className="text-[10px] text-slate-400 ml-2">{formatCurrency(p.pricePerM2)}/m²</span>
+                                                                        )}
+                                                                        {p.category === 'ink' && (
+                                                                            <span className="text-[10px] text-slate-400 ml-2">{formatCurrency(p.price)}/ud</span>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="col-span-4 flex items-center gap-1">
+                                                        <input
+                                                            type="number"
+                                                            step="0.01"
+                                                            value={row.price}
+                                                            onChange={e => updateBatchRow(idx, 'price', e.target.value)}
+                                                            className="w-full px-3 py-1.5 border border-slate-200 rounded text-xs focus:ring-2 focus:ring-slate-900 outline-none text-right"
+                                                            placeholder="0.00"
+                                                        />
+                                                    </div>
+                                                </div>
                                             );
                                         })}
-                                    </tbody>
-                                </table>
+                                    </div>
+
+                                    {/* Batch Add Button */}
+                                    <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
+                                        <span className="text-xs text-slate-500">
+                                            {batchRows.filter(r => r.product && r.price).length} material(es) listos para añadir
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={addBatchCustomPrices}
+                                            disabled={batchRows.filter(r => r.product && r.price).length === 0}
+                                            className="bg-slate-900 text-white px-5 py-2 rounded-lg font-bold text-sm disabled:bg-slate-300 flex items-center gap-2 transition-colors hover:bg-slate-800 active:scale-95"
+                                        >
+                                            <Plus size={16} /> Añadir Todos
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* List of already-added custom prices */}
+                                {Object.keys(newUser.customPrices).length > 0 && (
+                                    <div className="border-t border-slate-200">
+                                        <div className="bg-slate-50 px-4 py-2 border-b border-slate-200">
+                                            <span className="text-xs font-bold text-slate-700 uppercase">Precios Configurados ({Object.keys(newUser.customPrices).length})</span>
+                                        </div>
+                                        <table className="w-full text-sm text-left">
+                                            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500">
+                                                <tr>
+                                                    <th className="px-4 py-2">Ref.</th>
+                                                    <th className="px-4 py-2">Producto</th>
+                                                    <th className="px-4 py-2 text-center">Tipo</th>
+                                                    <th className="px-4 py-2 text-right">Precio Especial</th>
+                                                    <th className="px-4 py-2 text-right w-16"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {Object.entries(newUser.customPrices).map(([ref, price]) => {
+                                                    const prod = products.find(p => p.reference === ref);
+                                                    const isFlexible = prod?.isFlexible || false;
+                                                    const isInk = prod?.category === 'ink';
+                                                    return (
+                                                        <tr key={ref} className="hover:bg-slate-50 transition-colors">
+                                                            <td className="px-4 py-2 font-mono text-xs">{ref}</td>
+                                                            <td className="px-4 py-2 text-slate-600 text-xs">{prod ? prod.name : 'Producto desconocido'}</td>
+                                                            <td className="px-4 py-2 text-center">
+                                                                {isFlexible && (
+                                                                    <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                                                        <Layers size={10} /> Flexible
+                                                                    </span>
+                                                                )}
+                                                                {isInk && (
+                                                                    <span className="inline-flex items-center gap-1 bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                                                        <Droplets size={10} /> Tinta
+                                                                    </span>
+                                                                )}
+                                                                {!isFlexible && !isInk && (
+                                                                    <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                                                        Otro
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                            <td className="px-4 py-2 text-right font-bold text-sm">
+                                                                {formatCurrency(Number(price))}
+                                                                <span className="text-[10px] text-slate-400 ml-1">
+                                                                    {isFlexible ? '/m²' : '/ud'}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-4 py-2 text-right">
+                                                                <button type="button" onClick={() => removeCustomPrice(ref)} className="text-red-400 hover:text-red-600 transition-colors">
+                                                                    <Trash2 size={14} />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
