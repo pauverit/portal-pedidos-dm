@@ -755,12 +755,20 @@ export default function App() {
             <h1 className="text-3xl font-bold text-slate-900 mb-8">Panel de Administración</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div onClick={() => setCurrentView('admin_users')} className="bg-white p-8 rounded-xl shadow-lg border border-slate-200 cursor-pointer hover:border-slate-400 transition-all group">
+                <div onClick={() => setCurrentView('admin_client_list')} className="bg-white p-8 rounded-xl shadow-lg border border-slate-200 cursor-pointer hover:border-blue-300 hover:shadow-blue-100 transition-all group">
                     <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                         <UserPlus className="text-blue-600" size={24} />
                     </div>
                     <h3 className="text-xl font-bold text-slate-900 mb-2">Gestión de Clientes</h3>
-                    <p className="text-slate-500">Ver estado de clientes, gestionar accesos, pedidos, rappels y precios personalizados.</p>
+                    <p className="text-slate-500">Ver estado, pedidos, rappels e informe de todos los clientes.</p>
+                </div>
+
+                <div onClick={() => setCurrentView('admin_new_client')} className="bg-white p-8 rounded-xl shadow-lg border border-slate-200 cursor-pointer hover:border-green-300 hover:shadow-green-100 transition-all group">
+                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <UserPlus className="text-green-600" size={24} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">Alta de Cliente</h3>
+                    <p className="text-slate-500">Registrar un nuevo cliente, asignar comercial y configurar precios.</p>
                 </div>
 
 
@@ -1209,17 +1217,6 @@ export default function App() {
 
     const renderAdminUsersView = () => (
         <div className="p-6 md:p-10 max-w-4xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
-                    <UserPlus className="text-slate-400" /> {isEditing ? 'Editar Cliente' : 'Alta de Nuevo Cliente'}
-                </h1>
-                {isEditing && (
-                    <button onClick={handleCancelEdit} className="text-sm text-red-500 font-bold underline">
-                        Cancelar Edición
-                    </button>
-                )}
-            </div>
-
             <div className={isEditing ? "bg-yellow-50 rounded-xl shadow-lg border border-yellow-200 p-8 transition-colors" : "bg-white rounded-xl shadow-lg border border-slate-200 p-8 transition-colors"}>
                 <form onSubmit={handleAddUser} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="md:col-span-2">
@@ -1533,36 +1530,6 @@ export default function App() {
                         </button>
                     </div>
                 </form>
-            </div>
-
-            <div className="mt-8">
-                <h3 className="text-lg font-bold text-slate-900 mb-4">Clientes Registrados</h3>
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <table className="w-full text-sm text-left">
-                        <thead className="bg-slate-50 border-b border-slate-200 text-slate-500">
-                            <tr>
-                                <th className="px-6 py-3">Nombre</th>
-                                <th className="px-6 py-3">Usuario</th>
-                                <th className="px-6 py-3">Rappels</th>
-                                <th className="px-6 py-3 text-right">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {users.filter(u => u.role === 'client').map((user, idx) => (
-                                <tr key={idx} className="hover:bg-slate-50">
-                                    <td className="px-6 py-3 font-medium text-slate-900">{user.name}</td>
-                                    <td className="px-6 py-3 font-mono text-slate-500">{user.username}</td>
-                                    <td className="px-6 py-3 font-bold text-slate-900">{formatCurrency(user.rappelAccumulated)}</td>
-                                    <td className="px-6 py-3 text-right">
-                                        <button onClick={() => handleEditUser(user)} className="text-blue-600 hover:text-blue-800 font-bold text-xs bg-blue-50 px-3 py-1 rounded">
-                                            Editar
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
             </div>
         </div>
     );
@@ -2139,44 +2106,53 @@ export default function App() {
                     {currentView === 'admin_load' && currentUser.role === 'admin' && renderAdminLoadView()}
                     {currentView === 'admin_bulk_edit' && currentUser.role === 'admin' && renderAdminBulkEditView()}
                     {currentView === 'admin_products' && currentUser.role === 'admin' && renderAdminProductsView()}
-                    {currentView === 'admin_users' && currentUser.role === 'admin' && (
+                    {currentView === 'admin_dashboard' && currentUser.role === 'admin' && renderAdminDashboardView()}
+                    {currentView === 'admin_client_list' && currentUser.role === 'admin' && (
                         <div className="p-6 md:p-10 max-w-6xl mx-auto">
                             <div className="flex items-center gap-3 mb-6">
                                 <button onClick={() => setCurrentView('admin_dashboard')} className="text-slate-400 hover:text-slate-900 flex items-center gap-1 text-sm">
                                     <ArrowLeft size={16} /> Panel
                                 </button>
                                 <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
-                                    <UserPlus className="text-slate-400" />
-                                    Gestión de Clientes
+                                    <UserPlus className="text-slate-400" /> Gestión de Clientes
                                 </h1>
                             </div>
-                            <div className="mb-8">
-                                <AdminClientList
-                                    clients={users}
-                                    orders={orders}
-                                    onEditClient={handleEditUser}
-                                    onSaveClient={async (client) => {
-                                        if (!supabase) return;
-                                        await supabase.from('clients').update({
-                                            company_name: client.name,
-                                            email: client.email,
-                                            phone: client.phone,
-                                            delegation: client.delegation,
-                                            sales_rep: client.salesRep,
-                                            rappel_threshold: client.rappelThreshold,
-                                            hide_prices: client.hidePrices,
-                                            is_active: client.isActive,
-                                            must_change_password: client.mustChangePassword,
-                                        }).eq('id', client.id);
-                                        setUsers(prev => prev.map(u => u.id === client.id ? client : u));
-                                    }}
-                                    formatCurrency={formatCurrency}
-                                />
+                            <AdminClientList
+                                clients={users}
+                                orders={orders}
+                                onEditClient={handleEditUser}
+                                onSaveClient={async (client) => {
+                                    if (!supabase) return;
+                                    await supabase.from('clients').update({
+                                        company_name: client.name,
+                                        email: client.email,
+                                        phone: client.phone,
+                                        delegation: client.delegation,
+                                        sales_rep: client.salesRep,
+                                        rappel_threshold: client.rappelThreshold,
+                                        hide_prices: client.hidePrices,
+                                        is_active: client.isActive,
+                                        must_change_password: client.mustChangePassword,
+                                    }).eq('id', client.id);
+                                    setUsers(prev => prev.map(u => u.id === client.id ? client : u));
+                                }}
+                                formatCurrency={formatCurrency}
+                            />
+                        </div>
+                    )}
+                    {currentView === 'admin_new_client' && currentUser.role === 'admin' && (
+                        <div className="p-6 md:p-10 max-w-4xl mx-auto">
+                            <div className="flex items-center gap-3 mb-6">
+                                <button onClick={() => setCurrentView('admin_dashboard')} className="text-slate-400 hover:text-slate-900 flex items-center gap-1 text-sm">
+                                    <ArrowLeft size={16} /> Panel
+                                </button>
+                                <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+                                    <UserPlus className="text-slate-400" /> Alta de Nuevo Cliente
+                                </h1>
                             </div>
                             {renderAdminUsersView()}
                         </div>
                     )}
-                    {currentView === 'admin_dashboard' && currentUser.role === 'admin' && renderAdminDashboardView()}
                 </main>
             </div>
 
