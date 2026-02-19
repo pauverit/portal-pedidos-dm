@@ -19,6 +19,14 @@ export interface Product {
   brand?: string;
   weight?: number; // Weight in kg
   description?: string; // Product description (for lona weight extraction, etc.)
+  // Configurable Product Fields
+  allowFinish?: boolean;
+  allowBacking?: boolean;
+  allowAdhesive?: boolean;
+  finish?: 'gloss' | 'matte'; // Brillo/Mate
+  backing?: 'white' | 'gray' | 'black'; // Blanca/Gris/Negra
+  adhesive?: 'permanent' | 'removable'; // Permanente/Removible
+  materialType?: 'monomeric' | 'polymeric' | 'cast' | 'frontlit' | 'backlit' | 'mesh' | 'blockout';
 }
 
 export interface CartItem extends Product {

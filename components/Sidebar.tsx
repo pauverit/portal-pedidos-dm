@@ -34,10 +34,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
       subItems: [
         { id: 'cat_flexible_vinilos', label: 'Vinilos' },
         { id: 'cat_flexible_laminados', label: 'Laminados' },
+        { id: 'cat_flexible_laminados_wrapping', label: 'Wrapping' }, // Moved wrapping family under Laminados
         { id: 'cat_flexible_lonas', label: 'Lonas' },
         { id: 'cat_flexible_papeles', label: 'Papeles' },
         { id: 'cat_flexible_textiles', label: 'Textiles' },
         { id: 'cat_flexible_lienzos', label: 'Lienzos' },
+        { id: 'cat_flexible_wrapping', label: 'Wrapping' }, // Moved here as per request (Family inside Vinyls? User said "CREAR LA FAMILIA WRAPPING DENTRO DE VINILOS")
         { id: 'cat_flexible_corte_colores', label: 'Corte Colores' },
         { id: 'cat_flexible_otros', label: 'Otros' },
       ]

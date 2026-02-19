@@ -3,7 +3,9 @@ import { supabase } from './lib/supabase';
 import emailjs from '@emailjs/browser';
 import { Sidebar } from './components/Sidebar';
 import { AdminBulkLoad } from './components/AdminBulkLoad';
+import { ProductRow } from './components/ProductRow'; // Import ProductRow
 import { AdminBulkEdit } from './components/AdminBulkEdit';
+import { CrossSellModal } from './components/CrossSellModal';
 import { INITIAL_PRODUCTS, SALES_REPS, SALES_REPS_PHONES, DEFAULT_USERS, SALES_REPS_EMAILS } from './constants';
 import { Product, CartItem, User, Order } from './types';
 import {
@@ -143,6 +145,11 @@ export default function App() {
     const [shippingMethod, setShippingMethod] = useState<'agency' | 'own'>('own');
     const [observations, setObservations] = useState('');
     const [loginError, setLoginError] = useState('');
+
+    // Cross-sell Modal State
+    const [showCrossSellModal, setShowCrossSellModal] = useState(false);
+    const [crossMainProduct, setCrossMainProduct] = useState<Product | null>(null);
+    const [crossRecommendedProduct, setCrossRecommendedProduct] = useState<Product | null>(null);
 
     // Login Form
     const [username, setUsername] = useState('');
@@ -343,9 +350,28 @@ export default function App() {
     }
 
     // --- CART LOGIC ---
-    const addToCart = (product: Product, quantity = 1) => {
+    const addToCart = (product: Product, quantity = 1, options?: any) => {
         setCart(prev => {
-            const effectiveProduct = getEffectiveProduct(product, currentUser);
+            let effectiveProduct = getEffectiveProduct(product, currentUser);
+
+            // Merge options if present
+            if (options) {
+                effectiveProduct = { ...effectiveProduct, ...options };
+                // Generate unique ID based on options
+                const variantSuffix = Object.values(options).join('-');
+                effectiveProduct.id = `${effectiveProduct.id}-${variantSuffix}`;
+
+                // Append options to name for visibility
+                const attributes = [];
+                if (options.width) attributes.push(`${options.width}m`);
+                if (options.finish) attributes.push(options.finish === 'gloss' ? 'Brillo' : 'Mate');
+                if (options.backing) attributes.push(options.backing === 'black' ? 'Trasera Negra' : options.backing === 'gray' ? 'Trasera Gris' : 'Trasera Blanca');
+                if (options.adhesive) attributes.push(options.adhesive === 'permanent' ? 'Permanente' : 'Removible');
+
+                if (attributes.length > 0) {
+                    effectiveProduct.name = `${effectiveProduct.name} [${attributes.join(', ')}]`;
+                }
+            }
 
             const existing = prev.find(item => item.id === effectiveProduct.id);
             const calculatedPrice = effectiveProduct.isFlexible
@@ -354,15 +380,41 @@ export default function App() {
 
             if (existing) {
                 return prev.map(item =>
-                    item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
+                    item.id === effectiveProduct.id ? { ...item, quantity: item.quantity + quantity } : item
                 );
             }
             return [...prev, {
-                ...product,
+                ...effectiveProduct,
                 quantity,
                 calculatedPrice
             }];
         });
+
+
+        // Trigger Cross-sell if a Vinyl was added
+        let checkProduct = getEffectiveProduct(product, currentUser);
+        if (options) {
+            checkProduct = { ...checkProduct, ...options };
+        }
+
+        if (checkProduct.category === 'flexible' &&
+            (checkProduct.subcategory?.includes('vinil') || checkProduct.name.toLowerCase().includes('vinil')) &&
+            !checkProduct.name.includes('Oferta Pack')) {
+
+            // Find matching laminate
+            const laminate = products.find(p =>
+                p.category === 'flexible' &&
+                (p.subcategory?.includes('laminad') || p.name.toLowerCase().includes('laminad')) &&
+                p.width === checkProduct.width &&
+                (checkProduct.brand ? p.brand === checkProduct.brand : true)
+            );
+
+            if (laminate) {
+                setCrossMainProduct(checkProduct);
+                setCrossRecommendedProduct(laminate);
+                setShowCrossSellModal(true);
+            }
+        }
     };
 
     const updateQuantity = (id: string, delta: number) => {
@@ -1119,7 +1171,7 @@ export default function App() {
     );
 
     const renderAdminLoadView = () => (
-        <AdminBulkLoad onSave={handleBulkSave} />
+        <AdminBulkLoad onSave={handleBulkSave} currentProducts={products} />
     );
 
     const renderAdminBulkEditView = () => (
@@ -1257,8 +1309,8 @@ export default function App() {
                                         type="button"
                                         onClick={() => { setPriceTab('flexibles'); setBatchRows(Array(10).fill(null).map(() => ({ search: '', product: null, price: '' }))); }}
                                         className={`flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${priceTab === 'flexibles'
-                                                ? 'bg-white text-slate-900 border-b-2 border-slate-900'
-                                                : 'bg-slate-50 text-slate-500 hover:text-slate-700'
+                                            ? 'bg-white text-slate-900 border-b-2 border-slate-900'
+                                            : 'bg-slate-50 text-slate-500 hover:text-slate-700'
                                             }`}
                                     >
                                         <Layers size={16} /> Flexibles
@@ -1268,8 +1320,8 @@ export default function App() {
                                         type="button"
                                         onClick={() => { setPriceTab('inks'); setBatchRows(Array(10).fill(null).map(() => ({ search: '', product: null, price: '' }))); }}
                                         className={`flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${priceTab === 'inks'
-                                                ? 'bg-white text-slate-900 border-b-2 border-slate-900'
-                                                : 'bg-slate-50 text-slate-500 hover:text-slate-700'
+                                            ? 'bg-white text-slate-900 border-b-2 border-slate-900'
+                                            : 'bg-slate-50 text-slate-500 hover:text-slate-700'
                                             }`}
                                     >
                                         <Droplets size={16} /> Tintas
@@ -1595,82 +1647,15 @@ export default function App() {
                             <tbody className="divide-y divide-slate-100">
                                 {filteredProducts.map(product => {
                                     const cartItem = cart.find(item => item.id === product.id);
-                                    const quantity = cartItem ? cartItem.quantity : 0;
-
                                     return (
-                                        <tr key={product.id} className="hover:bg-slate-50 transition-colors group">
-                                            <td className="px-4 py-2 align-middle">
-                                                <span className="font-mono text-xs text-slate-500 bg-slate-100 px-1 py-0.5 rounded">
-                                                    {product.reference}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-2 align-middle">
-                                                <div className="flex flex-col">
-                                                    <span className="font-bold text-slate-800 text-sm">{product.name}</span>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-xs text-slate-400">{product.brand || 'DM'}</span>
-                                                        {product.description && (
-                                                            <span className="text-xs text-slate-400 border-l border-slate-200 pl-2 italic truncate max-w-[250px]" title={product.description}>
-                                                                {product.description}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-2 align-middle text-xs text-slate-500">
-                                                <div className="flex flex-col">
-                                                    {product.isFlexible ? (
-                                                        <>
-                                                            <span>{product.width}m x {product.length}m</span>
-                                                            <span className="text-[10px] text-slate-400">
-                                                                ({currentUser?.hidePrices ? 'Consultar' : formatCurrency(product.pricePerM2!)}/m²)
-                                                            </span>
-                                                        </>
-                                                    ) : (
-                                                        <span>{product.category === 'ink' ? product.volume : product.unit}</span>
-                                                    )}
-                                                    {product.weight > 0 && (
-                                                        <span className="text-[10px] text-purple-600 font-medium">
-                                                            {product.weight.toFixed(2)} kg
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-2 align-middle text-right">
-                                                <span className="font-bold text-slate-900">
-                                                    {currentUser?.hidePrices ? 'Consultar' : formatCurrency(product.price)}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-2 align-middle">
-                                                <div className="flex items-center justify-center gap-1">
-                                                    {quantity === 0 ? (
-                                                        <button
-                                                            onClick={() => addToCart(product)}
-                                                            className="bg-slate-900 hover:bg-slate-800 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-sm transition-transform active:scale-95 opacity-0 group-hover:opacity-100"
-                                                            style={{ opacity: 1 }}
-                                                        >
-                                                            <Plus size={16} />
-                                                        </button>
-                                                    ) : (
-                                                        <div className="flex items-center bg-slate-900 rounded-full shadow-sm overflow-hidden h-8">
-                                                            <button
-                                                                onClick={() => updateQuantity(product.id, -1)}
-                                                                className="h-full px-2 flex items-center justify-center text-white hover:bg-slate-700"
-                                                            >
-                                                                <Minus size={12} />
-                                                            </button>
-                                                            <span className="text-white font-bold min-w-[20px] text-center text-xs">{quantity}</span>
-                                                            <button
-                                                                onClick={() => addToCart(product)}
-                                                                className="h-full px-2 flex items-center justify-center text-white hover:bg-slate-700"
-                                                            >
-                                                                <Plus size={12} />
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
+                                        <ProductRow
+                                            key={product.id}
+                                            product={product}
+                                            cartItem={cartItem}
+                                            onAddToCart={addToCart}
+                                            onUpdateQuantity={updateQuantity}
+                                            formatCurrency={formatCurrency}
+                                        />
                                     );
                                 })}
                             </tbody>
@@ -2120,6 +2105,17 @@ export default function App() {
                     </div>
                 </div>
             )}
+            <CrossSellModal
+                isOpen={showCrossSellModal}
+                onClose={() => setShowCrossSellModal(false)}
+                mainProduct={crossMainProduct}
+                recommendedProduct={crossRecommendedProduct}
+                onAddRecommendation={(product) => {
+                    addToCart(product, 1);
+                    setShowCrossSellModal(false);
+                }}
+                formatCurrency={formatCurrency}
+            />
         </div>
     );
 }
