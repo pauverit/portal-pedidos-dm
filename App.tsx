@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from './lib/supabase';
 import emailjs from '@emailjs/browser';
 import { Sidebar } from './components/Sidebar';
@@ -152,7 +152,8 @@ export default function App() {
     // Promo Modal State (vinilo + laminado pack)
     const [showPromoModal, setShowPromoModal] = useState(false);
     const [promoEntries, setPromoEntries] = useState<PromoVinylEntry[]>([]);
-    const [promoShownForView, setPromoShownForView] = useState<string>(''); // track which cart visit showed the modal
+    // Track which vinyl cart-item IDs have already triggered the promo (ref = no re-render)
+    const offeredVinylIds = useRef<Set<string>>(new Set());
 
     // Login Form
     const [username, setUsername] = useState('');
@@ -421,12 +422,14 @@ export default function App() {
 
     // --- PROMO LOGIC: detect vinyls in cart when entering cart view ---
     useEffect(() => {
-        if (currentView !== 'cart') return;
-        // Avoid showing twice for same cart visit
-        const cartKey = cart.map(i => i.id + i.quantity).join(',');
-        if (promoShownForView === cartKey) return;
+        if (currentView !== 'cart') {
+            // When the user leaves the cart, clear the offered set so that
+            // genuinely new items added later can trigger the modal again.
+            offeredVinylIds.current.clear();
+            return;
+        }
 
-        // 1. Find monomeric/polymeric vinyls in the cart
+        // 1. Find monomeric/polymeric vinyls in the cart that haven't been offered yet
         const vinylItems = cart.filter(item =>
             item.category === 'flexible' &&
             (
@@ -436,20 +439,21 @@ export default function App() {
             (
                 item.materialType === 'monomeric' ||
                 item.materialType === 'polymeric' ||
-                // fallback: if no materialType set but is in vinyl subcategory
                 (!item.materialType && (
                     item.subcategory?.toLowerCase().includes('vinil') ||
                     item.name.toLowerCase().includes('vinil')
                 ))
             ) &&
-            !item.name.includes('Oferta Pack')
+            !item.name.includes('Oferta Pack') &&
+            !item.name.includes('(Pack)') &&
+            !offeredVinylIds.current.has(item.id) // ← skip already-offered vinyls
         );
 
         if (vinylItems.length === 0) return;
 
-        // 2. For each vinyl, find matching laminates not already in cart
+        // 2. For each new vinyl, find matching laminates not already in cart
         const entries: PromoVinylEntry[] = [];
-        const cartIds = new Set(cart.map(i => i.id.split('-')[0]));
+        const cartBaseIds = new Set(cart.map(i => i.id.split('-pack-')[0]));
 
         for (const vinylItem of vinylItems) {
             const candidates = products.filter(p =>
@@ -460,18 +464,20 @@ export default function App() {
                 ) &&
                 p.width === vinylItem.width &&
                 (vinylItem.brand ? p.brand === vinylItem.brand : true) &&
-                !cartIds.has(p.id) // not already in cart
+                !cartBaseIds.has(p.id) // not already in cart
             );
 
             if (candidates.length > 0) {
                 entries.push({ vinylItem, candidates });
             }
+            // Always mark as offered regardless of whether a laminate was found,
+            // so we never re-trigger for the same vinyl item.
+            offeredVinylIds.current.add(vinylItem.id);
         }
 
         if (entries.length > 0) {
             setPromoEntries(entries);
             setShowPromoModal(true);
-            setPromoShownForView(cartKey);
         }
     }, [currentView, cart]);
 

@@ -109,12 +109,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
       roles: ['admin']
     },
     {
-      id: 'admin_users',
-      label: 'Alta Clientes',
-      icon: UserPlus,
-      roles: ['admin']
-    },
-    {
       id: 'client_orders',
       label: 'Mis Pedidos',
       icon: ShoppingBag, // Need to import ShoppingBag
