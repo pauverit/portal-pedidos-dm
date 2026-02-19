@@ -190,6 +190,11 @@ export const ProductRow: React.FC<ProductRowProps> = ({
                             Desglosable
                         </span>
                     )}
+                    {product.brand && (
+                        <span className="ml-2 inline-flex items-center gap-1 text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full mt-1">
+                            {product.brand}
+                        </span>
+                    )}
                 </td>
                 <td className="px-4 py-3 text-slate-600">
                     {product.width ? `${product.width}m` : product.unit}
