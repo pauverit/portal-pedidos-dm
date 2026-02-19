@@ -53,6 +53,8 @@ export interface User {
   // Pricing
   hidePrices?: boolean;
   customPrices?: Record<string, number>; // Map reference -> price
+  mustChangePassword?: boolean; // true = force password change on first login
+  isActive?: boolean; // true = client has completed first login and activation
 }
 
 export interface SalesRep {

@@ -6,6 +6,7 @@ import { AdminBulkLoad } from './components/AdminBulkLoad';
 import { ProductRow } from './components/ProductRow'; // Import ProductRow
 import { AdminBulkEdit } from './components/AdminBulkEdit';
 import { CrossSellModal } from './components/CrossSellModal';
+import { AdminClientList } from './components/AdminClientList';
 import { INITIAL_PRODUCTS, SALES_REPS, SALES_REPS_PHONES, DEFAULT_USERS, SALES_REPS_EMAILS } from './constants';
 import { Product, CartItem, User, Order } from './types';
 import {
@@ -112,7 +113,9 @@ export default function App() {
                         registrationDate: c.created_at,
                         hidePrices: c.hide_prices || false,
                         customPrices: c.custom_prices || {},
-                        rappelThreshold: Number(c.rappel_threshold) || 800
+                        rappelThreshold: Number(c.rappel_threshold) || 800,
+                        mustChangePassword: c.must_change_password ?? false,
+                        isActive: c.is_active ?? !c.must_change_password
                     }));
                     // Merge with default admin
                     setUsers([DEFAULT_USERS[0], ...mappedClients]);
@@ -157,6 +160,11 @@ export default function App() {
 
     // Mobile Menu State
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    // Change Password State (first login)
+    const [newPwd, setNewPwd] = useState('');
+    const [confirmPwd, setConfirmPwd] = useState('');
+    const [pwdError, setPwdError] = useState('');
 
     // Admin Bulk Load Logic
     const handleBulkSave = async (newProducts: Product[]) => {
@@ -295,10 +303,17 @@ export default function App() {
         const foundUser = users.find(u => u.username === username && u.password === password);
 
         if (foundUser) {
-            setCurrentUser(foundUser);
-            localStorage.setItem('dm_portal_current_user', JSON.stringify(foundUser));
-            setCurrentView(foundUser.role === 'admin' ? 'admin_dashboard' : 'dashboard');
-            setLoginError('');
+            if (foundUser.mustChangePassword) {
+                // Force password change before entering
+                setCurrentUser(foundUser);
+                setCurrentView('change_password');
+                setLoginError('');
+            } else {
+                setCurrentUser(foundUser);
+                localStorage.setItem('dm_portal_current_user', JSON.stringify(foundUser));
+                setCurrentView(foundUser.role === 'admin' ? 'admin_dashboard' : 'dashboard');
+                setLoginError('');
+            }
         } else {
             setLoginError('Credenciales incorrectas');
         }
@@ -745,7 +760,7 @@ export default function App() {
                         <UserPlus className="text-blue-600" size={24} />
                     </div>
                     <h3 className="text-xl font-bold text-slate-900 mb-2">Gestión de Clientes</h3>
-                    <p className="text-slate-500">Dar de alta nuevos clientes, asignar comerciales y configurar precios personalizados.</p>
+                    <p className="text-slate-500">Ver estado de clientes, gestionar accesos, pedidos, rappels y precios personalizados.</p>
                 </div>
 
 
@@ -921,7 +936,9 @@ export default function App() {
                 rappel_accumulated: 0,
                 rappel_threshold: newUser.rappelThreshold,
                 hide_prices: newUser.hidePrices,
-                custom_prices: newUser.customPrices
+                custom_prices: newUser.customPrices,
+                must_change_password: true,
+                is_active: false
             };
 
             const { data: client, error: clientError } = await supabase
@@ -948,7 +965,9 @@ export default function App() {
                 registrationDate: client.created_at,
                 hidePrices: client.hide_prices || false,
                 customPrices: client.custom_prices || {},
-                usedCoupons: []
+                usedCoupons: [],
+                mustChangePassword: true,
+                isActive: false
             };
 
             if (isEditing) {
@@ -2030,6 +2049,51 @@ export default function App() {
 
     if (currentView === 'login') return renderLoginView();
 
+    // Force password change screen
+    if (currentView === 'change_password' && currentUser) {
+        const handleSaveNewPassword = async () => {
+            if (!newPwd || newPwd.length < 4) { setPwdError('La contraseña debe tener al menos 4 caracteres.'); return; }
+            if (newPwd !== confirmPwd) { setPwdError('Las contraseñas no coinciden.'); return; }
+            if (!supabase) { setPwdError('Error de conexión.'); return; }
+            const { error } = await supabase.from('clients').update({ password: newPwd, must_change_password: false, is_active: true }).eq('id', currentUser.id);
+            if (error) { setPwdError('Error al guardar: ' + error.message); return; }
+            const updated = { ...currentUser, password: newPwd, mustChangePassword: false, isActive: true };
+            setCurrentUser(updated);
+            localStorage.setItem('dm_portal_current_user', JSON.stringify(updated));
+            setCurrentView(currentUser.role === 'admin' ? 'admin_dashboard' : 'dashboard');
+        };
+        return (
+            <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
+                <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border border-slate-200">
+                    <div className="text-center mb-6">
+                        <div className="w-14 h-14 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <Lock size={26} />
+                        </div>
+                        <h1 className="text-xl font-bold text-slate-900">Cambiar Contraseña</h1>
+                        <p className="text-slate-500 text-sm mt-1">Por seguridad debes establecer tu propia clave antes de continuar.</p>
+                    </div>
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Nueva Contraseña</label>
+                            <input type="password" value={newPwd} onChange={e => setNewPwd(e.target.value)}
+                                className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none" placeholder="••••••" />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Confirmar Contraseña</label>
+                            <input type="password" value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)}
+                                className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none" placeholder="••••••" />
+                        </div>
+                        {pwdError && <p className="text-red-500 text-sm">{pwdError}</p>}
+                        <button onClick={handleSaveNewPassword}
+                            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                            <Save size={18} /> Guardar y Entrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     if (!currentUser) {
         setCurrentView('login');
         return renderLoginView();
@@ -2074,9 +2138,45 @@ export default function App() {
                     {currentView === 'client_orders' && renderClientOrdersView()}
                     {currentView === 'admin_load' && currentUser.role === 'admin' && renderAdminLoadView()}
                     {currentView === 'admin_bulk_edit' && currentUser.role === 'admin' && renderAdminBulkEditView()}
-                    {currentView === 'admin_dashboard' && currentUser.role === 'admin' && renderAdminDashboardView()}
-                    {currentView === 'admin_users' && currentUser.role === 'admin' && renderAdminUsersView()}
                     {currentView === 'admin_products' && currentUser.role === 'admin' && renderAdminProductsView()}
+                    {currentView === 'admin_users' && currentUser.role === 'admin' && (
+                        <div className="p-6 md:p-10 max-w-6xl mx-auto">
+                            <div className="flex items-center gap-3 mb-6">
+                                <button onClick={() => setCurrentView('admin_dashboard')} className="text-slate-400 hover:text-slate-900 flex items-center gap-1 text-sm">
+                                    <ArrowLeft size={16} /> Panel
+                                </button>
+                                <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+                                    <UserPlus className="text-slate-400" />
+                                    Gestión de Clientes
+                                </h1>
+                            </div>
+                            <div className="mb-8">
+                                <AdminClientList
+                                    clients={users}
+                                    orders={orders}
+                                    onEditClient={handleEditUser}
+                                    onSaveClient={async (client) => {
+                                        if (!supabase) return;
+                                        await supabase.from('clients').update({
+                                            company_name: client.name,
+                                            email: client.email,
+                                            phone: client.phone,
+                                            delegation: client.delegation,
+                                            sales_rep: client.salesRep,
+                                            rappel_threshold: client.rappelThreshold,
+                                            hide_prices: client.hidePrices,
+                                            is_active: client.isActive,
+                                            must_change_password: client.mustChangePassword,
+                                        }).eq('id', client.id);
+                                        setUsers(prev => prev.map(u => u.id === client.id ? client : u));
+                                    }}
+                                    formatCurrency={formatCurrency}
+                                />
+                            </div>
+                            {renderAdminUsersView()}
+                        </div>
+                    )}
+                    {currentView === 'admin_dashboard' && currentUser.role === 'admin' && renderAdminDashboardView()}
                 </main>
             </div>
 
