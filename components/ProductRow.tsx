@@ -41,16 +41,31 @@ export const ProductRow: React.FC<ProductRowProps> = ({
     }, [product, finish]); // Re-run if relevant
 
     const handleAdd = () => {
-        const options = isConfigurable ? {
-            width,
-            finish,
-            backing,
-            adhesive
-        } : undefined;
+        let options: any = undefined;
 
-        // Construct a composite ID or Name to distinguish in cart?
-        // For now, we pass options. App.tsx's addToCart might need to handle this.
-        // If standard product, just add.
+        if (isConfigurable) {
+            options = {};
+
+            // Width
+            if (product.category === 'flexible' || product.subcategory?.includes('lonas')) {
+                options.width = width;
+            }
+
+            // Finish
+            if (product.allowFinish || product.subcategory?.includes('vinilos') || product.subcategory?.includes('laminados')) {
+                options.finish = finish;
+            }
+
+            // Backing
+            if (product.allowBacking || (product.subcategory?.includes('vinilos') && !product.subcategory?.includes('laminados'))) {
+                options.backing = backing;
+            }
+
+            // Adhesive
+            if (product.allowAdhesive || (product.materialType === 'monomeric' && product.subcategory?.includes('vinilos'))) {
+                options.adhesive = adhesive;
+            }
+        }
 
         onAddToCart(product, quantity, options);
         setQuantity(1);
@@ -225,8 +240,8 @@ export const ProductRow: React.FC<ProductRowProps> = ({
                                     onClick={handleAdd}
                                     disabled={product.price === 0}
                                     className={`flex-1 flex items-center justify-center gap-2 py-1.5 px-3 rounded-lg text-white text-sm font-medium transition-colors ${product.price === 0
-                                            ? 'bg-slate-300 cursor-not-allowed'
-                                            : 'bg-slate-900 hover:bg-slate-800 shadow-sm hover:shadow'
+                                        ? 'bg-slate-300 cursor-not-allowed'
+                                        : 'bg-slate-900 hover:bg-slate-800 shadow-sm hover:shadow'
                                         }`}
                                 >
                                     <ShoppingCart size={16} />
