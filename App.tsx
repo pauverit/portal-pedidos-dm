@@ -5,7 +5,7 @@ import { Sidebar } from './components/Sidebar';
 import { AdminBulkLoad } from './components/AdminBulkLoad';
 import { ProductRow } from './components/ProductRow'; // Import ProductRow
 import { AdminBulkEdit } from './components/AdminBulkEdit';
-import { CrossSellModal } from './components/CrossSellModal';
+import { CrossSellModal, PromoVinylEntry, PromoSelection } from './components/CrossSellModal';
 import { AdminClientList } from './components/AdminClientList';
 import { INITIAL_PRODUCTS, SALES_REPS, SALES_REPS_PHONES, DEFAULT_USERS, SALES_REPS_EMAILS } from './constants';
 import { Product, CartItem, User, Order } from './types';
@@ -149,10 +149,10 @@ export default function App() {
     const [observations, setObservations] = useState('');
     const [loginError, setLoginError] = useState('');
 
-    // Cross-sell Modal State
-    const [showCrossSellModal, setShowCrossSellModal] = useState(false);
-    const [crossMainProduct, setCrossMainProduct] = useState<Product | null>(null);
-    const [crossRecommendedProducts, setCrossRecommendedProducts] = useState<Product[]>([]);
+    // Promo Modal State (vinilo + laminado pack)
+    const [showPromoModal, setShowPromoModal] = useState(false);
+    const [promoEntries, setPromoEntries] = useState<PromoVinylEntry[]>([]);
+    const [promoShownForView, setPromoShownForView] = useState<string>(''); // track which cart visit showed the modal
 
     // Login Form
     const [username, setUsername] = useState('');
@@ -406,36 +406,6 @@ export default function App() {
         });
 
 
-        // Trigger Cross-sell if a Vinyl was added
-        let checkProduct = getEffectiveProduct(product, currentUser);
-        if (options) {
-            checkProduct = { ...checkProduct, ...options };
-        }
-
-        if (checkProduct.category === 'flexible' &&
-            (checkProduct.subcategory?.includes('vinil') || checkProduct.name.toLowerCase().includes('vinil')) &&
-            !checkProduct.name.includes('Oferta Pack')) {
-
-            // Find matching laminates (same width, brand, and material type roughly)
-            // We want to offer a list of candidates.
-            // Match: Flexible, Laminate subcategory/name, Same Width, Same Brand (if exists)
-            const laminates = products.filter(p =>
-                p.category === 'flexible' &&
-                (p.subcategory?.includes('laminad') || p.name.toLowerCase().includes('laminad')) &&
-                p.width === checkProduct.width &&
-                (checkProduct.brand ? p.brand === checkProduct.brand : true) &&
-                // Optionally check material type compatibility (e.g. Monomeric with Monomeric)
-                (checkProduct.materialType ?
-                    (p.materialType === checkProduct.materialType || !p.materialType)
-                    : true)
-            );
-
-            if (laminates.length > 0) {
-                setCrossMainProduct(checkProduct);
-                setCrossRecommendedProducts(laminates);
-                setShowCrossSellModal(true);
-            }
-        }
     };
 
     const updateQuantity = (id: string, delta: number) => {
@@ -448,6 +418,112 @@ export default function App() {
     };
 
     const clearCart = () => setCart([]);
+
+    // --- PROMO LOGIC: detect vinyls in cart when entering cart view ---
+    useEffect(() => {
+        if (currentView !== 'cart') return;
+        // Avoid showing twice for same cart visit
+        const cartKey = cart.map(i => i.id + i.quantity).join(',');
+        if (promoShownForView === cartKey) return;
+
+        // 1. Find monomeric/polymeric vinyls in the cart
+        const vinylItems = cart.filter(item =>
+            item.category === 'flexible' &&
+            (
+                item.subcategory?.toLowerCase().includes('vinil') ||
+                item.name.toLowerCase().includes('vinil')
+            ) &&
+            (
+                item.materialType === 'monomeric' ||
+                item.materialType === 'polymeric' ||
+                // fallback: if no materialType set but is in vinyl subcategory
+                (!item.materialType && (
+                    item.subcategory?.toLowerCase().includes('vinil') ||
+                    item.name.toLowerCase().includes('vinil')
+                ))
+            ) &&
+            !item.name.includes('Oferta Pack')
+        );
+
+        if (vinylItems.length === 0) return;
+
+        // 2. For each vinyl, find matching laminates not already in cart
+        const entries: PromoVinylEntry[] = [];
+        const cartIds = new Set(cart.map(i => i.id.split('-')[0]));
+
+        for (const vinylItem of vinylItems) {
+            const candidates = products.filter(p =>
+                p.category === 'flexible' &&
+                (
+                    p.subcategory?.toLowerCase().includes('laminad') ||
+                    p.name.toLowerCase().includes('laminad')
+                ) &&
+                p.width === vinylItem.width &&
+                (vinylItem.brand ? p.brand === vinylItem.brand : true) &&
+                !cartIds.has(p.id) // not already in cart
+            );
+
+            if (candidates.length > 0) {
+                entries.push({ vinylItem, candidates });
+            }
+        }
+
+        if (entries.length > 0) {
+            setPromoEntries(entries);
+            setShowPromoModal(true);
+            setPromoShownForView(cartKey);
+        }
+    }, [currentView, cart]);
+
+    const PROMO_DISCOUNT_M2 = 0.10;
+
+    const handleAcceptPromo = (selections: PromoSelection[]) => {
+        setCart(prev => {
+            let next = [...prev];
+
+            for (const sel of selections) {
+                // A) Apply -0.10/m² discount to the vinyl already in the cart
+                next = next.map(item => {
+                    if (item.id !== sel.vinylCartItemId) return item;
+                    const newPricePerM2 = Math.max(0, (item.pricePerM2 ?? 0) - PROMO_DISCOUNT_M2);
+                    const newCalcPrice = (item.width ?? 0) * (item.length ?? 0) * newPricePerM2;
+                    return {
+                        ...item,
+                        pricePerM2: newPricePerM2,
+                        calculatedPrice: newCalcPrice,
+                        name: item.name.includes('(Pack)') ? item.name : `${item.name} (Pack)`,
+                    };
+                });
+
+                // B) Add the laminate with -0.10/m² discount and chosen finish
+                const laminate = sel.laminate;
+                const finishLabel = sel.finish === 'gloss' ? 'Brillo' : 'Mate';
+                const discountedPricePerM2 = Math.max(0, (laminate.pricePerM2 ?? 0) - PROMO_DISCOUNT_M2);
+                const width = laminate.width ?? 0;
+                const length = laminate.length ?? 0;
+                const calcPrice = width * length * discountedPricePerM2;
+                const variantId = `${laminate.id}-pack-${sel.finish}`;
+
+                // Don't add if already present
+                if (next.find(i => i.id === variantId)) continue;
+
+                const laminateCartItem = {
+                    ...laminate,
+                    id: variantId,
+                    finish: sel.finish,
+                    pricePerM2: discountedPricePerM2,
+                    calculatedPrice: calcPrice,
+                    quantity: 1,
+                    name: `${laminate.name} [${finishLabel}, Pack]`,
+                };
+                next.push(laminateCartItem);
+            }
+
+            return next;
+        });
+
+        setShowPromoModal(false);
+    };
 
     // --- CHECKOUT CALCULATIONS ---
     const [couponCode, setCouponCode] = useState('');
@@ -2188,14 +2264,10 @@ export default function App() {
                 </div>
             )}
             <CrossSellModal
-                isOpen={showCrossSellModal}
-                onClose={() => setShowCrossSellModal(false)}
-                mainProduct={crossMainProduct}
-                recommendedProducts={crossRecommendedProducts}
-                onAddRecommendation={(product, options) => {
-                    addToCart(product, 1, options);
-                    setShowCrossSellModal(false);
-                }}
+                isOpen={showPromoModal}
+                onClose={() => setShowPromoModal(false)}
+                promoEntries={promoEntries}
+                onAcceptPromo={handleAcceptPromo}
                 formatCurrency={formatCurrency}
             />
         </div>
