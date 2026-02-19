@@ -73,34 +73,38 @@ export const ProductRow: React.FC<ProductRowProps> = ({
     };
 
     const renderConfigurator = () => (
-        <div className="p-4 bg-slate-50 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex flex-wrap items-end gap-x-5 gap-y-2">
             {/* Width Selection */}
             {(product.category === 'flexible' || product.subcategory?.includes('lonas')) && (
                 <div>
                     <label className="block text-xs font-medium text-slate-700 mb-1">Medida</label>
-                    <select
-                        value={width}
-                        onChange={(e) => setWidth(parseFloat(e.target.value))}
-                        className="w-full p-2 border border-slate-300 rounded text-sm"
-                    >
-                        {/* Dynamic widths based on type */}
+                    <div className="flex flex-wrap gap-2">
                         {product.subcategory?.includes('lonas') ? (
                             <>
-                                <option value={1.05}>1.05m</option>
-                                <option value={1.37}>1.37m</option>
-                                <option value={1.60}>1.60m</option>
-                                <option value={2.20}>2.20m</option>
-                                <option value={2.50}>2.50m</option>
-                                <option value={3.20}>3.20m</option>
+                                {[1.05, 1.37, 1.60, 2.20, 2.50, 3.20].map((w) => (
+                                    <button
+                                        key={w}
+                                        onClick={() => setWidth(w)}
+                                        className={`px-2.5 py-1 text-xs rounded-full border font-medium transition-all ${width === w ? 'bg-green-600 text-white border-green-600' : 'bg-white text-slate-600 border-slate-300 hover:border-slate-500'}`}
+                                    >
+                                        {w}m
+                                    </button>
+                                ))}
                             </>
                         ) : (
                             <>
-                                <option value={1.05}>1.05m</option>
-                                <option value={1.37}>1.37m</option>
-                                <option value={1.52}>1.52m</option>
+                                {[1.05, 1.37, 1.52].map((w) => (
+                                    <button
+                                        key={w}
+                                        onClick={() => setWidth(w)}
+                                        className={`px-2.5 py-1 text-xs rounded-full border font-medium transition-all ${width === w ? 'bg-green-600 text-white border-green-600' : 'bg-white text-slate-600 border-slate-300 hover:border-slate-500'}`}
+                                    >
+                                        {w}m
+                                    </button>
+                                ))}
                             </>
                         )}
-                    </select>
+                    </div>
                 </div>
             )}
 
@@ -111,13 +115,13 @@ export const ProductRow: React.FC<ProductRowProps> = ({
                     <div className="flex gap-2">
                         <button
                             onClick={() => setFinish('gloss')}
-                            className={`flex-1 py-2 px-3 text-sm rounded border ${finish === 'gloss' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-300'}`}
+                            className={`px-2.5 py-1 text-xs rounded-full border font-medium transition-all ${finish === 'gloss' ? 'bg-green-600 text-white border-green-600' : 'bg-white text-slate-600 border-slate-300 hover:border-slate-500'}`}
                         >
                             Brillo
                         </button>
                         <button
                             onClick={() => setFinish('matte')}
-                            className={`flex-1 py-2 px-3 text-sm rounded border ${finish === 'matte' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-300'}`}
+                            className={`px-2.5 py-1 text-xs rounded-full border font-medium transition-all ${finish === 'matte' ? 'bg-green-600 text-white border-green-600' : 'bg-white text-slate-600 border-slate-300 hover:border-slate-500'}`}
                         >
                             Mate
                         </button>
@@ -135,13 +139,13 @@ export const ProductRow: React.FC<ProductRowProps> = ({
                         <div className="flex gap-2">
                             <button
                                 onClick={() => setBacking('white')}
-                                className={`flex-1 py-2 px-3 text-sm rounded border ${backing === 'white' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-300'}`}
+                                className={`px-2.5 py-1 text-xs rounded-full border font-medium transition-all ${backing === 'white' ? 'bg-green-600 text-white border-green-600' : 'bg-white text-slate-600 border-slate-300 hover:border-slate-500'}`}
                             >
                                 Blanca
                             </button>
                             <button
                                 onClick={() => setBacking('gray')}
-                                className={`flex-1 py-2 px-3 text-sm rounded border ${backing === 'gray' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-300'}`}
+                                className={`px-2.5 py-1 text-xs rounded-full border font-medium transition-all ${backing === 'gray' ? 'bg-green-600 text-white border-green-600' : 'bg-white text-slate-600 border-slate-300 hover:border-slate-500'}`}
                             >
                                 Gris
                             </button>
@@ -154,26 +158,30 @@ export const ProductRow: React.FC<ProductRowProps> = ({
             {(product.allowAdhesive || (product.materialType === 'monomeric' && product.subcategory?.includes('vinilos'))) && (
                 <div>
                     <label className="block text-xs font-medium text-slate-700 mb-1">Adhesivo</label>
-                    <select
-                        value={adhesive}
-                        onChange={(e) => setAdhesive(e.target.value as any)}
-                        className="w-full p-2 border border-slate-300 rounded text-sm"
-                    >
-                        <option value="permanent">Permanente</option>
-                        <option value="removable">Removible</option>
-                    </select>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setAdhesive('permanent')}
+                            className={`px-2.5 py-1 text-xs rounded-full border font-medium transition-all ${adhesive === 'permanent' ? 'bg-green-600 text-white border-green-600' : 'bg-white text-slate-600 border-slate-300 hover:border-slate-500'}`}
+                        >
+                            Permanente
+                        </button>
+                        <button
+                            onClick={() => setAdhesive('removable')}
+                            className={`px-2.5 py-1 text-xs rounded-full border font-medium transition-all ${adhesive === 'removable' ? 'bg-green-600 text-white border-green-600' : 'bg-white text-slate-600 border-slate-300 hover:border-slate-500'}`}
+                        >
+                            Removible
+                        </button>
+                    </div>
                 </div>
             )}
 
-            <div className="md:col-span-2 pt-2">
-                <button
-                    onClick={handleAdd}
-                    className="w-full bg-slate-900 text-white py-2 rounded-lg font-medium hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
-                >
-                    <ShoppingCart size={18} />
-                    Añadir Configuración al Pedido
-                </button>
-            </div>
+            <button
+                onClick={handleAdd}
+                className="ml-auto bg-slate-900 text-white py-1.5 px-4 rounded-lg text-xs font-bold hover:bg-slate-800 transition-colors flex items-center gap-1.5 self-end"
+            >
+                <ShoppingCart size={13} />
+                Añadir
+            </button>
         </div>
     );
 
