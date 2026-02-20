@@ -141,6 +141,7 @@ export default function App() {
     const [showLogoutModal, setShowLogoutModal] = useState(false);
 
     // Checkout States
+    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [promoCode, setPromoCode] = useState('');
     const [activeRep, setActiveRep] = useState<string | null>(null);
     const [activeRepPhone, setActiveRepPhone] = useState<string>('');
@@ -295,6 +296,46 @@ export default function App() {
         } catch (error: any) {
             console.error('Error updating products:', error);
             alert(`Error al actualizar productos: ${error.message}`);
+        }
+    };
+
+    const handleUpdateProduct = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingProduct || !supabase) return;
+
+        try {
+            // For flexible products, recalculate total price from pricePerM2 * width * length
+            // though the modal should handle this live, we ensure correctness here
+            let updatedProduct = { ...editingProduct };
+            if (updatedProduct.isFlexible && updatedProduct.pricePerM2 && updatedProduct.width && updatedProduct.length) {
+                updatedProduct.price = updatedProduct.pricePerM2 * updatedProduct.width * updatedProduct.length;
+            }
+
+            const { error } = await supabase
+                .from('products')
+                .update({
+                    name: updatedProduct.name,
+                    price: updatedProduct.price,
+                    price_per_m2: updatedProduct.pricePerM2 ?? null,
+                    width: updatedProduct.width ?? null,
+                    length: updatedProduct.length ?? null,
+                    brand: updatedProduct.brand ?? null,
+                    weight: updatedProduct.weight ?? null,
+                    in_stock: updatedProduct.inStock ?? true,
+                    subcategory: updatedProduct.subcategory ?? null,
+                    unit: updatedProduct.unit || 'ud',
+                    description: updatedProduct.description ?? null,
+                })
+                .eq('id', updatedProduct.id);
+
+            if (error) throw error;
+
+            setProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
+            setEditingProduct(null);
+            alert('Producto actualizado correctamente');
+        } catch (error: any) {
+            console.error('Error updating product:', error);
+            alert('Error al actualizar: ' + error.message);
         }
     };
 
@@ -874,32 +915,7 @@ export default function App() {
         </div>
     );
 
-    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
-    const handleUpdateProduct = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!editingProduct || !supabase) return;
-
-        try {
-            const { error } = await supabase
-                .from('products')
-                .update({
-                    name: editingProduct.name,
-                    price: editingProduct.price,
-                    // Add other fields if editable
-                })
-                .eq('id', editingProduct.id);
-
-            if (error) throw error;
-
-            setProducts(prev => prev.map(p => p.id === editingProduct.id ? editingProduct : p));
-            setEditingProduct(null);
-            alert('Producto actualizado correctamente');
-        } catch (error: any) {
-            console.error('Error updating product:', error);
-            alert('Error al actualizar: ' + error.message);
-        }
-    };
 
     const renderAdminProductsView = () => (
         <div className="p-6 md:p-10 max-w-7xl mx-auto pb-32">
@@ -1716,6 +1732,7 @@ export default function App() {
                                     <th className="px-4 py-3 w-32">Formato</th>
                                     <th className="px-4 py-3 w-28 text-right">Precio</th>
                                     <th className="px-4 py-3 w-32 text-center">Cantidad</th>
+                                    {currentUser?.role === 'admin' && <th className="px-4 py-3 w-20 text-center">Admin</th>}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -1729,6 +1746,8 @@ export default function App() {
                                             onAddToCart={addToCart}
                                             onUpdateQuantity={updateQuantity}
                                             formatCurrency={formatCurrency}
+                                            isAdmin={currentUser?.role === 'admin'}
+                                            onEdit={(p) => setEditingProduct(p)}
                                         />
                                     );
                                 })}
@@ -1746,7 +1765,7 @@ export default function App() {
     };
 
     const renderCheckoutView = () => (
-        <div className="p-4 md:p-8 max-w-3xl mx-auto w-full pb-32">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto w-full pb-32">
             <button onClick={() => setCurrentView('cat_flexible_vinilos')} className="mb-6 text-slate-500 hover:text-slate-900 flex items-center gap-1 text-sm"><ArrowLeft size={16} /> Seguir comprando</button>
 
             <h1 className="text-2xl font-bold text-slate-900 mb-6">Finalizar Pedido</h1>
@@ -1772,7 +1791,11 @@ export default function App() {
                         <div key={item.id} className="bg-white rounded-lg p-3 flex items-center justify-between border border-slate-100">
                             <div className="flex-1">
                                 <p className="text-sm font-bold text-slate-900">{item.name}</p>
-                                <p className="text-xs text-slate-500 font-mono">{item.reference}</p>
+                                <p className="text-xs text-slate-500 font-mono flex items-center gap-2">
+                                    {item.reference}
+                                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-slate-200" />
+                                    <span className="text-slate-400 font-normal">{(item.weight || 0) * item.quantity} kg</span>
+                                </p>
                             </div>
                             <div className="flex items-center gap-4">
                                 <div className="flex items-center bg-slate-100 rounded-full px-3 py-1">
