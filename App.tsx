@@ -7,12 +7,13 @@ import { ProductRow } from './components/ProductRow'; // Import ProductRow
 import { AdminBulkEdit } from './components/AdminBulkEdit';
 import { CrossSellModal, PromoVinylEntry, PromoSelection } from './components/CrossSellModal';
 import { AdminClientList } from './components/AdminClientList';
+import { AdminCoupons, Coupon } from './components/AdminCoupons';
 import { INITIAL_PRODUCTS, SALES_REPS, SALES_REPS_PHONES, DEFAULT_USERS, SALES_REPS_EMAILS } from './constants';
 import { Product, CartItem, User, Order } from './types';
 import {
     Search, Filter, ShoppingCart, Plus, Minus, Check, ArrowRight,
     MapPin, Printer, Download, CreditCard, ChevronRight, ChevronDown, ChevronUp, AlertCircle, Trash2, ArrowLeft,
-    CheckCircle, Settings, Save, Lock, Truck, Phone, Mail, FileText, UserPlus, Menu, ShoppingBag, LayoutDashboard, LogOut, X, Droplets, Layers
+    CheckCircle, Settings, Save, Lock, Truck, Phone, Mail, FileText, UserPlus, Menu, ShoppingBag, LayoutDashboard, LogOut, X, Droplets, Layers, ArrowUpDown, Ticket
 } from 'lucide-react';
 
 const formatCurrency = (value: number) =>
@@ -136,6 +137,7 @@ export default function App() {
         return [];
     });
     const [searchQuery, setSearchQuery] = useState('');
+    const [sortOrder, setSortOrder] = useState<'default' | 'price_asc' | 'price_desc'>('default');
 
     // Logout Modal State
     const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -519,7 +521,7 @@ export default function App() {
             setPromoEntries(entries);
             setShowPromoModal(true);
         }
-    }, [currentView, cart]);
+    }, [currentView, cart, products]);
 
     const PROMO_DISCOUNT_M2 = 0.10;
 
@@ -618,17 +620,15 @@ export default function App() {
     const applyCoupon = () => {
         const code = couponCode.toUpperCase().trim();
 
+        if (currentUser?.usedCoupons?.includes(code)) {
+            alert('Este cupón ya ha sido usado.');
+            return;
+        }
+
         if (code === 'PEDIDOINICIAL') {
-            // Logic: 5% discount
-            // TODO: Check if user already used it (mocked for now)
-            if (currentUser?.usedCoupons?.includes('PEDIDOINICIAL')) {
-                alert('Este cupón ya ha sido usado.');
-                return;
-            }
             setAppliedCoupon({ code, discount: cartTotal * 0.05 });
             alert('Cupón de Bienvenida aplicado: 5% Dto.');
         } else if (code === 'RAPPEL3') {
-            // Logic: 3% discount if total > 900
             if (cartTotal > 900) {
                 setAppliedCoupon({ code, discount: cartTotal * 0.03 });
                 alert('Cupón RAPPEL3 aplicado: 3% Dto adicional.');
@@ -637,8 +637,29 @@ export default function App() {
                 setAppliedCoupon(null);
             }
         } else {
-            alert('Cupón no válido');
-            setAppliedCoupon(null);
+            const dynamicCoupon = promoCoupons.find(c => c.code === code);
+            if (dynamicCoupon) {
+                if (!dynamicCoupon.isActive) {
+                    alert('Este cupón ya no está activo.');
+                    return;
+                }
+                if (dynamicCoupon.usesCount >= dynamicCoupon.maxUses) {
+                    alert('Este cupón ha alcanzado el máximo de usos permitidos.');
+                    return;
+                }
+                if (dynamicCoupon.minOrderAmount > 0 && cartTotal < dynamicCoupon.minOrderAmount) {
+                    alert(`Este cupón requiere un pedido mínimo de ${dynamicCoupon.minOrderAmount}€`);
+                    return;
+                }
+                const discount = dynamicCoupon.discountType === 'percentage'
+                    ? cartTotal * (dynamicCoupon.discountValue / 100)
+                    : dynamicCoupon.discountValue;
+                setAppliedCoupon({ code, discount });
+                alert(`Cupón ${code} aplicado: ${dynamicCoupon.discountType === 'percentage' ? dynamicCoupon.discountValue + '%' : dynamicCoupon.discountValue + '€'} de descuento.`);
+            } else {
+                alert('Cupón no válido');
+                setAppliedCoupon(null);
+            }
         }
     };
 
@@ -662,6 +683,85 @@ export default function App() {
     });
 
     const [lastOrder, setLastOrder] = useState<Order | null>(null);
+
+    const [promoCoupons, setPromoCoupons] = useState<Coupon[]>([]);
+
+    useEffect(() => {
+        const loadCoupons = async () => {
+            if (!supabase) return;
+            const { data, error } = await supabase
+                .from('coupons')
+                .select('*')
+                .order('created_at', { ascending: false });
+            if (data && !error) {
+                const mapped: Coupon[] = data.map((c: any) => ({
+                    id: c.id,
+                    code: c.code,
+                    description: c.description,
+                    discountType: c.discount_type,
+                    discountValue: Number(c.discount_value),
+                    minOrderAmount: Number(c.min_order_amount),
+                    maxUses: c.max_uses,
+                    usesCount: c.uses_count,
+                    isActive: c.is_active,
+                    createdAt: c.created_at,
+                    expiresAt: c.expires_at
+                }));
+                setPromoCoupons(mapped);
+            }
+        };
+        loadCoupons();
+    }, []);
+
+    const handleSaveCoupon = async (coupon: Partial<Coupon>) => {
+        if (!supabase) return;
+        const dbCoupon = {
+            code: coupon.code!.toUpperCase(),
+            description: coupon.description || null,
+            discount_type: coupon.discountType || 'percentage',
+            discount_value: coupon.discountValue || 0,
+            min_order_amount: coupon.minOrderAmount || 0,
+            max_uses: coupon.maxUses || 1,
+            is_active: coupon.isActive ?? true
+        };
+        const { data, error } = await supabase
+            .from('coupons')
+            .insert(dbCoupon)
+            .select()
+            .single();
+        if (error) {
+            alert('Error al guardar cupón: ' + error.message);
+            return;
+        }
+        const mapped: Coupon = {
+            id: data.id,
+            code: data.code,
+            description: data.description,
+            discountType: data.discount_type,
+            discountValue: Number(data.discount_value),
+            minOrderAmount: Number(data.min_order_amount),
+            maxUses: data.max_uses,
+            usesCount: data.uses_count,
+            isActive: data.is_active,
+            createdAt: data.created_at
+        };
+        setPromoCoupons(prev => [...prev, mapped]);
+    };
+
+    const handleUpdateCoupon = async (code: string, updates: Partial<Coupon>) => {
+        if (!supabase) return;
+        const dbUpdates: any = {};
+        if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive;
+        if (updates.usesCount !== undefined) dbUpdates.uses_count = updates.usesCount;
+        await supabase.from('coupons').update(dbUpdates).eq('code', code);
+        setPromoCoupons(prev => prev.map(c => c.code === code ? { ...c, ...updates } : c));
+    };
+
+    const handleDeleteCoupon = async (code: string) => {
+        if (!supabase) return;
+        await supabase.from('coupons').delete().eq('code', code);
+        setPromoCoupons(prev => prev.filter(c => c.code !== code));
+    };
 
     const handleFinalizeOrder = async () => {
         if (!currentUser) return;
@@ -837,13 +937,45 @@ export default function App() {
                 .update({ rappel_accumulated: newRappelTotal })
                 .eq('id', currentUser.id);
 
-            if (rappelError) console.error('Error updating rappel:', rappelError);
+            if (rappelError) {
+                console.error('Error updating rappel:', rappelError);
+                alert('El pedido se guardó pero hubo un error actualizando el rappel. Contacta con tu comercial.');
+            } else {
+                setCurrentUser({ ...currentUser, rappelAccumulated: newRappelTotal });
+            }
 
-            // Update local state
-            setCurrentUser({ ...currentUser, rappelAccumulated: newRappelTotal });
+            const newOrderObj: Order = {
+                id: order.id,
+                userId: currentUser.id,
+                date: new Date().toISOString(),
+                items: [...cart],
+                total: finalTotal,
+                status: 'processing',
+                shippingMethod,
+                salesRep: activeRep || undefined,
+                rappelDiscount: useAccumulatedRappel ? rappelDiscount : 0,
+                couponDiscount: appliedCoupon ? appliedCoupon.discount : 0
+            };
+            setOrders(prev => [...prev, newOrderObj]);
+
+            if (appliedCoupon) {
+                const updatedUsedCoupons = [...(currentUser.usedCoupons || []), appliedCoupon.code];
+                await supabase
+                    .from('clients')
+                    .update({ used_coupons: updatedUsedCoupons })
+                    .eq('id', currentUser.id);
+                setCurrentUser(prev => prev ? { ...prev, usedCoupons: updatedUsedCoupons } : null);
+
+                const dynamicCoupon = promoCoupons.find(c => c.code === appliedCoupon.code);
+                if (dynamicCoupon) {
+                    handleUpdateCoupon(appliedCoupon.code, { usesCount: dynamicCoupon.usesCount + 1 });
+                }
+            }
 
             setCart([]);
             setObservations('');
+            setAppliedCoupon(null);
+            setCouponCode('');
             setCurrentView('order_success');
 
         } catch (error: any) {
@@ -909,6 +1041,14 @@ export default function App() {
                     </div>
                     <h3 className="text-xl font-bold text-slate-900 mb-2">Edición Masiva</h3>
                     <p className="text-slate-500">Modificar descripción, precio y peso de múltiples productos simultáneamente.</p>
+                </div>
+
+                <div onClick={() => setCurrentView('admin_coupons')} className="bg-white p-8 rounded-xl shadow-lg border border-slate-200 cursor-pointer hover:border-purple-300 hover:shadow-purple-100 transition-all group">
+                    <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <Droplets className="text-purple-600" size={24} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">Cupones Promocionales</h3>
+                    <p className="text-slate-500">Crear y gestionar códigos de descuento de un solo uso.</p>
                 </div>
             </div>
         </div>
@@ -1667,6 +1807,14 @@ export default function App() {
             return matchCategory && matchSub;
         });
 
+        const sortedProducts = [...filteredProducts].sort((a, b) => {
+            if (sortOrder === 'default') return 0;
+            const priceA = a.isFlexible ? (a.pricePerM2 || 0) : (a.price || 0);
+            const priceB = b.isFlexible ? (b.pricePerM2 || 0) : (b.price || 0);
+            if (sortOrder === 'price_asc') return priceA - priceB;
+            return priceB - priceA;
+        });
+
         // Determine title
         let title = '';
         if (searchQuery) {
@@ -1717,6 +1865,15 @@ export default function App() {
                                 </button>
                             )}
                         </div>
+                        <select
+                            value={sortOrder}
+                            onChange={(e) => setSortOrder(e.target.value as any)}
+                            className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-900 outline-none bg-white"
+                        >
+                            <option value="default">Orden: Por defecto</option>
+                            <option value="price_asc">Precio: Menor a Mayor</option>
+                            <option value="price_desc">Precio: Mayor a Menor</option>
+                        </select>
                         <p className="text-slate-500 text-sm hidden md:block">Catálogo actualizado. Precios netos.</p>
                     </div>
                 </div>
@@ -1735,7 +1892,7 @@ export default function App() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {filteredProducts.map(product => {
+                                {sortedProducts.map(product => {
                                     const cartItem = cart.find(item => item.id === product.id);
                                     return (
                                         <ProductRow
@@ -2192,6 +2349,7 @@ export default function App() {
                 currentUser={currentUser}
                 isOpen={isMobileMenuOpen}
                 onClose={() => setIsMobileMenuOpen(false)}
+                onLogout={handleLogout}
             />
 
             <div className="flex-1 flex flex-col h-screen overflow-y-auto">
@@ -2286,6 +2444,19 @@ export default function App() {
                                 </h1>
                             </div>
                             {renderAdminUsersView()}
+                        </div>
+                    )}
+                    {currentView === 'admin_coupons' && currentUser.role === 'admin' && (
+                        <div className="p-6 md:p-10 max-w-5xl mx-auto">
+                            <button onClick={() => setCurrentView('admin_dashboard')} className="mb-6 text-slate-500 hover:text-slate-900 flex items-center gap-1 text-sm">
+                                <ArrowLeft size={16} /> Panel
+                            </button>
+                            <AdminCoupons
+                                coupons={promoCoupons}
+                                onAddCoupon={handleSaveCoupon}
+                                onUpdateCoupon={handleUpdateCoupon}
+                                onDeleteCoupon={handleDeleteCoupon}
+                            />
                         </div>
                     )}
                 </main>

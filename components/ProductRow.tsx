@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Check, ShoppingCart, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Check, ShoppingCart, AlertCircle, ChevronDown, ChevronUp, Package } from 'lucide-react';
 import { Product, CartItem } from '../types';
+
+const DISPLAY_BOX_SIZE = 6;
+const DISPLAY_DISCOUNT_PER_BOX = 1;
 
 interface ProductRowProps {
     product: Product;
@@ -32,6 +35,15 @@ export const ProductRow: React.FC<ProductRowProps> = ({
 
     // A product is "flexible" (has format/width to configure) if it's in the flexible category
     const isFlexible = product.category === 'flexible';
+    const isDisplay = product.category === 'display';
+
+    const getDisplayPriceInfo = (qty: number) => {
+        if (!isDisplay) return { unitPrice: product.price, discount: 0 };
+        const boxes = Math.floor(qty / DISPLAY_BOX_SIZE);
+        const discount = boxes * DISPLAY_DISCOUNT_PER_BOX;
+        const unitPrice = Math.max(0, product.price - discount);
+        return { unitPrice, discount, boxes };
+    };
 
     // Fedrigoni backing rule
     useEffect(() => {
@@ -56,6 +68,11 @@ export const ProductRow: React.FC<ProductRowProps> = ({
             if (product.allowAdhesive || (product.materialType === 'monomeric' && product.subcategory?.includes('vinilos'))) {
                 options.adhesive = adhesive;
             }
+        }
+
+        if (isDisplay) {
+            const { unitPrice } = getDisplayPriceInfo(quantity);
+            options = { ...options, displayUnitPrice: unitPrice };
         }
 
         onAddToCart(product, quantity, options);
@@ -218,7 +235,37 @@ export const ProductRow: React.FC<ProductRowProps> = ({
 
                 {/* Precio */}
                 <td className="px-4 py-3 text-right font-medium text-slate-900 w-28">
-                    {isFlexible && product.pricePerM2 ? (
+                    {isDisplay ? (
+                        <div className="text-right">
+                            {cartItem && cartItem.quantity >= DISPLAY_BOX_SIZE ? (
+                                <>
+                                    <div className="text-sm font-bold text-green-600">
+                                        {formatCurrency(getDisplayPriceInfo(cartItem.quantity).unitPrice)}/ud
+                                    </div>
+                                    <div className="text-[10px] text-slate-400 line-through">
+                                        {formatCurrency(product.price)}/ud
+                                    </div>
+                                    <div className="text-[10px] text-purple-600 font-medium mt-0.5 flex items-center justify-end gap-1">
+                                        <Package size={10} />
+                                        {getDisplayPriceInfo(cartItem.quantity).boxes} caja(s)
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="text-sm font-bold text-slate-900">
+                                        {formatCurrency(product.price)}/ud
+                                    </div>
+                                    <div className="text-[10px] text-purple-600 font-medium mt-0.5 flex items-center justify-end gap-1">
+                                        <Package size={10} />
+                                        Caja de {DISPLAY_BOX_SIZE} uds
+                                    </div>
+                                    <div className="text-[10px] text-green-600 font-medium">
+                                        -{DISPLAY_DISCOUNT_PER_BOX}€/ud por caja
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    ) : isFlexible && product.pricePerM2 ? (
                         <>
                             <div className="text-sm font-bold text-slate-900">
                                 {formatCurrency(product.pricePerM2)}/m²
@@ -242,25 +289,86 @@ export const ProductRow: React.FC<ProductRowProps> = ({
                 {/* Cantidad */}
                 <td className="px-4 py-3">
                     {cartItem ? (
-                        // In cart: show +/- controls
-                        <div className="flex items-center justify-center gap-2">
-                            <button
-                                onClick={() => onUpdateQuantity(cartItem.id, -1)}
-                                className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
-                            >
-                                -
-                            </button>
-                            <span className="w-8 text-center font-medium">{cartItem.quantity}</span>
-                            <button
-                                onClick={() => onUpdateQuantity(cartItem.id, 1)}
-                                className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
-                            >
-                                +
-                            </button>
-                        </div>
+                        isDisplay ? (
+                            <div className="flex flex-col items-center gap-1">
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => onUpdateQuantity(cartItem.id, -1)}
+                                        className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+                                    >
+                                        -
+                                    </button>
+                                    <span className="w-8 text-center font-medium">{cartItem.quantity}</span>
+                                    <button
+                                        onClick={() => onUpdateQuantity(cartItem.id, 1)}
+                                        className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                                {cartItem.quantity >= DISPLAY_BOX_SIZE && (
+                                    <div className="text-[10px] text-center">
+                                        <span className="text-purple-600 font-bold flex items-center justify-center gap-1">
+                                            <Package size={10} />
+                                            {getDisplayPriceInfo(cartItem.quantity).boxes} caja(s)
+                                        </span>
+                                        <span className="text-green-600 font-medium">
+                                            {formatCurrency(getDisplayPriceInfo(cartItem.quantity).unitPrice)}/ud
+                                            <span className="text-slate-400 ml-1">(-{getDisplayPriceInfo(cartItem.quantity).discount}€)</span>
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-center gap-2">
+                                <button
+                                    onClick={() => onUpdateQuantity(cartItem.id, -1)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+                                >
+                                    -
+                                </button>
+                                <span className="w-8 text-center font-medium">{cartItem.quantity}</span>
+                                <button
+                                    onClick={() => onUpdateQuantity(cartItem.id, 1)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+                                >
+                                    +
+                                </button>
+                            </div>
+                        )
                     ) : isFlexible ? (
                         // Flexible not in cart: empty (button is in Formato column)
                         null
+                    ) : isDisplay ? (
+                        // Display: show quantity with price preview
+                        <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={quantity}
+                                    onChange={e => setQuantity(parseInt(e.target.value) || 1)}
+                                    className="w-16 px-2 py-1 border border-slate-200 rounded-lg text-sm text-center focus:ring-2 focus:ring-slate-900 outline-none"
+                                />
+                                <button
+                                    onClick={handleAdd}
+                                    disabled={product.price === 0}
+                                    className={`flex-1 flex items-center justify-center gap-2 py-1.5 px-3 rounded-lg text-white text-sm font-medium transition-colors ${product.price === 0
+                                        ? 'bg-slate-300 cursor-not-allowed'
+                                        : 'bg-purple-600 hover:bg-purple-700 shadow-sm hover:shadow'
+                                        }`}
+                                >
+                                    <ShoppingCart size={16} />
+                                    <span className="hidden sm:inline">Añadir</span>
+                                </button>
+                            </div>
+                            {quantity >= DISPLAY_BOX_SIZE && product.price > 0 && (
+                                <div className="text-[10px] text-green-600 font-medium">
+                                    {getDisplayPriceInfo(quantity).boxes} caja(s) = {formatCurrency(getDisplayPriceInfo(quantity).unitPrice)}/ud
+                                    <span className="text-slate-400 ml-1">(dto -{getDisplayPriceInfo(quantity).discount}€)</span>
+                                </div>
+                            )}
+                        </div>
                     ) : (
                         // Non-flexible: add to cart controls
                         <div className="flex items-center gap-2">

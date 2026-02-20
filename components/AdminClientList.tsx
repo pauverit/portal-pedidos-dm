@@ -93,6 +93,7 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                                 <th className="px-4 py-3 text-center">Estado</th>
                                 <th className="px-4 py-3 text-center">Contraseña</th>
                                 <th className="px-4 py-3 text-center">Pedidos</th>
+                                <th className="px-4 py-3 text-center">Cupones</th>
                                 <th className="px-4 py-3 text-right">Rappel</th>
                                 <th className="px-4 py-3 text-right">Acciones</th>
                             </tr>
@@ -100,7 +101,7 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                         <tbody className="divide-y divide-slate-100">
                             {filteredClients.length === 0 && (
                                 <tr>
-                                    <td colSpan={7} className="px-4 py-8 text-center text-slate-400 text-sm">
+                                    <td colSpan={8} className="px-4 py-8 text-center text-slate-400 text-sm">
                                         No hay clientes registrados
                                     </td>
                                 </tr>
@@ -153,6 +154,19 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                                             <div className="font-bold text-slate-900">{clientOrders.length}</div>
                                             {totalSpent > 0 && (
                                                 <div className="text-xs text-slate-400">{formatCurrency(totalSpent)}</div>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            {client.usedCoupons && client.usedCoupons.length > 0 ? (
+                                                <div className="flex flex-col gap-0.5">
+                                                    {client.usedCoupons.map(coupon => (
+                                                        <span key={coupon} className="inline-flex items-center gap-1 bg-purple-100 text-purple-700 text-[10px] font-bold px-1.5 py-0.5 rounded">
+                                                            {coupon}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <span className="text-slate-300 text-xs">—</span>
                                             )}
                                         </td>
                                         <td className="px-4 py-3 text-right">

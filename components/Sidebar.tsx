@@ -9,9 +9,10 @@ interface SidebarProps {
   currentUser: User | null;
   isOpen: boolean;
   onClose: () => void;
+  onLogout: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, cartCount, currentUser, isOpen, onClose }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, cartCount, currentUser, isOpen, onClose, onLogout }) => {
   // State to track which menu is expanded
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
 
@@ -226,7 +227,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
             </button>
           )}
           <button
-            onClick={() => setCurrentView('login')}
+            onClick={onLogout}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors">
             <LogOut size={20} />
             Cerrar Sesión
