@@ -218,14 +218,24 @@ export const ProductRow: React.FC<ProductRowProps> = ({
 
                 {/* Precio */}
                 <td className="px-4 py-3 text-right font-medium text-slate-900 w-28">
-                    {product.price > 0
-                        ? formatCurrency(product.price)
-                        : <span className="text-slate-400 italic">Consultar</span>}
-                    {product.unit && <span className="text-xs text-slate-400 font-normal"> / {product.unit}</span>}
-                    {isFlexible && product.pricePerM2 && (
-                        <div className="text-[10px] text-slate-500 font-normal mt-0.5">
-                            ({formatCurrency(product.pricePerM2)}/m²)
-                        </div>
+                    {isFlexible && product.pricePerM2 ? (
+                        <>
+                            <div className="text-sm font-bold text-slate-900">
+                                {formatCurrency(product.pricePerM2)}/m²
+                            </div>
+                            {isExpanded && product.price > 0 && (
+                                <div className="text-[10px] text-slate-500 font-normal mt-0.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                                    {formatCurrency(product.price)} / {product.unit || 'bobina'}
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <>
+                            {product.price > 0
+                                ? formatCurrency(product.price)
+                                : <span className="text-slate-400 italic">Consultar</span>}
+                            {product.unit && <span className="text-xs text-slate-400 font-normal"> / {product.unit}</span>}
+                        </>
                     )}
                 </td>
 
