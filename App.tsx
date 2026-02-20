@@ -324,7 +324,6 @@ export default function App() {
                     in_stock: updatedProduct.inStock ?? true,
                     subcategory: updatedProduct.subcategory ?? null,
                     unit: updatedProduct.unit || 'ud',
-                    description: updatedProduct.description ?? null,
                 })
                 .eq('id', updatedProduct.id);
 
@@ -1747,7 +1746,20 @@ export default function App() {
                                             onUpdateQuantity={updateQuantity}
                                             formatCurrency={formatCurrency}
                                             isAdmin={currentUser?.role === 'admin'}
-                                            onEdit={(p) => setEditingProduct(p)}
+                                            onEdit={(p) => {
+                                                // Auto-fill length=50 for vinyls, laminados, lonas
+                                                const fixedLengthSubcats = ['vinilos', 'laminados', 'laminados_wrapping', 'lonas'];
+                                                let product = { ...p };
+                                                if (product.isFlexible && fixedLengthSubcats.includes(product.subcategory ?? '')) {
+                                                    if (!product.length || product.length === 0) {
+                                                        product.length = 50;
+                                                        if (product.pricePerM2 && product.width) {
+                                                            product.price = parseFloat((product.pricePerM2 * product.width * 50).toFixed(2));
+                                                        }
+                                                    }
+                                                }
+                                                setEditingProduct(product);
+                                            }}
                                         />
                                     );
                                 })}
@@ -2183,6 +2195,24 @@ export default function App() {
             />
 
             <div className="flex-1 flex flex-col h-screen overflow-y-auto">
+                {/* Desktop Brand Logos Top Bar */}
+                <div className="hidden md:flex items-center justify-end sticky top-0 z-30 bg-white border-b border-slate-100 shadow-sm px-6 py-2 gap-4">
+                    {[
+                        { src: '/logos/logo atp.png', alt: 'ATP', invert: false },
+                        { src: '/logos/TMK loo.jpg', alt: 'TMK', invert: false },
+                        { src: '/logos/fedrigoni.jpg', alt: 'Fedrigoni', invert: false },
+                        { src: '/logos/PNG_LOGOTIPO-DRUKKO-BLANCO-e1768041183921.png', alt: 'Drukko', invert: true },
+                    ].map(logo => (
+                        <img
+                            key={logo.alt}
+                            src={logo.src}
+                            alt={logo.alt}
+                            className="h-8 w-auto object-contain"
+                            style={{ maxWidth: '90px', filter: logo.invert ? 'invert(1)' : 'none' }}
+                        />
+                    ))}
+                </div>
+
                 <header className="md:hidden bg-white border-b border-slate-200 p-4 sticky top-0 z-30 flex items-center justify-between shadow-sm">
                     <div className="flex items-center gap-2">
                         <button onClick={() => setIsMobileMenuOpen(true)} className="text-slate-700 hover:text-slate-900 mr-2">
@@ -2260,6 +2290,242 @@ export default function App() {
                     )}
                 </main>
             </div>
+
+            {/* ===================== EDIT PRODUCT MODAL ===================== */}
+            {editingProduct && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setEditingProduct(null)}>
+                    <div
+                        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between p-6 border-b border-slate-100">
+                            <div>
+                                <h2 className="text-lg font-bold text-slate-900">Editar Producto</h2>
+                                <p className="text-xs text-slate-500 font-mono mt-0.5">{editingProduct.reference}</p>
+                            </div>
+                            <button
+                                onClick={() => setEditingProduct(null)}
+                                className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleUpdateProduct} className="p-6 space-y-5">
+                            {/* Nombre */}
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Nombre / Descripción</label>
+                                <input
+                                    type="text"
+                                    value={editingProduct.name}
+                                    onChange={e => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-900 outline-none"
+                                />
+                            </div>
+
+                            {/* Marca */}
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Marca</label>
+                                <select
+                                    value={editingProduct.brand || ''}
+                                    onChange={e => setEditingProduct({ ...editingProduct, brand: e.target.value as any })}
+                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-900 outline-none bg-white"
+                                >
+                                    <option value="">Sin marca (DM)</option>
+                                    <option value="ATP">ATP</option>
+                                    <option value="TMK">TMK</option>
+                                    <option value="FEDRIGONI">FEDRIGONI</option>
+                                    <option value="HP">HP</option>
+                                    <option value="DRUKKO">DRUKKO</option>
+                                </select>
+                            </div>
+
+                            {/* Stock */}
+                            <div className="flex items-center gap-3">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={editingProduct.inStock ?? true}
+                                        onChange={e => setEditingProduct({ ...editingProduct, inStock: e.target.checked })}
+                                        className="w-4 h-4 rounded accent-slate-900"
+                                    />
+                                    <span className="text-sm font-medium text-slate-700">Disponible en stock</span>
+                                </label>
+                            </div>
+
+                            {/* Flexible material fields */}
+                            {editingProduct.isFlexible ? (
+                                <>
+                                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-4">
+                                        <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">Material Flexible (precio por m²)</p>
+
+                                        {/* Precio por m2 */}
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
+                                                Precio por m² (€/m²) <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                value={editingProduct.pricePerM2 ?? ''}
+                                                onChange={e => {
+                                                    const pm2 = parseFloat(e.target.value) || 0;
+                                                    const w = editingProduct.width ?? 1.05;
+                                                    const l = editingProduct.length ?? 50;
+                                                    setEditingProduct({
+                                                        ...editingProduct,
+                                                        pricePerM2: pm2,
+                                                        price: parseFloat((pm2 * w * l).toFixed(2))
+                                                    });
+                                                }}
+                                                className="w-full px-4 py-2.5 border border-blue-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none font-mono"
+                                                placeholder="ej. 3.25"
+                                            />
+                                        </div>
+
+                                        {/* Ancho */}
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Ancho (m)</label>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                value={editingProduct.width ?? ''}
+                                                onChange={e => {
+                                                    const w = parseFloat(e.target.value) || 0;
+                                                    const pm2 = editingProduct.pricePerM2 ?? 0;
+                                                    const l = editingProduct.length ?? 50;
+                                                    setEditingProduct({
+                                                        ...editingProduct,
+                                                        width: w,
+                                                        price: parseFloat((pm2 * w * l).toFixed(2))
+                                                    });
+                                                }}
+                                                className="w-full px-4 py-2.5 border border-blue-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none font-mono"
+                                                placeholder="ej. 1.37"
+                                            />
+                                        </div>
+
+                                        {/* Largo */}
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
+                                                Largo (m)
+                                                {['vinilos', 'laminados', 'laminados_wrapping', 'lonas'].includes(editingProduct.subcategory ?? '') && (
+                                                    <span className="ml-2 text-blue-600 font-normal normal-case">(Vinilos/Laminados/Lonas = 50m fijo)</span>
+                                                )}
+                                            </label>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                value={editingProduct.length ?? ''}
+                                                onChange={e => {
+                                                    const l = parseFloat(e.target.value) || 0;
+                                                    const pm2 = editingProduct.pricePerM2 ?? 0;
+                                                    const w = editingProduct.width ?? 1.05;
+                                                    setEditingProduct({
+                                                        ...editingProduct,
+                                                        length: l,
+                                                        price: parseFloat((pm2 * w * l).toFixed(2))
+                                                    });
+                                                }}
+                                                className="w-full px-4 py-2.5 border border-blue-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none font-mono"
+                                                placeholder="ej. 50"
+                                            />
+                                        </div>
+
+                                        {/* Precio calculado (resultado) */}
+                                        <div className="bg-white rounded-lg border border-blue-200 p-3 flex items-center justify-between">
+                                            <span className="text-xs font-bold text-slate-600 uppercase">Precio total bobina</span>
+                                            <span className="text-xl font-black text-slate-900">
+                                                {formatCurrency(editingProduct.price ?? 0)}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-slate-400">
+                                            Cálculo: {editingProduct.pricePerM2 ?? 0} €/m² × {editingProduct.width ?? 0} m × {editingProduct.length ?? 0} m = {formatCurrency(editingProduct.price ?? 0)}
+                                        </p>
+                                    </div>
+
+                                    {/* Peso */}
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Peso bobina (kg)</label>
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            min="0"
+                                            value={editingProduct.weight ?? ''}
+                                            onChange={e => setEditingProduct({ ...editingProduct, weight: parseFloat(e.target.value) || 0 })}
+                                            className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-900 outline-none font-mono"
+                                        />
+                                    </div>
+                                </>
+                            ) : (
+                                /* Non-flexible: simple price per unit */
+                                <>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Precio unitario (€)</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={editingProduct.price ?? ''}
+                                            onChange={e => setEditingProduct({ ...editingProduct, price: parseFloat(e.target.value) || 0 })}
+                                            className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-900 outline-none font-mono"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Unidad</label>
+                                        <input
+                                            type="text"
+                                            value={editingProduct.unit ?? 'ud'}
+                                            onChange={e => setEditingProduct({ ...editingProduct, unit: e.target.value })}
+                                            className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-900 outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Peso (kg)</label>
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            min="0"
+                                            value={editingProduct.weight ?? ''}
+                                            onChange={e => setEditingProduct({ ...editingProduct, weight: parseFloat(e.target.value) || 0 })}
+                                            className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-900 outline-none font-mono"
+                                        />
+                                    </div>
+                                </>
+                            )}
+
+                            {/* Subcategoría (readonly info) */}
+                            <div className="bg-slate-50 rounded-lg p-3 text-xs text-slate-500">
+                                <span className="font-bold">Categoría:</span> {editingProduct.category} / {editingProduct.subcategory || '—'}&nbsp;&nbsp;
+                                {editingProduct.isFlexible && <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Flexible</span>}
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingProduct(null)}
+                                    className="flex-1 px-4 py-3 border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 px-4 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <Save size={18} />
+                                    Guardar Cambios
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+            {/* ============================================================ */}
 
             {/* Custom Logout Confirmation Modal */}
             {showLogoutModal && (
