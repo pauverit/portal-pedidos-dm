@@ -199,8 +199,8 @@ export const ProductRow: React.FC<ProductRowProps> = ({
                             <button
                                 onClick={() => setIsExpanded(!isExpanded)}
                                 className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all ${isExpanded
-                                        ? 'bg-slate-900 text-white border-slate-900'
-                                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50 hover:border-slate-500'
+                                    ? 'bg-slate-900 text-white border-slate-900'
+                                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50 hover:border-slate-500'
                                     }`}
                             >
                                 {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -222,6 +222,11 @@ export const ProductRow: React.FC<ProductRowProps> = ({
                         ? formatCurrency(product.price)
                         : <span className="text-slate-400 italic">Consultar</span>}
                     {product.unit && <span className="text-xs text-slate-400 font-normal"> / {product.unit}</span>}
+                    {isFlexible && product.pricePerM2 && (
+                        <div className="text-[10px] text-slate-500 font-normal mt-0.5">
+                            ({formatCurrency(product.pricePerM2)}/m²)
+                        </div>
+                    )}
                 </td>
 
                 {/* Cantidad */}
@@ -260,8 +265,8 @@ export const ProductRow: React.FC<ProductRowProps> = ({
                                 onClick={handleAdd}
                                 disabled={product.price === 0}
                                 className={`flex-1 flex items-center justify-center gap-2 py-1.5 px-3 rounded-lg text-white text-sm font-medium transition-colors ${product.price === 0
-                                        ? 'bg-slate-300 cursor-not-allowed'
-                                        : 'bg-slate-900 hover:bg-slate-800 shadow-sm hover:shadow'
+                                    ? 'bg-slate-300 cursor-not-allowed'
+                                    : 'bg-slate-900 hover:bg-slate-800 shadow-sm hover:shadow'
                                     }`}
                             >
                                 <ShoppingCart size={16} />
