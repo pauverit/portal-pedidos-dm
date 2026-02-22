@@ -86,8 +86,17 @@ export default function App() {
                         volume: p.volume,
                         inStock: p.in_stock,
                         brand: p.brand as any,
-                        weight: Number(p.weight) || 1,
-                        description: p.description || ''
+                        weight: Number(p.weight) || 0,
+                        description: p.description || '',
+
+                        // Configurable Props
+                        finish: p.finish,
+                        backing: p.backing,
+                        adhesive: p.adhesive,
+                        materialType: p.material_type,
+                        allowFinish: p.allow_finish,
+                        allowBacking: p.allow_backing,
+                        allowAdhesive: p.allow_adhesive,
                     }));
                     setProducts(mappedProducts);
                 }
@@ -188,7 +197,18 @@ export default function App() {
                 length: Number.isFinite(p.length) ? p.length : null,
                 brand: p.brand || null,
                 in_stock: p.inStock,
-                weight: Number.isFinite(p.weight) ? p.weight : 1 // Default 1kg
+                weight: Number.isFinite(p.weight) ? p.weight : 0,
+                description: p.description || null,
+                volume: p.volume || null,
+
+                // Configurable fields
+                finish: p.finish || null,
+                backing: p.backing || null,
+                adhesive: p.adhesive || null,
+                material_type: p.materialType || null,
+                allow_finish: p.allowFinish ?? false,
+                allow_backing: p.allowBacking ?? false,
+                allow_adhesive: p.allowAdhesive ?? false,
             }));
 
             if (newProducts.length === 0) {
@@ -229,7 +249,17 @@ export default function App() {
                     volume: p.volume,
                     inStock: p.in_stock,
                     brand: p.brand as any,
-                    weight: Number(p.weight) || 1
+                    weight: Number(p.weight) || 0,
+                    description: p.description || '',
+
+                    // Configurable props
+                    finish: p.finish,
+                    backing: p.backing,
+                    adhesive: p.adhesive,
+                    materialType: p.material_type,
+                    allowFinish: p.allow_finish,
+                    allowBacking: p.allow_backing,
+                    allowAdhesive: p.allow_adhesive,
                 })));
             }
 
@@ -255,7 +285,9 @@ export default function App() {
                         weight: Number.isFinite(product.weight) ? product.weight : 0,
                         width: Number.isFinite(product.width) ? product.width : 0,
                         length: Number.isFinite(product.length) ? product.length : 0,
-                        price_per_m2: Number.isFinite(product.pricePerM2) ? product.pricePerM2 : null
+                        price_per_m2: Number.isFinite(product.pricePerM2) ? product.pricePerM2 : null,
+                        description: product.description || null,
+                        volume: product.volume || null,
                     })
                     .eq('id', product.id);
 
@@ -288,8 +320,17 @@ export default function App() {
                     volume: p.volume,
                     inStock: p.in_stock,
                     brand: p.brand as any,
-                    weight: Number(p.weight) || 1,
-                    description: p.description || ''
+                    weight: Number(p.weight) || 0,
+                    description: p.description || '',
+
+                    // Configurable Props
+                    finish: p.finish,
+                    backing: p.backing,
+                    adhesive: p.adhesive,
+                    materialType: p.material_type,
+                    allowFinish: p.allow_finish,
+                    allowBacking: p.allow_backing,
+                    allowAdhesive: p.allow_adhesive,
                 })));
             }
 
@@ -326,6 +367,15 @@ export default function App() {
                     in_stock: updatedProduct.inStock ?? true,
                     subcategory: updatedProduct.subcategory ?? null,
                     unit: updatedProduct.unit || 'ud',
+                    description: updatedProduct.description ?? null,
+                    volume: updatedProduct.volume ?? null,
+                    finish: updatedProduct.finish ?? null,
+                    backing: updatedProduct.backing ?? null,
+                    adhesive: updatedProduct.adhesive ?? null,
+                    material_type: updatedProduct.materialType ?? null,
+                    allow_finish: updatedProduct.allowFinish ?? false,
+                    allow_backing: updatedProduct.allowBacking ?? false,
+                    allow_adhesive: updatedProduct.allowAdhesive ?? false,
                 })
                 .eq('id', updatedProduct.id);
 

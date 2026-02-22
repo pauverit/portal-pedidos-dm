@@ -21,9 +21,8 @@ interface ParsedItem {
     // New fields
     finish: 'gloss' | 'matte' | '';
     backing: 'white' | 'gray' | 'black' | '';
-    adhesive: 'permanent' | 'removable' | '';
     materialType: string;
-
+    volume: string;
     isValid: boolean;
     errors: string[];
 }
@@ -136,6 +135,7 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave, currentPro
                 adhesiveRaw.includes('perm') ? 'permanent' : '';
 
             const materialType = (cols[12] || '').toLowerCase();
+            const volume = cols[14] || '';
 
             const calculatedWeight = category === 'flexible'
                 ? calculateWeight(name, subcategory, description, width, length)
@@ -155,7 +155,8 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave, currentPro
                 backing: backing as any,
                 adhesive: adhesive as any,
                 materialType,
-                weight: calculatedWeight || (parseFloat((cols[13] || '0').replace(',', '.')) || 0), // Allow manual weight in col 13?
+                volume,
+                weight: calculatedWeight || (parseFloat((cols[13] || '0').replace(',', '.')) || 0),
                 isValid: itemsErrors.length === 0,
                 errors: itemsErrors
             };
@@ -196,6 +197,7 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave, currentPro
             backing: item.backing || undefined,
             adhesive: item.adhesive || undefined,
             materialType: item.materialType as any || undefined,
+            volume: item.volume || undefined,
             allowFinish: !!item.finish,
             allowBacking: !!item.backing,
             allowAdhesive: !!item.adhesive,
@@ -217,7 +219,7 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave, currentPro
         // CSV Header
         const header = [
             'Referencia', 'Nombre', 'Categoría', 'Subcategoría', 'Precio', 'Ancho', 'Largo',
-            'Marca', 'Descripción', 'Acabado', 'Trasera', 'Adhesivo', 'Tipo Material', 'Peso'
+            'Marca', 'Descripción', 'Acabado', 'Trasera', 'Adhesivo', 'Tipo Material', 'Peso', 'Volumen'
         ].join('\t');
 
         const rows = currentProducts.map(p => {
@@ -235,7 +237,8 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave, currentPro
                 p.backing === 'black' ? 'Negra' : p.backing === 'gray' ? 'Gris' : p.backing === 'white' ? 'Blanca' : '',
                 p.adhesive === 'permanent' ? 'Permanente' : p.adhesive === 'removable' ? 'Removible' : '',
                 p.materialType || '',
-                (p.weight || 0).toString().replace('.', ',')
+                (p.weight || 0).toString().replace('.', ','),
+                p.volume || ''
             ].join('\t');
         }).join('\n');
 
@@ -286,7 +289,7 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave, currentPro
                         <p className="font-bold mb-2">Instrucciones:</p>
                         <p className="mb-2">Copia las columnas de tu Excel y pégalas aquí. El orden <strong>EXACTO</strong> debe ser:</p>
                         <code className="bg-white px-2 py-1 rounded border border-blue-200 block text-xs md:text-sm overflow-x-auto select-all">
-                            REF | NOMBRE | CAT | SUBCAT | PRECIO | ANCHO | LARGO | MARCA | DESC | ACABADO | TRASERA | ADHESIVO | TIPO
+                            REF | NOMBRE | CAT | SUBCAT | PRECIO | ANCHO | LARGO | MARCA | DESC | ACABADO | TRASERA | ADHESIVO | TIPO | PESO | VOLUMEN
                         </code>
                         <div className="mt-2 text-xs text-blue-600 space-x-4">
                             <span>* ACABADO: Brillo, Mate</span>
