@@ -26,13 +26,13 @@ export const orderService = {
         if (!supabase) throw new Error('Supabase client is not initialized.');
 
         const now = new Date();
-        const timestamp = now.getFullYear().toString() +
-            (now.getMonth() + 1).toString().padStart(2, '0') +
-            now.getDate().toString().padStart(2, '0') + '-' +
-            now.getHours().toString().padStart(2, '0') +
-            now.getMinutes().toString().padStart(2, '0') +
-            now.getSeconds().toString().padStart(2, '0');
-        const orderNumber = timestamp;
+        const day = now.getDate().toString().padStart(2, '0');
+        const month = (now.getMonth() + 1).toString().padStart(2, '0');
+        const year = now.getFullYear().toString().slice(-2);
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+
+        const orderNumber = `${day}${month}${year}-${hours}${minutes}`;
 
         // 1. Mark/Upsert Client
         const clientData: any = {
@@ -93,6 +93,8 @@ export const orderService = {
         const formatCurrency = (value: number) =>
             new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
 
+        const shippingLabel = shippingMethod === 'agency' ? 'TIPSA' : 'REPARTO PROPIO';
+
         const templateParams = {
             to_email: currentUser.email,
             to_name: currentUser.name,
@@ -100,6 +102,8 @@ export const orderService = {
             order_total: formatCurrency(finalTotal),
             sales_rep: activeRep || 'N/A',
             sales_rep_phone: activeRepPhone,
+            shipping_method: shippingLabel,
+            email_subject: `PEDIDO | ${currentUser.name} | ${shippingLabel}`,
             order_details: cart
                 .map(item =>
                     `${item.reference} | ${item.name} | ${item.quantity} x ${formatCurrency(item.calculatedPrice)} = ${formatCurrency(item.calculatedPrice * item.quantity)}`
