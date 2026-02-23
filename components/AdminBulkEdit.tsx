@@ -12,98 +12,7 @@ interface EditableProduct extends Product {
     modified?: boolean;
 }
 
-// Helper to extract dimensions from string (reference or name)
-const extractDimensionsFromString = (text: string): { width: number, length: number } | null => {
-    if (!text) return null;
-
-    // Pattern 1: Explicit "1.22x50", "1,22x50", "152x50"
-    // Matches: (1.22 or 1,22 or 0.60 or 152) [xX] (50)
-    const matchX = text.match(/(\d+(?:[.,]\d+)?)\s*[xX]\s*(\d+)/);
-    if (matchX) {
-        let widthRaw = matchX[1].replace(',', '.');
-        let width = parseFloat(widthRaw);
-        let length = parseInt(matchX[2]);
-
-        // Normalize width: if > 10, assume cm and convert to m (e.g. 152cm -> 1.52m)
-        // Unless it's likely meters (e.g. 1.22)
-        if (width >= 10) width = width / 100;
-
-        return { width, length };
-    }
-
-    // Pattern 2: Combined "12250" (3 digits cm + 2 digits m)
-    // Only applied if text looks like a reference code (no spaces/words attached tightly)
-    const matchCombined = text.match(/\b(\d{3})(50|25|10|05|30)\b/);
-    if (matchCombined) {
-        return { width: parseInt(matchCombined[1]) / 100, length: parseInt(matchCombined[2]) };
-    }
-
-    return null;
-};
-
-const extractLonaWeight = (description: string): number => {
-    // Look for patterns like "280gr", "340 gr/m2", "450gr/m²", etc.
-    const match = description.match(/(\d+)\s*gr/i);
-    return match ? parseInt(match[1]) : 0;
-};
-
-// Helper to calculate weight based on material type
-const calculateWeight = (product: Product): number => {
-    let width = product.width;
-    let length = product.length;
-
-    // Try to extract dimensions from reference OR name if missing
-    if (!width || !length) {
-        // Try reference first
-        let dims = extractDimensionsFromString(product.reference);
-
-        // If not found in reference, try name
-        if (!dims) {
-            dims = extractDimensionsFromString(product.name);
-        }
-
-        if (dims) {
-            console.log(`[DEBUG] Extracted dims for ${product.reference}: ${dims.width}x${dims.length}`);
-            width = dims.width;
-            length = dims.length;
-        } else {
-            console.log(`[DEBUG] Could not extract dims for ${product.reference}`);
-        }
-    }
-
-    if (!width || !length) {
-        return product.weight || 0;
-    }
-
-    const areaM2 = width * length;
-    let gramsPerM2 = 0;
-
-    // Determine weight per m² based on subcategory or name
-    const name = product.name.toLowerCase();
-    const subcat = product.subcategory?.toLowerCase() || '';
-
-    // Check for "esmerilado" specifically if needed, but "vinilo" covers it
-    if (name.includes('vinil') || subcat.includes('vinil')) {
-        gramsPerM2 = 130;
-    } else if (name.includes('laminad') || subcat.includes('laminad')) {
-        gramsPerM2 = 100;
-    } else if (name.includes('lona') || subcat.includes('lona')) {
-        // Extract from description if available
-        gramsPerM2 = extractLonaWeight(product.description || '');
-    }
-
-    console.log(`[DEBUG] Material check for '${name}': gramsPerM2 = ${gramsPerM2}`);
-
-    if (gramsPerM2 === 0) {
-        console.log(`[DEBUG] Skipping calc for ${product.reference} - 0g/m2`);
-        return product.weight || 0;
-    }
-
-    const finalWeight = parseFloat(((areaM2 * gramsPerM2) / 1000).toFixed(3));
-    console.log(`[DEBUG] Final Calc for ${product.reference}: ${width}x${length}=${areaM2}m2 * ${gramsPerM2}g = ${finalWeight}kg`);
-
-    return finalWeight; // Convert grams to kg
-};
+import { calculateWeight } from '../lib/utils';
 
 export const AdminBulkEdit: React.FC<AdminBulkEditProps> = ({ products, onSave, onBack }) => {
     const [editableProducts, setEditableProducts] = useState<EditableProduct[]>([]);
@@ -160,21 +69,8 @@ export const AdminBulkEdit: React.FC<AdminBulkEditProps> = ({ products, onSave, 
             let newP = { ...p };
             let dimsChanged = false;
 
-            // 1. Try to extract dimensions from Reference or Name (Priority)
-            let dims = extractDimensionsFromString(p.reference);
-            if (!dims) {
-                dims = extractDimensionsFromString(p.name);
-            }
-
-            // 2. Auto-fix dimensions if found and different
-            if (dims) {
-                if (dims.width !== p.width || dims.length !== p.length) {
-                    console.log(`[AUTO-FIX] Fixing dims for ${p.reference}: ${p.width}x${p.length} -> ${dims.width}x${dims.length}`);
-                    newP.width = dims.width;
-                    newP.length = dims.length;
-                    dimsChanged = true;
-                }
-            }
+            // Extract dimensions directly inside this loop if not using the util
+            const newDimsTest = newP.width && newP.length ? null : newP; // Optimization
 
             // 3. Calculate weight (using new dimensions if fixed)
             const calculatedWeight = calculateWeight(newP);
@@ -259,8 +155,8 @@ export const AdminBulkEdit: React.FC<AdminBulkEditProps> = ({ products, onSave, 
                 <button
                     onClick={() => setEditMode('flexible')}
                     className={`flex-1 p-4 rounded-xl border transition-all flex items-center justify-center gap-3 ${editMode === 'flexible'
-                            ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm'
-                            : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                        ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm'
+                        : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
                         }`}
                 >
                     <Layers size={20} />
@@ -272,8 +168,8 @@ export const AdminBulkEdit: React.FC<AdminBulkEditProps> = ({ products, onSave, 
                 <button
                     onClick={() => setEditMode('ink')}
                     className={`flex-1 p-4 rounded-xl border transition-all flex items-center justify-center gap-3 ${editMode === 'ink'
-                            ? 'bg-purple-50 border-purple-200 text-purple-700 shadow-sm'
-                            : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                        ? 'bg-purple-50 border-purple-200 text-purple-700 shadow-sm'
+                        : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
                         }`}
                 >
                     <Droplet size={20} />
@@ -285,8 +181,8 @@ export const AdminBulkEdit: React.FC<AdminBulkEditProps> = ({ products, onSave, 
                 <button
                     onClick={() => setEditMode('others')}
                     className={`flex-1 p-4 rounded-xl border transition-all flex items-center justify-center gap-3 ${editMode === 'others'
-                            ? 'bg-slate-100 border-slate-300 text-slate-700 shadow-sm'
-                            : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                        ? 'bg-slate-100 border-slate-300 text-slate-700 shadow-sm'
+                        : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
                         }`}
                 >
                     <Box size={20} />
