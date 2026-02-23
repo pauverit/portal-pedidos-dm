@@ -66,7 +66,10 @@ export const orderService = {
             .select()
             .single();
 
-        if (orderError) throw new Error(`Order error: ${orderError.message}`);
+        if (orderError) {
+            console.error('Insert Order Error:', orderError);
+            throw new Error(`Error en el pedido (Supabase): ${orderError.message} - ${orderError.details || ''}`);
+        }
 
         // 3. Order Lines
         const orderLines = cart.map(item => ({
@@ -81,7 +84,10 @@ export const orderService = {
             .from('order_lines')
             .insert(orderLines);
 
-        if (linesError) throw linesError;
+        if (linesError) {
+            console.error('Insert Order Lines Error:', linesError);
+            throw new Error(`Error en las líneas del pedido: ${linesError.message}`);
+        }
 
         // 4. Email
         const formatCurrency = (value: number) =>
@@ -121,11 +127,11 @@ export const orderService = {
         );
 
         // 5. Update Rappel
-        const newRappelTotal = (currentUser.rappelAccumulated - (useAccumulatedRappel ? rappelDiscount : 0)) + newRappelGenerated;
+        const newRappelTotal = (client.rappel_accumulated - (useAccumulatedRappel ? rappelDiscount : 0)) + newRappelGenerated;
         await supabase
             .from('clients')
             .update({ rappel_accumulated: newRappelTotal })
-            .eq('id', currentUser.id);
+            .eq('id', client.id);
 
         // 6. Coupons
         if (appliedCoupon) {
