@@ -1,0 +1,130 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import { Product, User, ProductCategory } from '../types';
+import { INITIAL_PRODUCTS, DEFAULT_USERS } from '../constants';
+import { Coupon } from '../components/AdminCoupons';
+
+export function useSupabaseData() {
+    const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
+    const [users, setUsers] = useState<User[]>(DEFAULT_USERS);
+    const [promoCoupons, setPromoCoupons] = useState<Coupon[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const loadInitialData = async () => {
+        if (!supabase) {
+            setLoading(false);
+            return;
+        }
+
+        try {
+            // Load Products
+            const { data: dbProducts, error: prodError } = await supabase
+                .from('products')
+                .select('*')
+                .order('name');
+
+            if (prodError) {
+                console.warn('Could not load products from Supabase, using defaults:', prodError);
+            } else if (dbProducts && dbProducts.length > 0) {
+                const mappedProducts: Product[] = dbProducts.map(p => ({
+                    id: p.id,
+                    name: p.name,
+                    reference: p.reference,
+                    category: p.category as ProductCategory,
+                    subcategory: p.subcategory,
+                    price: Number(p.price) || 0,
+                    unit: p.unit || 'ud',
+                    isFlexible: p.is_flexible,
+                    width: Number(p.width),
+                    length: Number(p.length),
+                    pricePerM2: Number(p.price_per_m2),
+                    volume: p.volume,
+                    inStock: p.in_stock,
+                    brand: p.brand as any,
+                    weight: Number(p.weight) || 0,
+                    description: p.description || '',
+                    finish: p.finish,
+                    backing: p.backing,
+                    adhesive: p.adhesive,
+                    materialType: p.material_type,
+                    allowFinish: p.allow_finish,
+                    allowBacking: p.allow_backing,
+                    allowAdhesive: p.allow_adhesive,
+                }));
+                setProducts(mappedProducts);
+            }
+
+            // Load Clients
+            const { data: dbClients, error: clientError } = await supabase
+                .from('clients')
+                .select('*');
+
+            if (clientError) {
+                console.warn('Could not load clients from Supabase:', clientError);
+            } else if (dbClients) {
+                const mappedClients: User[] = dbClients.map(c => ({
+                    id: c.id,
+                    name: c.company_name,
+                    email: c.email,
+                    role: 'client',
+                    username: c.username,
+                    password: c.password,
+                    phone: c.phone,
+                    rappelAccumulated: Number(c.rappel_accumulated) || 0,
+                    delegation: c.delegation,
+                    salesRep: c.sales_rep,
+                    registrationDate: c.created_at,
+                    hidePrices: c.hide_prices || false,
+                    customPrices: c.custom_prices || {},
+                    rappelThreshold: Number(c.rappel_threshold) || 800,
+                    mustChangePassword: c.must_change_password ?? false,
+                    isActive: c.is_active ?? !c.must_change_password,
+                    usedCoupons: c.used_coupons || []
+                }));
+                setUsers([DEFAULT_USERS[0], ...mappedClients]);
+            }
+
+            // Load Coupons
+            const { data: dbCoupons, error: couponError } = await supabase
+                .from('coupons')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (dbCoupons && !couponError) {
+                const mappedCoupons: Coupon[] = dbCoupons.map((c: any) => ({
+                    id: c.id,
+                    code: c.code,
+                    description: c.description,
+                    discountType: c.discount_type,
+                    discountValue: Number(c.discount_value),
+                    minOrderAmount: Number(c.min_order_amount),
+                    maxUses: c.max_uses,
+                    usesCount: c.uses_count,
+                    isActive: c.is_active,
+                    createdAt: c.created_at,
+                    expiresAt: c.expires_at
+                }));
+                setPromoCoupons(mappedCoupons);
+            }
+        } catch (err) {
+            console.error('Error loading Supabase data:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadInitialData();
+    }, []);
+
+    return {
+        products,
+        setProducts,
+        users,
+        setUsers,
+        promoCoupons,
+        setPromoCoupons,
+        loading,
+        refreshData: loadInitialData
+    };
+}
