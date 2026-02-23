@@ -61,7 +61,8 @@ export const orderService = {
                 observations,
                 shipping_method: shippingMethod,
                 rappel_discount: rappelDiscount,
-                coupon_discount: appliedCoupon?.discount || 0
+                coupon_discount: appliedCoupon?.discount || 0,
+                status: 'tramitado'
             })
             .select()
             .single();

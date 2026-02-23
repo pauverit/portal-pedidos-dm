@@ -87,7 +87,9 @@ export default function App() {
 
     useEffect(() => {
         if (currentUser) {
-            setCurrentView(currentUser.role === 'admin' ? 'admin_dashboard' : 'dashboard');
+            if (currentView === 'login') {
+                setCurrentView(currentUser.role === 'admin' ? 'admin_dashboard' : 'dashboard');
+            }
             loadUserOrders(currentUser.role === 'client' ? currentUser.id : undefined);
         } else {
             setOrders([]);
