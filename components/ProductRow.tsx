@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Check, ShoppingCart, AlertCircle, ChevronDown, ChevronUp, Package } from 'lucide-react';
 import { Product, CartItem } from '../types';
+import { isVinyl, isLaminate, isLona } from '../lib/utils';
 
 
 interface ProductRowProps {
@@ -49,13 +50,13 @@ export const ProductRow: React.FC<ProductRowProps> = ({
             options = {};
             options.width = width;
 
-            if (product.allowFinish || product.subcategory?.includes('vinilos') || product.subcategory?.includes('laminados')) {
+            if (product.allowFinish || isVinyl(product) || isLaminate(product)) {
                 options.finish = finish;
             }
-            if (product.allowBacking || (product.subcategory?.includes('vinilos') && !product.subcategory?.includes('laminados'))) {
+            if (product.allowBacking || (isVinyl(product) && !isLaminate(product))) {
                 options.backing = backing;
             }
-            if (product.allowAdhesive || (product.materialType === 'monomeric' && product.subcategory?.includes('vinilos'))) {
+            if (product.allowAdhesive || (product.materialType === 'monomeric' && isVinyl(product))) {
                 options.adhesive = adhesive;
             }
         }
@@ -67,7 +68,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
     };
 
     // Width options per subcategory
-    const widthOptions = product.subcategory?.includes('lonas')
+    const widthOptions = isLona(product)
         ? [1.05, 1.37, 1.60, 2.20, 2.50, 3.20]
         : [1.05, 1.37, 1.52, 1.60];
 
@@ -92,7 +93,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
                 </div>
 
                 {/* Finish */}
-                {(product.allowFinish || product.subcategory?.includes('vinilos') || product.subcategory?.includes('laminados')) && (
+                {(product.allowFinish || isVinyl(product) || isLaminate(product)) && (
                     <div>
                         <label className="block text-xs font-medium text-slate-600 mb-1.5">Acabado</label>
                         <div className="flex gap-1.5">
@@ -107,7 +108,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
                 )}
 
                 {/* Backing (vinyls only) */}
-                {(product.allowBacking || (product.subcategory?.includes('vinilos') && !product.subcategory?.includes('laminados'))) && (
+                {(product.allowBacking || (isVinyl(product) && !isLaminate(product))) && (
                     <div>
                         <label className="block text-xs font-medium text-slate-600 mb-1.5">Trasera</label>
                         {product.materialType === 'monomeric' && (product.brand?.toLowerCase().includes('fedrigoni') || product.name.toLowerCase().includes('fedrigoni')) ? (
@@ -126,7 +127,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
                 )}
 
                 {/* Adhesive (monomeric vinyls) */}
-                {(product.allowAdhesive || (product.materialType === 'monomeric' && product.subcategory?.includes('vinilos'))) && (
+                {(product.allowAdhesive || (product.materialType === 'monomeric' && isVinyl(product))) && (
                     <div>
                         <label className="block text-xs font-medium text-slate-600 mb-1.5">Adhesivo</label>
                         <div className="flex gap-1.5">
@@ -167,9 +168,6 @@ export const ProductRow: React.FC<ProductRowProps> = ({
     return (
         <>
             <tr className={`border-b border-slate-50 hover:bg-slate-50 transition-colors ${isExpanded ? 'bg-slate-50' : ''}`}>
-                {/* Ref */}
-                <td className="px-4 py-3 font-medium text-slate-900">{product.reference}</td>
-
                 {/* Name / Description */}
                 <td className="px-4 py-3">
                     <div className="font-medium text-slate-900">{product.name}</div>
@@ -305,7 +303,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
             {/* Expanded configurator row — spans all columns */}
             {isExpanded && isFlexible && (
                 <tr>
-                    <td colSpan={isAdmin ? 6 : 5} className="p-0">
+                    <td colSpan={isAdmin ? 5 : 4} className="p-0">
                         {renderConfigurator()}
                     </td>
                 </tr>

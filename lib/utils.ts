@@ -33,6 +33,33 @@ export const extractDimensionsFromString = (text: string): { width: number, leng
 };
 
 /**
+ * Detects if a product is a vinyl based on its name or subcategory.
+ */
+export const isVinyl = (product: { name: string, subcategory?: string }): boolean => {
+    const name = product.name.toLowerCase();
+    const subcat = product.subcategory?.toLowerCase() || '';
+    return name.includes('vinil') || subcat.includes('vinil');
+};
+
+/**
+ * Detects if a product is a laminate based on its name or subcategory.
+ */
+export const isLaminate = (product: { name: string, subcategory?: string }): boolean => {
+    const name = product.name.toLowerCase();
+    const subcat = product.subcategory?.toLowerCase() || '';
+    return name.includes('laminad') || subcat.includes('laminad');
+};
+
+/**
+ * Detects if a product is a lona based on its name or subcategory.
+ */
+export const isLona = (product: { name: string, subcategory?: string }): boolean => {
+    const name = product.name.toLowerCase();
+    const subcat = product.subcategory?.toLowerCase() || '';
+    return name.includes('lona') || subcat.includes('lona');
+};
+
+/**
  * Extracts weight in grams from a descriptive text, usually for Lonas.
  */
 export const extractLonaWeight = (description: string): number => {
@@ -74,17 +101,11 @@ export const calculateWeight = (
     const areaM2 = width * length;
     let gramsPerM2 = 0;
 
-    // Determine weight per m² based on subcategory or name
-    const name = product.name.toLowerCase();
-    const subcat = product.subcategory?.toLowerCase() || '';
-
-    // Check for "esmerilado" specifically if needed, but "vinilo" covers it
-    if (name.includes('vinil') || subcat.includes('vinil')) {
+    if (isVinyl(product)) {
         gramsPerM2 = 130;
-    } else if (name.includes('laminad') || subcat.includes('laminad')) {
+    } else if (isLaminate(product)) {
         gramsPerM2 = 100;
-    } else if (name.includes('lona') || subcat.includes('lona')) {
-        // Extract from description if available
+    } else if (isLona(product)) {
         gramsPerM2 = extractLonaWeight(product.description || '');
     }
 

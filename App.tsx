@@ -10,6 +10,7 @@ import { AdminClientList } from './components/AdminClientList';
 import { AdminCoupons, Coupon } from './components/AdminCoupons';
 import { INITIAL_PRODUCTS, SALES_REPS, SALES_REPS_PHONES, DEFAULT_USERS, SALES_REPS_EMAILS } from './constants';
 import { Product, CartItem, User, Order } from './types';
+import { calculateWeight, isVinyl, isLaminate } from './lib/utils';
 import {
     Search, Filter, ShoppingCart, Plus, Minus, Check, ArrowRight,
     MapPin, Printer, Download, CreditCard, ChevronRight, ChevronDown, ChevronUp, AlertCircle, Trash2, ArrowLeft,
@@ -486,6 +487,9 @@ export default function App() {
                 ? (effectiveProduct.width! * effectiveProduct.length! * effectiveProduct.pricePerM2!)
                 : effectiveProduct.price;
 
+            // Calculate weight based on current configuration
+            const itemWeight = calculateWeight(effectiveProduct);
+
             if (existing) {
                 return prev.map(item =>
                     item.id === effectiveProduct.id ? { ...item, quantity: item.quantity + quantity } : item
@@ -494,7 +498,8 @@ export default function App() {
             return [...prev, {
                 ...effectiveProduct,
                 quantity,
-                calculatedPrice
+                calculatedPrice,
+                weight: itemWeight
             }];
         });
 
@@ -524,17 +529,11 @@ export default function App() {
         // 1. Find monomeric/polymeric vinyls in the cart that haven't been offered yet
         const vinylItems = cart.filter(item =>
             item.category === 'flexible' &&
-            (
-                item.subcategory?.toLowerCase().includes('vinil') ||
-                item.name.toLowerCase().includes('vinil')
-            ) &&
+            isVinyl(item) &&
             (
                 item.materialType === 'monomeric' ||
                 item.materialType === 'polymeric' ||
-                (!item.materialType && (
-                    item.subcategory?.toLowerCase().includes('vinil') ||
-                    item.name.toLowerCase().includes('vinil')
-                ))
+                !item.materialType
             ) &&
             !item.name.includes('Oferta Pack') &&
             !item.name.includes('(Pack)') &&
@@ -550,10 +549,7 @@ export default function App() {
         for (const vinylItem of vinylItems) {
             const candidates = products.filter(p =>
                 p.category === 'flexible' &&
-                (
-                    p.subcategory?.toLowerCase().includes('laminad') ||
-                    p.name.toLowerCase().includes('laminad')
-                ) &&
+                isLaminate(p) &&
                 p.width === vinylItem.width &&
                 (vinylItem.brand ? p.brand === vinylItem.brand : true) &&
                 !cartBaseIds.has(p.id) // not already in cart
@@ -1132,7 +1128,6 @@ export default function App() {
                 <table className="w-full text-sm text-left">
                     <thead className="bg-slate-50 border-b border-slate-200 text-slate-500">
                         <tr>
-                            <th className="px-6 py-3">Ref (No editable)</th>
                             <th className="px-6 py-3">Nombre</th>
                             <th className="px-6 py-3 text-right">Precio Base</th>
                             <th className="px-6 py-3 text-right">Acciones</th>
@@ -1143,7 +1138,6 @@ export default function App() {
                             .filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.reference.toLowerCase().includes(searchQuery.toLowerCase()))
                             .map(product => (
                                 <tr key={product.id} className="hover:bg-slate-50">
-                                    <td className="px-6 py-4 font-mono font-bold text-slate-900">{product.reference}</td>
                                     <td className="px-6 py-4">
                                         {editingProduct?.id === product.id ? (
                                             <input
@@ -1933,7 +1927,6 @@ export default function App() {
                         <table className="w-full text-left text-sm">
                             <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-medium">
                                 <tr>
-                                    <th className="px-4 py-3 w-16">Ref</th>
                                     <th className="px-4 py-3">Nombre / Descripción</th>
                                     <th className="px-4 py-3 w-32">Formato</th>
                                     <th className="px-4 py-3 w-28 text-right">Precio</th>
@@ -2011,8 +2004,6 @@ export default function App() {
                             <div className="flex-1">
                                 <p className="text-sm font-bold text-slate-900">{item.name}</p>
                                 <p className="text-xs text-slate-500 font-mono flex items-center gap-2">
-                                    {item.reference}
-                                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-slate-200" />
                                     <span className="text-slate-400 font-normal">{(item.weight || 0) * item.quantity} kg</span>
                                 </p>
                             </div>

@@ -211,8 +211,8 @@ export const AdminBulkEdit: React.FC<AdminBulkEditProps> = ({ products, onSave, 
                     <table className="w-full text-sm text-left">
                         <thead className="bg-slate-50 border-b border-slate-200 text-slate-500">
                             <tr>
-                                <th className="px-4 py-3 w-32">Referencia</th>
                                 <th className="px-4 py-3 w-48">Nombre</th>
+                                <th className="px-4 py-3">Descripción</th>
                                 {editMode === 'flexible' ? (
                                     <>
                                         <th className="px-4 py-3 w-28 text-right bg-blue-50/50">Precio (€/m²)</th>
@@ -239,20 +239,21 @@ export const AdminBulkEdit: React.FC<AdminBulkEditProps> = ({ products, onSave, 
                                         className={`hover:bg-slate-50 ${product.modified ? 'bg-blue-50' : ''}`}
                                     >
                                         <td className="px-4 py-3">
-                                            <div className="font-mono text-xs font-bold text-slate-900 flex items-center gap-2">
-                                                {product.reference}
-                                                {product.modified && <CheckCircle size={14} className="text-blue-600" />}
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    value={product.name}
+                                                    onChange={(e) => updateProduct(product.id, 'name', e.target.value)}
+                                                    className="w-full border border-slate-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
+                                                />
+                                                {product.modified && (
+                                                    <div className="absolute -left-6 top-1/2 -translate-y-1/2">
+                                                        <CheckCircle size={14} className="text-blue-600" />
+                                                    </div>
+                                                )}
                                             </div>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <input
-                                                type="text"
-                                                value={product.name}
-                                                onChange={(e) => updateProduct(product.id, 'name', e.target.value)}
-                                                className="w-full border border-slate-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
-                                            />
-                                        </td>
-                                        {/* <td className="px-4 py-3">
                                             <textarea
                                                 value={product.description || ''}
                                                 onChange={(e) => updateProduct(product.id, 'description', e.target.value)}
@@ -260,7 +261,7 @@ export const AdminBulkEdit: React.FC<AdminBulkEditProps> = ({ products, onSave, 
                                                 className="w-full border border-slate-300 rounded px-2 py-1 text-xs resize-none focus:ring-2 focus:ring-slate-900 outline-none"
                                                 rows={2}
                                             />
-                                        </td> */}
+                                        </td>
                                         {editMode === 'flexible' ? (
                                             <>
                                                 <td className="px-4 py-3 bg-blue-50/30">

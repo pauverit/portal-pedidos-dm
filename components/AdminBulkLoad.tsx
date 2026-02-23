@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Save, AlertCircle, CheckCircle, X, Trash2, Download, FileSpreadsheet } from 'lucide-react';
 import { Product, ProductCategory } from '../types';
+import { calculateWeight } from '../lib/utils';
 
 interface AdminBulkLoadProps {
     onSave: (products: Product[]) => void;
@@ -55,26 +56,6 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave, currentPro
         return normalized;
     };
 
-    const calculateWeight = (name: string, subcat: string, description: string, width: number, length: number): number => {
-        if (width <= 0 || length <= 0) return 0;
-        const areaM2 = width * length;
-        let gramsPerM2 = 0;
-
-        const nameLower = name.toLowerCase();
-        const subcatLower = subcat.toLowerCase();
-
-        if (nameLower.includes('vinil') || subcatLower.includes('vinil')) {
-            gramsPerM2 = 130;
-        } else if (nameLower.includes('laminad') || subcatLower.includes('laminad')) {
-            gramsPerM2 = 100;
-        } else if (nameLower.includes('lona') || subcatLower.includes('lona')) {
-            const match = description.match(/(\d+)\s*gr/i);
-            gramsPerM2 = match ? parseInt(match[1]) : 0;
-        }
-
-        if (gramsPerM2 === 0) return 0;
-        return parseFloat(((areaM2 * gramsPerM2) / 1000).toFixed(3));
-    };
 
     const parseData = () => {
         if (!rawInput.trim()) return;
@@ -138,7 +119,7 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave, currentPro
             const volume = cols[14] || '';
 
             const calculatedWeight = category === 'flexible'
-                ? calculateWeight(name, subcategory, description, width, length)
+                ? calculateWeight({ reference, name, subcategory, description, width, length })
                 : 0;
 
             return {
@@ -338,8 +319,7 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave, currentPro
                                 <thead className="bg-slate-50 border-b border-slate-200 text-slate-500">
                                     <tr>
                                         <th className="px-4 py-3">Estado</th>
-                                        <th className="px-4 py-3">Ref</th>
-                                        <th className="px-4 py-3">Nombre</th>
+                                        <th className="px-4 py-3">Nombre / Descripción</th>
                                         <th className="px-4 py-3">Cat.</th>
                                         <th className="px-4 py-3">Precio</th>
                                         <th className="px-4 py-3">Attrs</th>
@@ -351,8 +331,10 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave, currentPro
                                             <td className="px-4 py-2">
                                                 {item.isValid ? <CheckCircle size={18} className="text-green-500" /> : <AlertCircle size={18} className="text-red-500" />}
                                             </td>
-                                            <td className="px-4 py-2 font-mono text-xs">{item.reference}</td>
-                                            <td className="px-4 py-2 truncate max-w-[200px]">{item.name}</td>
+                                            <td className="px-4 py-2">
+                                                <div className="font-bold">{item.name}</div>
+                                                <div className="text-[10px] text-slate-500 truncate max-w-[200px]">{item.description}</div>
+                                            </td>
                                             <td className="px-4 py-2">{item.category}</td>
                                             <td className="px-4 py-2 font-mono">{item.price} €</td>
                                             <td className="px-4 py-2 text-xs">
