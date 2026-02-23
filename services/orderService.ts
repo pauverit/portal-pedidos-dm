@@ -151,5 +151,55 @@ export const orderService = {
             newRappelTotal,
             orderNumber
         };
+    },
+
+    async getUserOrders(userId?: string): Promise<Order[]> {
+        if (!supabase) return [];
+
+        // 1. Get client by external user_id if needed, but here we assume 'client_id' in orders table
+        // matches the 'id' of the client record.
+        // If App.tsx passes the client table ID, we use it directly.
+
+        let query = supabase
+            .from('orders')
+            .select(`
+                *,
+                order_lines (
+                    *,
+                    products (*)
+                )
+            `);
+
+        if (userId) {
+            query = query.eq('client_id', userId);
+        }
+
+        const { data: dbOrders, error: ordersError } = await query
+            .order('created_at', { ascending: false });
+
+        if (ordersError) {
+            console.error('Error fetching orders:', ordersError);
+            return [];
+        }
+
+        return (dbOrders || []).map(order => ({
+            id: order.id,
+            userId: order.client_id,
+            date: order.created_at,
+            total: Number(order.total),
+            status: order.status as any,
+            shippingMethod: order.shipping_method,
+            salesRep: order.sales_rep,
+            rappelDiscount: Number(order.rappel_discount) || 0,
+            couponDiscount: Number(order.coupon_discount) || 0,
+            items: (order.order_lines || []).map((line: any) => ({
+                id: line.product_id,
+                name: line.products?.name || 'Producto eliminado',
+                reference: line.products?.reference || '',
+                quantity: line.quantity,
+                calculatedPrice: Number(line.unit_price),
+                category: line.products?.category || 'otros'
+            }))
+        }));
     }
 };

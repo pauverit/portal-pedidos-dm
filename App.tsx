@@ -57,10 +57,7 @@ export default function App() {
     const offeredVinylIds = useRef<Set<string>>(new Set());
     const [loginError, setLoginError] = useState('');
 
-    const [orders, setOrders] = useState<Order[]>(() => {
-        const saved = localStorage.getItem('dm_portal_orders');
-        return saved ? JSON.parse(saved) : [];
-    });
+    const [orders, setOrders] = useState<Order[]>([]);
 
     // Helper states from original logic
     const activeRep = currentUser?.salesRep || null;
@@ -79,9 +76,21 @@ export default function App() {
     const tax = subtotalAfterDiscount * 0.21;
     const finalTotal = subtotalAfterDiscount + tax + shippingCost;
 
+    const loadUserOrders = async (userId: string) => {
+        try {
+            const userOrders = await orderService.getUserOrders(userId);
+            setOrders(userOrders);
+        } catch (error) {
+            console.error('Error loading user orders:', error);
+        }
+    };
+
     useEffect(() => {
         if (currentUser) {
             setCurrentView(currentUser.role === 'admin' ? 'admin_dashboard' : 'dashboard');
+            loadUserOrders(currentUser.role === 'client' ? currentUser.id : undefined);
+        } else {
+            setOrders([]);
         }
     }, [currentUser]);
 
@@ -95,7 +104,13 @@ export default function App() {
         }
     };
 
-    const handleLogout = () => setShowLogoutModal(true);
+    const handleLogout = () => {
+        if (cart.length === 0) {
+            confirmLogout(true);
+        } else {
+            setShowLogoutModal(true);
+        }
+    };
     const confirmLogout = (shouldClearCart: boolean) => {
         if (shouldClearCart) clearCart();
         logout();
