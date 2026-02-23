@@ -1,5 +1,3 @@
--- SQL Migration to synchronize Supabase schema with application data models
-
 -- 1. Products Table Adjustments
 ALTER TABLE products ADD COLUMN IF NOT EXISTS is_flexible BOOLEAN DEFAULT FALSE;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS price_per_m2 DECIMAL(10,2);
@@ -29,7 +27,9 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS coupon_discount DECIMAL(10,2) DEFAUL
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS observations TEXT;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS sales_rep TEXT;
 
--- Index for performance
+-- 4. Index for performance (No foreign keys to avoid type mismatch errors)
 CREATE INDEX IF NOT EXISTS idx_products_reference ON products(reference);
 CREATE INDEX IF NOT EXISTS idx_clients_email ON clients(email);
 CREATE INDEX IF NOT EXISTS idx_orders_client_id ON orders(client_id);
+CREATE INDEX IF NOT EXISTS idx_order_lines_order_id ON order_lines(order_id);
+CREATE INDEX IF NOT EXISTS idx_order_lines_product_id ON order_lines(product_id);

@@ -155,7 +155,7 @@ export default function App() {
             setOrders(prev => [...prev, newOrder]);
             updateCurrentUser({ rappelAccumulated: results.newRappelTotal });
             clearCart();
-            setCurrentView('order_success');
+            setCurrentView('client_orders');
         } catch (error: any) {
             alert('Error: ' + error.message);
         }

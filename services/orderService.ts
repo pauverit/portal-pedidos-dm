@@ -156,50 +156,87 @@ export const orderService = {
     async getUserOrders(userId?: string): Promise<Order[]> {
         if (!supabase) return [];
 
-        // 1. Get client by external user_id if needed, but here we assume 'client_id' in orders table
-        // matches the 'id' of the client record.
-        // If App.tsx passes the client table ID, we use it directly.
-
-        let query = supabase
+        // 1. Fetch Orders
+        let ordersQuery = supabase
             .from('orders')
-            .select(`
-                *,
-                order_lines (
-                    *,
-                    products (*)
-                )
-            `);
+            .select('*');
 
         if (userId) {
-            query = query.eq('client_id', userId);
+            ordersQuery = ordersQuery.eq('client_id', userId);
         }
 
-        const { data: dbOrders, error: ordersError } = await query
+        const { data: dbOrders, error: ordersError } = await ordersQuery
             .order('created_at', { ascending: false });
 
         if (ordersError) {
             console.error('Error fetching orders:', ordersError);
             return [];
         }
+        if (!dbOrders || dbOrders.length === 0) return [];
 
-        return (dbOrders || []).map(order => ({
-            id: order.id,
-            userId: order.client_id,
-            date: order.created_at,
-            total: Number(order.total),
-            status: order.status as any,
-            shippingMethod: order.shipping_method,
-            salesRep: order.sales_rep,
-            rappelDiscount: Number(order.rappel_discount) || 0,
-            couponDiscount: Number(order.coupon_discount) || 0,
-            items: (order.order_lines || []).map((line: any) => ({
-                id: line.product_id,
-                name: line.products?.name || 'Producto eliminado',
-                reference: line.products?.reference || '',
-                quantity: line.quantity,
-                calculatedPrice: Number(line.unit_price),
-                category: line.products?.category || 'otros'
-            }))
-        }));
+        const orderIds = dbOrders.map(o => o.id);
+
+        // 2. Fetch Order Lines
+        const { data: dbLines, error: linesError } = await supabase
+            .from('order_lines')
+            .select('*')
+            .in('order_id', orderIds);
+
+        if (linesError) {
+            console.error('Error fetching order lines:', linesError);
+            return dbOrders.map(o => ({
+                id: o.id,
+                userId: o.client_id,
+                date: o.created_at,
+                total: Number(o.total),
+                status: o.status as any,
+                shippingMethod: o.shipping_method,
+                salesRep: o.sales_rep,
+                rappelDiscount: Number(o.rappel_discount) || 0,
+                couponDiscount: Number(o.coupon_discount) || 0,
+                items: []
+            }));
+        }
+
+        // 3. Fetch Products (to get names and references)
+        const productIds = [...new Set((dbLines || []).map(l => l.product_id))];
+        const { data: dbProducts, error: prodError } = await supabase
+            .from('products')
+            .select('id, name, reference, category, price, unit')
+            .in('id', productIds);
+
+        const productsMap = (dbProducts || []).reduce((acc, p) => {
+            acc[p.id] = p;
+            return acc;
+        }, {} as Record<string, any>);
+
+        // 4. Join in memory
+        return dbOrders.map(order => {
+            const lines = (dbLines || []).filter(l => l.order_id === order.id);
+            return {
+                id: order.id,
+                userId: order.client_id,
+                date: order.created_at,
+                total: Number(order.total),
+                status: (order.status || 'pending') as any,
+                shippingMethod: order.shipping_method,
+                salesRep: order.sales_rep,
+                rappelDiscount: Number(order.rappel_discount) || 0,
+                couponDiscount: Number(order.coupon_discount) || 0,
+                items: lines.map(line => {
+                    const p = productsMap[line.product_id];
+                    return {
+                        id: line.product_id,
+                        name: p?.name || 'Producto eliminado',
+                        reference: p?.reference || '',
+                        quantity: line.quantity,
+                        calculatedPrice: Number(line.unit_price),
+                        price: p?.price || Number(line.unit_price),
+                        unit: p?.unit || 'ud',
+                        category: p?.category || 'otros'
+                    } as CartItem;
+                })
+            } as Order;
+        });
     }
 };
