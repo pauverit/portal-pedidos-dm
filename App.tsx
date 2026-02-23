@@ -348,6 +348,20 @@ export default function App() {
         <div className="flex min-h-screen bg-slate-50 font-sans text-slate-900">
             <Sidebar currentView={currentView} setCurrentView={setCurrentView} cartCount={cart.reduce((a, b) => a + b.quantity, 0)} currentUser={currentUser!} isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} onLogout={handleLogout} />
             <div className="flex-1 flex flex-col h-screen overflow-y-auto">
+                <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-slate-200 sticky top-0 z-30">
+                    <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 text-slate-600">
+                        <Menu size={24} />
+                    </button>
+                    <img src="/logo.png" alt="DigitalMarket" className="h-8 w-auto" />
+                    <button onClick={() => setCurrentView('cart')} className="p-2 -mr-2 text-slate-600 relative">
+                        <ShoppingCart size={24} />
+                        {cart.length > 0 && (
+                            <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full">
+                                {cart.reduce((a, b) => a + b.quantity, 0)}
+                            </span>
+                        )}
+                    </button>
+                </header>
                 <main className="flex-1">{renderContent()}</main>
             </div>
             {showLogoutModal && (
