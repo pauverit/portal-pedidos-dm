@@ -5,9 +5,10 @@ import { SALES_REPS } from '../constants';
 interface AdminNewClientProps {
     onSave: (clientData: any) => Promise<void>;
     onBack: () => void;
+    isAdmin?: boolean;
 }
 
-export const AdminNewClient: React.FC<AdminNewClientProps> = ({ onSave, onBack }) => {
+export const AdminNewClient: React.FC<AdminNewClientProps> = ({ onSave, onBack, isAdmin = true }) => {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -24,7 +25,7 @@ export const AdminNewClient: React.FC<AdminNewClientProps> = ({ onSave, onBack }
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.username || !formData.password || !formData.salesRep) {
+        if (!formData.username || !formData.password || (isAdmin && !formData.salesRep)) {
             alert('Usuario, contraseña y comercial son obligatorios');
             return;
         }
@@ -55,20 +56,22 @@ export const AdminNewClient: React.FC<AdminNewClientProps> = ({ onSave, onBack }
                             placeholder="Ej: Impresiones Digitales SL"
                         />
                     </div>
-                    <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Comercial Asignado *</label>
-                        <select
-                            required
-                            value={formData.salesRep}
-                            onChange={e => setFormData({ ...formData, salesRep: e.target.value })}
-                            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none bg-white"
-                        >
-                            <option value="">— Seleccionar Comercial —</option>
-                            {Object.entries(SALES_REPS).map(([code, name]) => (
-                                <option key={code} value={name}>{name}</option>
-                            ))}
-                        </select>
-                    </div>
+                    {isAdmin && (
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Comercial Asignado *</label>
+                            <select
+                                required
+                                value={formData.salesRep}
+                                onChange={e => setFormData({ ...formData, salesRep: e.target.value })}
+                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none bg-white"
+                            >
+                                <option value="">— Seleccionar Comercial —</option>
+                                {Object.entries(SALES_REPS).map(([code, name]) => (
+                                    <option key={code} value={name}>{name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
                     <div>
                         <label className="block text-sm font-bold text-slate-700 mb-2">Usuario (Login) *</label>
                         <input

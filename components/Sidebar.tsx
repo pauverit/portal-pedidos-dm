@@ -25,13 +25,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
       id: 'dashboard',
       label: 'Dashboard',
       icon: LayoutDashboard,
-      roles: ['client', 'admin']
+      roles: ['client', 'admin', 'sales']
     },
     {
       id: 'flexible',
       label: 'Materiales Flexibles',
       icon: Scroll,
-      roles: ['client', 'admin'],
+      roles: ['client', 'admin', 'sales'],
       subItems: [
         { id: 'cat_flexible_vinilos', label: 'Vinilos' },
         { id: 'cat_flexible_laminados', label: 'Laminados' },
@@ -49,7 +49,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
       id: 'rigid',
       label: 'Rígidos',
       icon: Layers,
-      roles: ['client', 'admin'],
+      roles: ['client', 'admin', 'sales'],
       subItems: [
         { id: 'cat_rigid_pvc', label: 'PVC' },
         { id: 'cat_rigid_composite', label: 'Composite' },
@@ -62,7 +62,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
       id: 'accessory',
       label: 'Accesorios',
       icon: Wrench,
-      roles: ['client', 'admin'],
+      roles: ['client', 'admin', 'sales'],
       subItems: [
         { id: 'cat_accessory_herramientas', label: 'Herramientas' },
         { id: 'cat_accessory_ollados', label: 'Ollados' },
@@ -75,7 +75,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
       id: 'display',
       label: 'Displays',
       icon: Monitor,
-      roles: ['client', 'admin'],
+      roles: ['client', 'admin', 'sales'],
       subItems: [
         { id: 'cat_display_rollups', label: 'Roll-ups' },
         { id: 'cat_display_xban', label: 'X-Banners' },
@@ -88,7 +88,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
       id: 'cat_ink_all',
       label: 'Tintas & Consumibles',
       icon: Printer,
-      roles: ['client', 'admin'],
+      roles: ['client', 'admin', 'sales'],
       subItems: [
         { id: 'cat_ink_l600_700', label: 'L600 / L700 Series' },
         { id: 'cat_ink_l800', label: 'L800 Series / R530' },
@@ -110,10 +110,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
       roles: ['admin']
     },
     {
+      id: 'admin_sales_management',
+      label: 'Gestión de Comerciales',
+      icon: UserCircle,
+      roles: ['admin']
+    },
+    {
+      id: 'admin_new_client',
+      label: 'Alta Nuevo Cliente',
+      icon: UserPlus,
+      roles: ['sales']
+    },
+    {
+      id: 'admin_client_list',
+      label: 'Mis Clientes',
+      icon: UserCircle,
+      roles: ['sales']
+    },
+    {
       id: 'client_orders',
       label: 'Mis Pedidos',
-      icon: ShoppingBag, // Need to import ShoppingBag
-      roles: ['client', 'admin']
+      icon: ShoppingBag,
+      roles: ['client', 'admin', 'sales']
     },
   ];
 
@@ -145,7 +163,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
             <UserCircle className="text-slate-400" size={24} />
             <div className="overflow-hidden">
               <p className="text-xs font-bold text-slate-900 truncate">{currentUser?.name}</p>
-              <p className="text-[10px] text-slate-500 uppercase tracking-wider">{currentUser?.role === 'admin' ? 'Administrador' : 'Cliente B2B'}</p>
+              <p className="text-[10px] text-slate-500 uppercase tracking-wider">
+                {currentUser?.role === 'admin' ? 'Administrador' : currentUser?.role === 'sales' ? 'Comercial' : 'Cliente B2B'}
+              </p>
             </div>
           </div>
         </div>
@@ -206,7 +226,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
         </nav>
 
         <div className="p-4 border-t border-slate-100">
-          {(currentUser?.role === 'client' || currentUser?.role === 'admin') && (
+          {(currentUser?.role === 'client' || currentUser?.role === 'admin' || currentUser?.role === 'sales') && (
             <button
               onClick={() => {
                 setCurrentView('cart');

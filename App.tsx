@@ -15,6 +15,8 @@ import { ProductListView } from './components/ProductListView';
 import { CheckoutView } from './components/CheckoutView';
 import { OrderSuccessView } from './components/OrderSuccessView';
 import { DashboardView } from './components/DashboardView';
+import { SalesDashboard } from './components/SalesDashboard';
+import { AdminSalesManagement } from './components/AdminSalesManagement';
 
 import {
     SALES_REPS, SALES_REPS_PHONES, SALES_REPS_EMAILS, INITIAL_PRODUCTS
@@ -88,7 +90,7 @@ export default function App() {
     useEffect(() => {
         if (currentUser) {
             if (currentView === 'login') {
-                setCurrentView(currentUser.role === 'admin' ? 'admin_dashboard' : 'dashboard');
+                setCurrentView(currentUser.role === 'admin' ? 'admin_dashboard' : currentUser.role === 'sales' ? 'dashboard' : 'dashboard');
             }
             loadUserOrders(currentUser.role === 'client' ? currentUser.id : undefined);
         } else {
@@ -276,22 +278,25 @@ export default function App() {
 
     const handleCreateClient = async (clientData: any) => {
         try {
+            const data = {
+                company_name: clientData.name,
+                username: clientData.username,
+                password: clientData.password,
+                email: clientData.email,
+                phone: clientData.phone,
+                sales_rep: currentUser?.role === 'sales' ? currentUser.name : clientData.salesRep,
+                sales_rep_code: currentUser?.role === 'sales' ? currentUser.salesRepCode : undefined,
+                delegation: clientData.delegation,
+                rappel_threshold: clientData.rappelThreshold,
+                hide_prices: clientData.hidePrices,
+                rappel_accumulated: 0,
+                must_change_password: true,
+                role: 'client'
+            };
+
             const { error } = await supabase
                 .from('clients')
-                .insert([{
-                    company_name: clientData.name,
-                    username: clientData.username,
-                    password: clientData.password,
-                    email: clientData.email,
-                    phone: clientData.phone,
-                    sales_rep: clientData.salesRep,
-                    delegation: clientData.delegation,
-                    rappel_threshold: clientData.rappelThreshold,
-                    hide_prices: clientData.hidePrices,
-                    rappel_accumulated: 0,
-                    must_change_password: true,
-                    role: 'client'
-                }]);
+                .insert([data]);
 
             if (error) throw error;
             await refreshData();
@@ -399,7 +404,12 @@ export default function App() {
     };
 
     const renderContent = () => {
-        if (currentView === 'dashboard' && currentUser) return <DashboardView currentUser={currentUser} onNewOrder={() => setCurrentView('cat_flexible_vinilos')} formatCurrency={formatCurrency} />;
+        if (currentView === 'dashboard' && currentUser) {
+            if (currentUser.role === 'sales') {
+                return <SalesDashboard currentUser={currentUser} clients={users} orders={orders} onNavigate={setCurrentView} formatCurrency={formatCurrency} />;
+            }
+            return <DashboardView currentUser={currentUser} onNewOrder={() => setCurrentView('cat_flexible_vinilos')} formatCurrency={formatCurrency} />;
+        }
         if (currentView.startsWith('cat_')) return <ProductListView products={products} cart={cart} currentView={currentView} searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} sortOrder={sortOrder} onSortOrderChange={setSortOrder} onAddToCart={addToCart} onUpdateQuantity={updateQuantity} onEditProduct={setEditingProduct} isAdmin={currentUser?.role === 'admin'} formatCurrency={formatCurrency} />;
         if (currentView === 'cart' && currentUser) return <CheckoutView currentUser={currentUser} cart={cart} onContinueShopping={() => setCurrentView('cat_flexible_vinilos')} onUpdateQuantity={updateQuantity} onAddToCart={addToCart} formatCurrency={formatCurrency} couponCode={couponCode} onCouponCodeChange={setCouponCode} appliedCoupon={appliedCoupon} onApplyCoupon={handleApplyCoupon} onRemoveCoupon={() => setAppliedCoupon(null)} activeRep={activeRep} activeRepPhone={activeRepPhone} totalWeight={totalWeight} shippingMethod={shippingMethod} onShippingMethodChange={setShippingMethod} agencyCost={agencyCost} observations={observations} onObservationsChange={setObservations} useAccumulatedRappel={useAccumulatedRappel} onUseAccumulatedRappelChange={setUseAccumulatedRappel} rappelDiscount={rappelDiscount} cartTotal={cartTotal} shippingCost={shippingCost} tax={tax} finalTotal={finalTotal} newRappelGenerated={newRappelGenerated} onFinalizeOrder={handleFinalizeOrder} />;
         if (currentView === 'order_success') return <OrderSuccessView order={lastOrder} observations={observations} formatCurrency={formatCurrency} onReset={() => setCurrentView('dashboard')} userEmail={currentUser?.email || ''} salesRepPhone={activeRepPhone} />;
@@ -408,9 +418,15 @@ export default function App() {
         if (currentView === 'admin_products') return <AdminProductList products={products} searchQuery={searchQuery} onSearchChange={setSearchQuery} editingProduct={editingProduct} onEditClick={setEditingProduct} onUpdateProduct={handleUpdateProduct} onCancelEdit={() => setEditingProduct(null)} onEditingProductChange={setEditingProduct} onBack={() => setCurrentView('admin_dashboard')} formatCurrency={formatCurrency} />;
         if (currentView === 'admin_load') return <AdminBulkLoad onSave={handleSaveBulkProducts} currentProducts={products} />;
         if (currentView === 'admin_bulk_edit') return <AdminBulkEdit products={products} onSave={handleBulkEditProducts} onBack={() => setCurrentView('admin_dashboard')} />;
-        if (currentView === 'admin_client_list') return <div className="p-6 md:p-10 max-w-7xl mx-auto"><AdminClientList clients={users} orders={orders} onEditClient={() => { }} onSaveClient={handleSaveClient} formatCurrency={formatCurrency} /></div>;
-        if (currentView === 'admin_new_client') return <AdminNewClient onSave={handleCreateClient} onBack={() => setCurrentView('admin_dashboard')} />;
+        if (currentView === 'admin_client_list') {
+            const displayClients = currentUser?.role === 'sales'
+                ? users.filter(u => u.salesRep === currentUser.name || u.salesRepCode === currentUser.salesRepCode)
+                : users;
+            return <div className="p-6 md:p-10 max-w-7xl mx-auto"><AdminClientList clients={displayClients} orders={orders} onEditClient={() => { }} onSaveClient={handleSaveClient} formatCurrency={formatCurrency} isAdmin={currentUser?.role === 'admin'} /></div>;
+        }
+        if (currentView === 'admin_new_client') return <AdminNewClient onSave={handleCreateClient} onBack={() => setCurrentView(currentUser?.role === 'sales' ? 'dashboard' : 'admin_dashboard')} isAdmin={currentUser?.role === 'admin'} />;
         if (currentView === 'admin_coupons') return <div className="p-6 md:p-10 max-w-7xl mx-auto"><AdminCoupons coupons={promoCoupons} onAddCoupon={handleAddCoupon} onUpdateCoupon={handleUpdateCoupon} onDeleteCoupon={handleDeleteCoupon} /></div>;
+        if (currentView === 'admin_sales_management') return <AdminSalesManagement salesReps={users.filter(u => u.role === 'sales')} clients={users} orders={orders} onRefresh={refreshData} formatCurrency={formatCurrency} />;
 
         return <div className="p-10">Vista no encontrada ({currentView})</div>;
     };

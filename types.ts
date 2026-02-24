@@ -40,7 +40,7 @@ export interface User {
   name: string;
   id: string;
   email: string;
-  role: 'admin' | 'client';
+  role: 'admin' | 'client' | 'sales';
   rappelAccumulated: number;
   rappelThreshold?: number; // New: custom threshold for rappel accumulation
   // Auth fields
@@ -51,12 +51,13 @@ export interface User {
   // B2B Specifics
   salesRep?: string;
   delegation?: string;
-  usedCoupons?: string[];
   // Pricing
   hidePrices?: boolean;
   customPrices?: Record<string, number>; // Map reference -> price
   mustChangePassword?: boolean; // true = force password change on first login
   isActive?: boolean; // true = client has completed first login and activation
+  usedCoupons?: string[];
+  salesRepCode?: string; // For sales representatives
 }
 
 export interface SalesRep {

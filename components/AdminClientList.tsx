@@ -9,6 +9,7 @@ interface AdminClientListProps {
     onEditClient: (client: User) => void;
     onSaveClient: (client: User) => Promise<void>;
     formatCurrency: (value: number) => string;
+    isAdmin?: boolean;
 }
 
 export const AdminClientList: React.FC<AdminClientListProps> = ({
@@ -16,7 +17,8 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
     orders,
     onEditClient,
     onSaveClient,
-    formatCurrency
+    formatCurrency,
+    isAdmin = true
 }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [editingClient, setEditingClient] = useState<User | null>(null);
@@ -54,7 +56,7 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
 
     const handleSave = async () => {
         if (!editingClient) return;
-        if (!editForm.salesRep) {
+        if (isAdmin && !editForm.salesRep) {
             alert('El comercial asignado es obligatorio.');
             return;
         }
@@ -241,22 +243,24 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Comercial Asignado *</label>
-                                <select
-                                    value={editForm.salesRep || ''}
-                                    onChange={e => setEditForm(p => ({ ...p, salesRep: e.target.value }))}
-                                    className={`w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none ${!editForm.salesRep ? 'border-red-300 bg-red-50' : 'border-slate-300'}`}
-                                >
-                                    <option value="">— Seleccionar Comercial —</option>
-                                    {Object.entries(SALES_REPS).map(([code, name]) => (
-                                        <option key={code} value={name}>{name}</option>
-                                    ))}
-                                </select>
-                                {!editForm.salesRep && (
-                                    <p className="text-xs text-red-500 mt-1">⚠️ El comercial es obligatorio</p>
-                                )}
-                            </div>
+                            {isAdmin && (
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Comercial Asignado *</label>
+                                    <select
+                                        value={editForm.salesRep || ''}
+                                        onChange={e => setEditForm(p => ({ ...p, salesRep: e.target.value }))}
+                                        className={`w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none ${!editForm.salesRep ? 'border-red-300 bg-red-50' : 'border-slate-300'}`}
+                                    >
+                                        <option value="">— Seleccionar Comercial —</option>
+                                        {Object.entries(SALES_REPS).map(([code, name]) => (
+                                            <option key={code} value={name}>{name}</option>
+                                        ))}
+                                    </select>
+                                    {!editForm.salesRep && (
+                                        <p className="text-xs text-red-500 mt-1">⚠️ El comercial es obligatorio</p>
+                                    )}
+                                </div>
+                            )}
 
                             <div>
                                 <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Rappel Umbral (€)</label>
