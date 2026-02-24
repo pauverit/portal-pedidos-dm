@@ -167,19 +167,64 @@ export default function App() {
         setCart(prev => {
             let next = [...prev];
             for (const sel of selections) {
+                const laminateId = `${sel.laminate.id}-pack-${sel.vinylCartItemId}`;
+
                 next = next.map(item => {
                     if (item.id !== sel.vinylCartItemId) return item;
                     const nm2 = Math.max(0, (item.pricePerM2 ?? 0) - 0.10);
-                    return { ...item, pricePerM2: nm2, calculatedPrice: (item.width ?? 0) * (item.length ?? 0) * nm2, name: item.name.includes('(Pack)') ? item.name : `${item.name} (Pack)` };
+                    return {
+                        ...item,
+                        pricePerM2: nm2,
+                        originalPricePerM2: item.pricePerM2,
+                        promoLinkedId: laminateId,
+                        calculatedPrice: (item.width ?? 0) * (item.length ?? 0) * nm2,
+                        name: item.name.includes('(Pack)') ? item.name : `${item.name} (Pack)`
+                    };
                 });
+
                 const l = sel.laminate;
                 const dpm2 = Math.max(0, (l.pricePerM2 ?? 0) - 0.10);
-                next.push({ ...l, id: `${l.id}-pack-${sel.finish}`, finish: sel.finish, pricePerM2: dpm2, calculatedPrice: (l.width ?? 0) * (l.length ?? 0) * dpm2, quantity: 1, name: `${l.name} [${sel.finish === 'gloss' ? 'Brillo' : 'Mate'}, Pack]` });
+                next.push({
+                    ...l,
+                    id: laminateId,
+                    finish: sel.finish,
+                    pricePerM2: dpm2,
+                    calculatedPrice: (l.width ?? 0) * (l.length ?? 0) * dpm2,
+                    quantity: 1,
+                    name: `${l.name} [${sel.finish === 'gloss' ? 'Brillo' : 'Mate'}, Pack]`
+                });
             }
             return next;
         });
         setShowPromoModal(false);
     };
+
+    // Auto-restore vinyl price if linked laminate is removed
+    useEffect(() => {
+        const promotedVinyls = cart.filter(item => item.promoLinkedId);
+        if (promotedVinyls.length === 0) return;
+
+        let needsUpdate = false;
+        const newCart = cart.map(item => {
+            if (item.promoLinkedId && !cart.some(l => l.id === item.promoLinkedId)) {
+                needsUpdate = true;
+                const restoredPrice = item.originalPricePerM2 ?? (item.pricePerM2 ?? 0) + 0.10;
+                return {
+                    ...item,
+                    pricePerM2: restoredPrice,
+                    originalPricePerM2: undefined,
+                    promoLinkedId: undefined,
+                    calculatedPrice: (item.width ?? 0) * (item.length ?? 0) * restoredPrice,
+                    name: item.name.replace(' (Pack)', '')
+                };
+            }
+            return item;
+        });
+
+        if (needsUpdate) {
+            setCart(newCart);
+        }
+    }, [cart]);
 
     useEffect(() => {
         if (currentView !== 'cart') { offeredVinylIds.current.clear(); return; }
@@ -187,7 +232,18 @@ export default function App() {
         if (vinylItems.length === 0) return;
         const entries: PromoVinylEntry[] = [];
         for (const v of vinylItems) {
-            const candidates = products.filter(p => p.category === 'flexible' && isLaminate(p) && p.width === v.width && (v.brand ? p.brand === v.brand : true));
+            const vPrice = v.pricePerM2 ?? 0;
+            const candidates = products.filter(p => {
+                const isMatchingLaminate = p.category === 'flexible' && isLaminate(p) && p.width === v.width && (v.brand ? p.brand === v.brand : true);
+                if (!isMatchingLaminate) return false;
+
+                // Allow only laminates with similar price (+/- 20%)
+                const pPrice = p.pricePerM2 ?? 0;
+                if (vPrice === 0) return true; // Fallback if price is missing
+                const diff = Math.abs(pPrice - vPrice) / vPrice;
+                return diff <= 0.20;
+            });
+
             if (candidates.length > 0) entries.push({ vinylItem: v, candidates });
             offeredVinylIds.current.add(v.id);
         }

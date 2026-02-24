@@ -32,6 +32,8 @@ export interface Product {
 export interface CartItem extends Product {
   quantity: number;
   calculatedPrice: number;
+  promoLinkedId?: string; // ID of the laminate linked to this vinyl in a promotion
+  originalPricePerM2?: number; // Store original price to restore it if needed
 }
 
 export interface User {
