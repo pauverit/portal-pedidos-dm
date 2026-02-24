@@ -234,19 +234,45 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                     </div>
                 ) : (
                     <>
-                        {newRappelGenerated > 0 && (
-                            <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-lg flex flex-col gap-2 text-emerald-800 text-sm">
-                                <div className="flex justify-between items-center">
-                                    <span className="font-medium flex items-center gap-1">
-                                        <CheckCircle size={14} /> ¡Umbral de Rappel Superado!
-                                    </span>
-                                    <span className="font-bold text-lg">+{formatCurrency(newRappelGenerated)}</span>
-                                </div>
-                                <p className="text-[10px] text-emerald-600 uppercase tracking-wider font-bold">
-                                    Este pedido genera un 3% de beneficio acumulable
-                                </p>
+                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-2">
+                            <div className="flex justify-between items-center mb-2">
+                                <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Generación de Rappel</h4>
+                                <span className="bg-white px-2 py-0.5 rounded border border-slate-200 text-[10px] font-bold text-slate-700">Umbral: {formatCurrency(earningThreshold)}</span>
                             </div>
-                        )}
+
+                            {cartTotal >= earningThreshold ? (
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm font-bold text-emerald-700 flex items-center gap-1">
+                                            <CheckCircle size={14} /> ¡Beneficio Activado!
+                                        </span>
+                                        <span className="text-xl font-black text-emerald-600">+{formatCurrency(newRappelGenerated)}</span>
+                                    </div>
+                                    <div className="h-1.5 bg-emerald-100 rounded-full overflow-hidden">
+                                        <div className="h-full bg-emerald-500 rounded-full w-full"></div>
+                                    </div>
+                                    <p className="text-[10px] text-emerald-600 font-medium">
+                                        Este pedido genera un 3% de beneficio directo para tu próximo canje.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-center text-sm font-medium text-slate-600">
+                                        <span>Progreso para Rappel</span>
+                                        <span>{((cartTotal / earningThreshold) * 100).toFixed(0)}%</span>
+                                    </div>
+                                    <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-slate-400 rounded-full transition-all duration-500"
+                                            style={{ width: `${(cartTotal / earningThreshold) * 100}%` }}
+                                        ></div>
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 leading-tight">
+                                        Te faltan <strong>{formatCurrency(earningThreshold - cartTotal)}</strong> para empezar a acumular saldo rappel (3%) en tus pedidos.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
 
                         {currentUser.rappelAccumulated > 0 && (
                             <div className="border-t border-slate-100 pt-4">
@@ -310,6 +336,13 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                             {shippingCost > 0 && <div className="flex justify-between text-sm text-slate-500"><span>Envío</span> <span>{formatCurrency(shippingCost)}</span></div>}
                             {useAccumulatedRappel && <div className="flex justify-between text-sm text-green-600 font-medium"><span>Descuento Rappel</span> <span>-{formatCurrency(rappelDiscount)}</span></div>}
                             <div className="flex justify-between text-sm text-slate-500"><span>IVA (21%)</span> <span>{formatCurrency(tax)}</span></div>
+
+                            {newRappelGenerated > 0 && (
+                                <div className="flex justify-between text-xs font-bold text-emerald-600 bg-emerald-50 p-2 rounded-lg mt-2 border border-emerald-100">
+                                    <span>Bonificación acumulada (este pedido)</span>
+                                    <span>+{formatCurrency(newRappelGenerated)}</span>
+                                </div>
+                            )}
                         </div>
 
                         <div className="h-px bg-slate-900 my-2"></div>
