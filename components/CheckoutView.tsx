@@ -234,40 +234,69 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                     </div>
                 ) : (
                     <>
-                        {appliedCoupon?.code === 'RAPPEL3' && (
-                            <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg flex justify-between items-center text-blue-800 text-sm">
-                                <span className="font-medium">Beneficio generado (3%):</span>
-                                <span className="font-bold">+{formatCurrency(newRappelGenerated)}</span>
+                        {newRappelGenerated > 0 && (
+                            <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-lg flex flex-col gap-2 text-emerald-800 text-sm">
+                                <div className="flex justify-between items-center">
+                                    <span className="font-medium flex items-center gap-1">
+                                        <CheckCircle size={14} /> ¡Umbral de Rappel Superado!
+                                    </span>
+                                    <span className="font-bold text-lg">+{formatCurrency(newRappelGenerated)}</span>
+                                </div>
+                                <p className="text-[10px] text-emerald-600 uppercase tracking-wider font-bold">
+                                    Este pedido genera un 3% de beneficio acumulable
+                                </p>
                             </div>
                         )}
 
                         {currentUser.rappelAccumulated > 0 && (
                             <div className="border-t border-slate-100 pt-4">
                                 {canRedeem ? (
-                                    <label className="flex items-center justify-between cursor-pointer p-2 hover:bg-slate-50 rounded select-none">
-                                        <div className="flex items-center gap-3">
-                                            <input
-                                                type="checkbox"
-                                                checked={useAccumulatedRappel}
-                                                onChange={(e) => onUseAccumulatedRappelChange(e.target.checked)}
-                                                className="w-5 h-5 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
-                                            />
+                                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 text-white shadow-lg animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                        <label className="flex items-center justify-between cursor-pointer select-none">
+                                            <div className="flex items-center gap-4">
+                                                <div className="relative flex items-center justify-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={useAccumulatedRappel}
+                                                        onChange={(e) => onUseAccumulatedRappelChange(e.target.checked)}
+                                                        className="w-6 h-6 rounded-lg border-white/20 bg-white/10 text-white focus:ring-white focus:ring-offset-slate-900"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold">¡Puedes canjear tu Saldo Rappel!</p>
+                                                    <p className="text-xs text-white/60">Disponible: {formatCurrency(currentUser.rappelAccumulated)}</p>
+                                                </div>
+                                            </div>
+                                            {useAccumulatedRappel && (
+                                                <span className="text-xl font-black text-white">-{formatCurrency(rappelDiscount)}</span>
+                                            )}
+                                        </label>
+                                        <div className="mt-3 pt-3 border-t border-white/10">
+                                            <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold">
+                                                Lógica de canje aplicada: Umbral de {formatCurrency(earningThreshold)} x 1.5
+                                            </p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-slate-500">
+                                        <div className="flex justify-between items-center mb-2">
                                             <div>
-                                                <p className="text-sm font-bold text-slate-700">Canjear saldo acumulado</p>
-                                                <p className="text-xs text-slate-500">Disponible: {formatCurrency(currentUser.rappelAccumulated)}</p>
+                                                <p className="text-xs font-bold text-slate-700 uppercase tracking-tighter">Saldo Rappel Acumulado</p>
+                                                <p className="text-sm font-bold text-slate-900">{formatCurrency(currentUser.rappelAccumulated)}</p>
+                                            </div>
+                                            <div className="bg-white border border-slate-200 px-3 py-1 rounded-full text-[10px] font-bold uppercase text-slate-400">
+                                                Bloqueado
                                             </div>
                                         </div>
-                                        {useAccumulatedRappel && <span className="text-green-600 font-bold">-{formatCurrency(rappelDiscount)}</span>}
-                                    </label>
-                                ) : (
-                                    <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-slate-500">
-                                        <div className="flex justify-between items-center mb-1">
-                                            <p className="text-xs font-bold text-slate-700 uppercase">Saldo Rappel Disponible</p>
-                                            <span className="font-bold text-slate-900">{formatCurrency(currentUser.rappelAccumulated)}</span>
+                                        <div className="h-2 bg-slate-200 rounded-full overflow-hidden mb-2">
+                                            <div
+                                                className="h-full bg-slate-400 rounded-full transition-all duration-500"
+                                                style={{ width: `${Math.min(100, (cartTotal / redemptionThreshold) * 100)}%` }}
+                                            ></div>
                                         </div>
-                                        <p className="text-xs">
-                                            Pedido mínimo para canje: <strong>{formatCurrency(redemptionThreshold)}</strong>.
-                                            Faltan: {formatCurrency(missingForRedemption)}
+                                        <p className="text-[10px] leading-tight">
+                                            Para canjear, el pedido debe superar <strong>{formatCurrency(redemptionThreshold)}</strong> (Umbral x 1.5).
+                                            Faltan <strong>{formatCurrency(missingForRedemption)}</strong>.
                                         </p>
                                     </div>
                                 )}
