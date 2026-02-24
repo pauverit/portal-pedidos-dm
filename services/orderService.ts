@@ -16,11 +16,16 @@ export const orderService = {
         rappelDiscount: number,
         appliedCoupon: { code: string; discount: number } | null,
         newRappelGenerated: number,
+        subtotal: number,
+        tax: number,
+        shippingCost: number,
+        discountAmount: number,
     }) {
         const {
             currentUser, cart, finalTotal, activeRep, activeRepPhone,
             observations, shippingMethod, useAccumulatedRappel,
-            rappelDiscount, appliedCoupon, newRappelGenerated
+            rappelDiscount, appliedCoupon, newRappelGenerated,
+            subtotal, tax, shippingCost, discountAmount
         } = params;
 
         if (!supabase) throw new Error('Supabase client is not initialized.');
@@ -119,6 +124,12 @@ export const orderService = {
             sales_rep_phone: activeRepPhone,
             shipping_method: shippingLabel,
             email_subject: `PEDIDO | ${currentUser.name} | ${shippingLabel}`,
+            subtotal: formatCurrency(subtotal),
+            shipping_cost: formatCurrency(shippingCost),
+            rappel_discount: rappelDiscount > 0 ? `-${formatCurrency(rappelDiscount)}` : '0,00 €',
+            coupon_discount: discountAmount > 0 ? `-${formatCurrency(discountAmount)}` : '0,00 €',
+            tax: formatCurrency(tax),
+            total_final: formatCurrency(finalTotal),
             order_details: cart
                 .map(item =>
                     `${item.reference} | ${item.name} | ${item.quantity} x ${formatCurrency(item.calculatedPrice)} = ${formatCurrency(item.calculatedPrice * item.quantity)}`

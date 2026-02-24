@@ -139,7 +139,11 @@ export default function App() {
             const results = await orderService.finalizeOrder({
                 currentUser, cart, finalTotal, activeRep, activeRepPhone, observations,
                 shippingMethod, useAccumulatedRappel, rappelDiscount, appliedCoupon,
-                newRappelGenerated
+                newRappelGenerated,
+                subtotal: subtotalAfterDiscount,
+                tax,
+                shippingCost,
+                discountAmount
             });
 
             const newOrder: Order = {
