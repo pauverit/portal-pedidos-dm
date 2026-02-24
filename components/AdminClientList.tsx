@@ -10,6 +10,7 @@ interface AdminClientListProps {
     onSaveClient: (client: User) => Promise<void>;
     formatCurrency: (value: number) => string;
     isAdmin?: boolean;
+    salesRepsData: User[];
 }
 
 export const AdminClientList: React.FC<AdminClientListProps> = ({
@@ -18,7 +19,8 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
     onEditClient,
     onSaveClient,
     formatCurrency,
-    isAdmin = true
+    isAdmin = true,
+    salesRepsData
 }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [editingClient, setEditingClient] = useState<User | null>(null);
@@ -252,8 +254,8 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                                         className={`w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none ${!editForm.salesRep ? 'border-red-300 bg-red-50' : 'border-slate-300'}`}
                                     >
                                         <option value="">— Seleccionar Comercial —</option>
-                                        {Object.entries(SALES_REPS).map(([code, name]) => (
-                                            <option key={code} value={name}>{name}</option>
+                                        {salesRepsData.map(rep => (
+                                            <option key={rep.id} value={rep.name}>{rep.name}</option>
                                         ))}
                                     </select>
                                     {!editForm.salesRep && (

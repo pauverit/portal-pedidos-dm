@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { UserPlus, Save, Eye, EyeOff } from 'lucide-react';
-import { SALES_REPS } from '../constants';
+import { User } from '../types';
 
 interface AdminNewClientProps {
     onSave: (clientData: any) => Promise<void>;
     onBack: () => void;
     isAdmin?: boolean;
+    salesReps: User[];
 }
 
-export const AdminNewClient: React.FC<AdminNewClientProps> = ({ onSave, onBack, isAdmin = true }) => {
+export const AdminNewClient: React.FC<AdminNewClientProps> = ({ onSave, onBack, isAdmin = true, salesReps }) => {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -66,8 +67,8 @@ export const AdminNewClient: React.FC<AdminNewClientProps> = ({ onSave, onBack, 
                                 className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none bg-white"
                             >
                                 <option value="">— Seleccionar Comercial —</option>
-                                {Object.entries(SALES_REPS).map(([code, name]) => (
-                                    <option key={code} value={name}>{name}</option>
+                                {salesReps.map(rep => (
+                                    <option key={rep.id} value={rep.name}>{rep.name}</option>
                                 ))}
                             </select>
                         </div>

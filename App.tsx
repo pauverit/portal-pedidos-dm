@@ -422,9 +422,13 @@ export default function App() {
             const displayClients = currentUser?.role === 'sales'
                 ? users.filter(u => u.salesRep === currentUser.name || u.salesRepCode === currentUser.salesRepCode)
                 : users;
-            return <div className="p-6 md:p-10 max-w-7xl mx-auto"><AdminClientList clients={displayClients} orders={orders} onEditClient={() => { }} onSaveClient={handleSaveClient} formatCurrency={formatCurrency} isAdmin={currentUser?.role === 'admin'} /></div>;
+            const salesReps = users.filter(u => u.role === 'sales');
+            return <div className="p-6 md:p-10 max-w-7xl mx-auto"><AdminClientList clients={displayClients} orders={orders} onEditClient={() => { }} onSaveClient={handleSaveClient} formatCurrency={formatCurrency} isAdmin={currentUser?.role === 'admin'} salesRepsData={salesReps} /></div>;
         }
-        if (currentView === 'admin_new_client') return <AdminNewClient onSave={handleCreateClient} onBack={() => setCurrentView(currentUser?.role === 'sales' ? 'dashboard' : 'admin_dashboard')} isAdmin={currentUser?.role === 'admin'} />;
+        if (currentView === 'admin_new_client') {
+            const salesReps = users.filter(u => u.role === 'sales');
+            return <AdminNewClient onSave={handleCreateClient} onBack={() => setCurrentView(currentUser?.role === 'sales' ? 'dashboard' : 'admin_dashboard')} isAdmin={currentUser?.role === 'admin'} salesReps={salesReps} />;
+        }
         if (currentView === 'admin_coupons') return <div className="p-6 md:p-10 max-w-7xl mx-auto"><AdminCoupons coupons={promoCoupons} onAddCoupon={handleAddCoupon} onUpdateCoupon={handleUpdateCoupon} onDeleteCoupon={handleDeleteCoupon} /></div>;
         if (currentView === 'admin_sales_management') return <AdminSalesManagement salesReps={users.filter(u => u.role === 'sales')} clients={users} orders={orders} onRefresh={refreshData} formatCurrency={formatCurrency} />;
 

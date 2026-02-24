@@ -96,6 +96,20 @@ export const orderService = {
 
         const shippingLabel = shippingMethod === 'agency' ? 'TIPSA' : 'REPARTO PROPIO';
 
+        // Fetch Sales Rep email from DB
+        let salesRepEmail = 'info@digitalmarket.com';
+        if (activeRep) {
+            const { data: repData } = await supabase
+                .from('clients')
+                .select('email')
+                .eq('role', 'sales')
+                .eq('company_name', activeRep)
+                .single();
+            if (repData?.email) {
+                salesRepEmail = repData.email;
+            }
+        }
+
         const templateParams = {
             to_email: currentUser.email,
             to_name: currentUser.name,
@@ -112,10 +126,6 @@ export const orderService = {
                 .join('\n'),
             observations: observations || 'Sin observaciones'
         };
-
-        const salesRepEmail = activeRep && Object.keys(SALES_REPS).find(k => SALES_REPS[k] === activeRep)
-            ? SALES_REPS_EMAILS[Object.keys(SALES_REPS).find(k => SALES_REPS[k] === activeRep)!]
-            : 'info@digitalmarket.com';
 
         await emailjs.send(
             import.meta.env.VITE_EMAILJS_SERVICE_ID,
