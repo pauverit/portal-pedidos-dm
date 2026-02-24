@@ -237,11 +237,11 @@ export default function App() {
                 const isMatchingLaminate = p.category === 'flexible' && isLaminate(p) && p.width === v.width && (v.brand ? p.brand === v.brand : true);
                 if (!isMatchingLaminate) return false;
 
-                // Allow only laminates with similar price (+/- 20%)
+                // Allow only laminates with similar price (+/- 0.40€/m2)
                 const pPrice = p.pricePerM2 ?? 0;
                 if (vPrice === 0) return true; // Fallback if price is missing
-                const diff = Math.abs(pPrice - vPrice) / vPrice;
-                return diff <= 0.20;
+                const diff = Math.abs(pPrice - vPrice);
+                return diff <= 0.40;
             });
 
             if (candidates.length > 0) entries.push({ vinylItem: v, candidates });
