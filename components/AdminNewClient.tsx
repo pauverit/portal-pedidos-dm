@@ -122,6 +122,29 @@ export const AdminNewClient: React.FC<AdminNewClientProps> = ({ onSave, onBack, 
                             className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none"
                         />
                     </div>
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Umbral Rappel (€) *</label>
+                        <input
+                            type="number"
+                            required
+                            min="500"
+                            max="1000"
+                            value={formData.rappelThreshold}
+                            onChange={e => setFormData({ ...formData, rappelThreshold: Number(e.target.value) })}
+                            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none"
+                            placeholder="500 - 1000"
+                        />
+                        <p className="text-[10px] text-slate-500 mt-1 uppercase font-bold tracking-tight">Mín. 500€ / Máx. 1000€</p>
+                    </div>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-800">
+                    <p className="font-bold mb-1">Información sobre Rappel:</p>
+                    <ul className="list-disc list-inside space-y-1 text-xs">
+                        <li>El cliente acumula un <strong>3% de beneficio</strong> en cada pedido superior al umbral establecido.</li>
+                        <li>Para canjear el saldo acumulado, el pedido debe superar <strong>1.5 veces</strong> su umbral.</li>
+                        <li>Ejemplo: Con umbral de 800€, acumula desde 800€ y canjea en pedidos de 1200€ o más.</li>
+                    </ul>
                 </div>
 
                 <div className="pt-4 flex items-center justify-end gap-4">

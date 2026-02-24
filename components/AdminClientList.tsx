@@ -265,13 +265,24 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                             )}
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Rappel Umbral (€)</label>
+                                <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Rappel Umbral (€) *</label>
                                 <input
                                     type="number"
+                                    min="500"
+                                    max="1000"
                                     value={editForm.rappelThreshold || 800}
                                     onChange={e => setEditForm(p => ({ ...p, rappelThreshold: Number(e.target.value) }))}
                                     className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
                                 />
+                                <p className="text-[10px] text-slate-500 mt-1 uppercase font-bold tracking-tight">Mín. 500€ / Máx. 1000€</p>
+                            </div>
+
+                            <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-800">
+                                <p className="font-bold mb-1">Información de Rappel:</p>
+                                <ul className="list-disc list-inside space-y-0.5">
+                                    <li>Acumula <strong>3% de beneficio</strong> &gt; umbral.</li>
+                                    <li>Canjea en pedidos &gt; <strong>1.5x umbral</strong>.</li>
+                                </ul>
                             </div>
 
                             <div className="flex gap-4 flex-wrap pt-1">
