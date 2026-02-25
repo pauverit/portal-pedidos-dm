@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserPlus, Edit2, TrendingUp, Users, ShoppingBag, Save, X, Eye, EyeOff, Search, ChevronDown, ChevronRight } from 'lucide-react';
+import { UserPlus, Edit2, TrendingUp, Users, ShoppingBag, Save, X, Eye, EyeOff, Search, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { User, Order } from '../types';
 import { supabase } from '../lib/supabase';
 
@@ -92,6 +92,20 @@ export const AdminSalesManagement: React.FC<AdminSalesManagementProps> = ({
             alert('Error: ' + error.message);
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleDelete = async (rep: User) => {
+        if (!confirm(`¿Eliminar al comercial "${rep.name}"? Esta acción no se puede deshacer.`)) return;
+        try {
+            const { error } = await supabase
+                .from('clients')
+                .delete()
+                .eq('id', rep.id);
+            if (error) throw error;
+            await onRefresh();
+        } catch (error: any) {
+            alert('Error al eliminar comercial: ' + error.message);
         }
     };
 
@@ -193,12 +207,22 @@ export const AdminSalesManagement: React.FC<AdminSalesManagementProps> = ({
                                                 <span className="text-purple-600 font-bold">{formatCurrency(stats.totalRappel)}</span>
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                <button
-                                                    onClick={() => startEdit(rep)}
-                                                    className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
-                                                >
-                                                    <Edit2 size={16} />
-                                                </button>
+                                                <div className="flex justify-end gap-1">
+                                                    <button
+                                                        onClick={() => startEdit(rep)}
+                                                        className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                                                        title="Editar"
+                                                    >
+                                                        <Edit2 size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(rep)}
+                                                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Eliminar"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                         {isExpanded && (

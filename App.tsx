@@ -40,7 +40,7 @@ export default function App() {
         products, users, setUsers, promoCoupons, setPromoCoupons, refreshData
     } = useSupabaseData();
     const { currentUser, setCurrentUser, login, logout, updateCurrentUser } = useAuth();
-    const { cart, setCart, addToCart, updateQuantity, clearCart } = useCart(currentUser);
+    const { cart, setCart, addToCart, updateQuantity, clearCart, syncCartPrices } = useCart(currentUser);
 
     const [currentView, setCurrentView] = useState('login');
     const [searchQuery, setSearchQuery] = useState('');
@@ -59,6 +59,15 @@ export default function App() {
     const offeredVinylIds = useRef<Set<string>>(new Set());
     const [loginError, setLoginError] = useState('');
     const [selectedClientForOrder, setSelectedClientForOrder] = useState<User | null>(null);
+
+    // Sync cart prices when a sales rep selects a different client
+    useEffect(() => {
+        if (currentUser?.role === 'sales' && selectedClientForOrder) {
+            syncCartPrices(selectedClientForOrder);
+        } else if (currentUser?.role === 'sales' && !selectedClientForOrder) {
+            syncCartPrices(currentUser);
+        }
+    }, [selectedClientForOrder?.id]);
 
     const [orders, setOrders] = useState<Order[]>([]);
 
@@ -87,12 +96,14 @@ export default function App() {
                 const userOrders = await orderService.getUserOrders(user.id);
                 setOrders(userOrders);
             } else if (user.role === 'sales') {
-                // Load orders for all clients assigned to this sales rep
+                // Efficient: pass clientIds directly — DB filters, not JS
                 const myClientIds = allUsers
                     .filter(u => u.role === 'client' && (u.salesRep === user.name || u.salesRepCode === user.salesRepCode))
                     .map(u => u.id);
-                const allOrders = await orderService.getUserOrders();
-                setOrders(allOrders.filter(o => myClientIds.includes(o.userId)));
+                const repOrders = myClientIds.length > 0
+                    ? await orderService.getUserOrders(undefined, myClientIds)
+                    : [];
+                setOrders(repOrders);
             } else {
                 // Admin: load all orders
                 const allOrders = await orderService.getUserOrders();
@@ -263,14 +274,14 @@ export default function App() {
         for (const v of vinylItems) {
             const vPrice = v.pricePerM2 ?? 0;
             const candidates = products.filter(p => {
-                const isMatchingLaminate = p.category === 'flexible' && isLaminate(p) && p.width === v.width && (v.brand ? p.brand === v.brand : true);
+                // Match laminates by brand (width no longer stored for flexible products)
+                const isMatchingLaminate = p.category === 'flexible' && isLaminate(p) && (v.brand ? p.brand === v.brand : true);
                 if (!isMatchingLaminate) return false;
 
                 // Allow only laminates with similar price (+/- 0.40€/m2)
                 const pPrice = p.pricePerM2 ?? 0;
-                if (vPrice === 0) return true; // Fallback if price is missing
-                const diff = Math.abs(pPrice - vPrice);
-                return diff <= 0.40;
+                if (vPrice === 0) return true;
+                return Math.abs(pPrice - vPrice) <= 0.40;
             });
 
             if (candidates.length > 0) entries.push({ vinylItem: v, candidates });

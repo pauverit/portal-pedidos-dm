@@ -40,8 +40,21 @@ export const ClientOrdersView: React.FC<ClientOrdersViewProps> = ({
                     </p>
                 </div>
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                    <p className="text-slate-500 text-xs uppercase font-bold mb-1">Saldo Rappel Acumulado</p>
-                    <p className="text-3xl font-bold text-green-600">{formatCurrency(currentUser?.rappelAccumulated || 0)}</p>
+                    {!isManagerView ? (
+                        <>
+                            <p className="text-slate-500 text-xs uppercase font-bold mb-1">Saldo Rappel Acumulado</p>
+                            <p className="text-3xl font-bold text-green-600">{formatCurrency(currentUser?.rappelAccumulated || 0)}</p>
+                        </>
+                    ) : (
+                        <>
+                            <p className="text-slate-500 text-xs uppercase font-bold mb-1">Ticket Medio</p>
+                            <p className="text-3xl font-bold text-slate-900">
+                                {userOrders.length > 0
+                                    ? formatCurrency(userOrders.reduce((s, o) => s + o.total, 0) / userOrders.length)
+                                    : '—'}
+                            </p>
+                        </>
+                    )}
                 </div>
             </div>
 

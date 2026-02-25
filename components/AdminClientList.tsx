@@ -226,7 +226,12 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                             </button>
                         </div>
 
-                        <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                        <div className={`p-6 space-y-4 max-h-[70vh] overflow-y-auto relative ${saving ? 'opacity-50 pointer-events-none' : ''}`}>
+                            {saving && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-white/20 z-10">
+                                    <div className="w-8 h-8 border-4 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
+                                </div>
+                            )}
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Empresa *</label>

@@ -159,13 +159,19 @@ export const orderService = {
             .update({ rappel_accumulated: newRappelTotal })
             .eq('id', client.id);
 
-        // 6. Coupons
+        // 6. Coupons — mark as used on the actual client, not the logged-in user
         if (appliedCoupon) {
-            const updatedUsedCoupons = [...(currentUser.usedCoupons || []), appliedCoupon.code];
+            const effectiveClientId = client.id; // always the order's client
+            const { data: clientData } = await supabase
+                .from('clients')
+                .select('used_coupons')
+                .eq('id', effectiveClientId)
+                .single();
+            const updatedUsedCoupons = [...((clientData?.used_coupons as string[]) || []), appliedCoupon.code];
             await supabase
                 .from('clients')
                 .update({ used_coupons: updatedUsedCoupons })
-                .eq('id', currentUser.id);
+                .eq('id', effectiveClientId);
         }
 
         return {
@@ -175,7 +181,7 @@ export const orderService = {
         };
     },
 
-    async getUserOrders(userId?: string): Promise<Order[]> {
+    async getUserOrders(userId?: string, clientIds?: string[]): Promise<Order[]> {
         if (!supabase) return [];
 
         // 1. Fetch Orders
@@ -185,6 +191,8 @@ export const orderService = {
 
         if (userId) {
             ordersQuery = ordersQuery.eq('client_id', userId);
+        } else if (clientIds && clientIds.length > 0) {
+            ordersQuery = ordersQuery.in('client_id', clientIds);
         }
 
         const { data: dbOrders, error: ordersError } = await ordersQuery

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, X, Loader2 } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { Product, CartItem } from '../types';
 import { ProductRow } from './ProductRow';
 

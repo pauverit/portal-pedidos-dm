@@ -3,13 +3,7 @@ import { CartItem, Product, User } from '../types';
 import { calculateWeight } from '../lib/utils';
 
 export function useCart(currentUser: User | null) {
-    const [cart, setCart] = useState<CartItem[]>(() => {
-        if (currentUser) {
-            const savedCart = localStorage.getItem(`dm_portal_cart_${currentUser.id}`);
-            return savedCart ? JSON.parse(savedCart) : [];
-        }
-        return [];
-    });
+    const [cart, setCart] = useState<CartItem[]>([]);
 
     const getEffectiveProduct = (product: Product, user: User | null): Product => {
         if (!user || !user.customPrices) return product;
@@ -94,11 +88,35 @@ export function useCart(currentUser: User | null) {
         }
     }, [currentUser?.id]);
 
+    const syncCartPrices = (user: User | null) => {
+        setCart(prev => prev.map(item => {
+            // Find original product info (we only have reference and basic fields)
+            // But we can re-apply custom prices from the user object
+            const customPrice = user?.customPrices?.[item.reference];
+            if (customPrice === undefined) return item;
+
+            const newPrice = item.isFlexible ? 0 : customPrice;
+            const newPricePerM2 = item.isFlexible ? customPrice : undefined;
+
+            const calculatedPrice = item.isFlexible
+                ? (item.width! * item.length! * newPricePerM2!)
+                : newPrice;
+
+            return {
+                ...item,
+                price: newPrice,
+                pricePerM2: newPricePerM2,
+                calculatedPrice
+            };
+        }));
+    };
+
     return {
         cart,
         setCart,
         addToCart,
         updateQuantity,
-        clearCart
+        clearCart,
+        syncCartPrices
     };
 }
