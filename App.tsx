@@ -58,11 +58,14 @@ export default function App() {
     const [promoEntries, setPromoEntries] = useState<PromoVinylEntry[]>([]);
     const offeredVinylIds = useRef<Set<string>>(new Set());
     const [loginError, setLoginError] = useState('');
+    const [selectedClientForOrder, setSelectedClientForOrder] = useState<User | null>(null);
 
     const [orders, setOrders] = useState<Order[]>([]);
 
     // Helper states from original logic
-    const activeRep = currentUser?.salesRep || null;
+    // For sales reps, use the selected client's salesRep; for clients, use their own
+    const orderUser = (currentUser?.role === 'sales' && selectedClientForOrder) ? selectedClientForOrder : currentUser;
+    const activeRep = orderUser?.salesRep || (currentUser?.role === 'sales' ? currentUser?.name : null);
     const repKey = Object.keys(SALES_REPS).find(key => SALES_REPS[key] === activeRep);
     const activeRepPhone = repKey ? SALES_REPS_PHONES[repKey] : '958 000 000';
 
@@ -135,9 +138,15 @@ export default function App() {
 
     const handleFinalizeOrder = async () => {
         if (!currentUser) return;
+        // Sales rep must select a client
+        if (currentUser.role === 'sales' && !selectedClientForOrder) {
+            alert('Debes seleccionar un cliente para asignar el pedido antes de confirmar.');
+            return;
+        }
+        const effectiveUser = (currentUser.role === 'sales' && selectedClientForOrder) ? selectedClientForOrder : currentUser;
         try {
             const results = await orderService.finalizeOrder({
-                currentUser, cart, finalTotal, activeRep, activeRepPhone, observations,
+                currentUser: effectiveUser, cart, finalTotal, activeRep, activeRepPhone, observations,
                 shippingMethod, useAccumulatedRappel, rappelDiscount, appliedCoupon,
                 newRappelGenerated,
                 subtotal: subtotalAfterDiscount,
@@ -148,7 +157,7 @@ export default function App() {
 
             const newOrder: Order = {
                 id: results.order.id,
-                userId: currentUser.id,
+                userId: effectiveUser.id,
                 date: new Date().toISOString(),
                 items: [...cart],
                 total: finalTotal,
@@ -163,6 +172,7 @@ export default function App() {
             setOrders(prev => [...prev, newOrder]);
             updateCurrentUser({ rappelAccumulated: results.newRappelTotal });
             clearCart();
+            setSelectedClientForOrder(null);
             setCurrentView('client_orders');
         } catch (error: any) {
             alert('Error: ' + error.message);
@@ -277,6 +287,19 @@ export default function App() {
             await refreshData();
         } catch (error: any) {
             alert('Error al guardar cliente: ' + error.message);
+        }
+    };
+
+    const handleDeleteClient = async (clientId: string) => {
+        try {
+            const { error } = await supabase
+                .from('clients')
+                .delete()
+                .eq('id', clientId);
+            if (error) throw error;
+            await refreshData();
+        } catch (error: any) {
+            alert('Error al eliminar cliente: ' + error.message);
         }
     };
 
@@ -415,7 +438,13 @@ export default function App() {
             return <DashboardView currentUser={currentUser} onNewOrder={() => setCurrentView('cat_flexible_vinilos')} formatCurrency={formatCurrency} />;
         }
         if (currentView.startsWith('cat_')) return <ProductListView products={products} cart={cart} currentView={currentView} searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} sortOrder={sortOrder} onSortOrderChange={setSortOrder} onAddToCart={addToCart} onUpdateQuantity={updateQuantity} onEditProduct={setEditingProduct} isAdmin={currentUser?.role === 'admin'} formatCurrency={formatCurrency} />;
-        if (currentView === 'cart' && currentUser) return <CheckoutView currentUser={currentUser} cart={cart} onContinueShopping={() => setCurrentView('cat_flexible_vinilos')} onUpdateQuantity={updateQuantity} onAddToCart={addToCart} formatCurrency={formatCurrency} couponCode={couponCode} onCouponCodeChange={setCouponCode} appliedCoupon={appliedCoupon} onApplyCoupon={handleApplyCoupon} onRemoveCoupon={() => setAppliedCoupon(null)} activeRep={activeRep} activeRepPhone={activeRepPhone} totalWeight={totalWeight} shippingMethod={shippingMethod} onShippingMethodChange={setShippingMethod} agencyCost={agencyCost} observations={observations} onObservationsChange={setObservations} useAccumulatedRappel={useAccumulatedRappel} onUseAccumulatedRappelChange={setUseAccumulatedRappel} rappelDiscount={rappelDiscount} cartTotal={cartTotal} shippingCost={shippingCost} tax={tax} finalTotal={finalTotal} newRappelGenerated={newRappelGenerated} onFinalizeOrder={handleFinalizeOrder} />;
+        if (currentView === 'cart' && currentUser) {
+            const isSalesRep = currentUser.role === 'sales';
+            const assignedClients = isSalesRep
+                ? users.filter(u => u.role === 'client' && (u.salesRep === currentUser.name || u.salesRepCode === currentUser.salesRepCode))
+                : [];
+            return <CheckoutView currentUser={selectedClientForOrder || currentUser} cart={cart} onContinueShopping={() => setCurrentView('cat_flexible_vinilos')} onUpdateQuantity={updateQuantity} onAddToCart={addToCart} formatCurrency={formatCurrency} couponCode={couponCode} onCouponCodeChange={setCouponCode} appliedCoupon={appliedCoupon} onApplyCoupon={handleApplyCoupon} onRemoveCoupon={() => setAppliedCoupon(null)} activeRep={activeRep} activeRepPhone={activeRepPhone} totalWeight={totalWeight} shippingMethod={shippingMethod} onShippingMethodChange={setShippingMethod} agencyCost={agencyCost} observations={observations} onObservationsChange={setObservations} useAccumulatedRappel={useAccumulatedRappel} onUseAccumulatedRappelChange={setUseAccumulatedRappel} rappelDiscount={rappelDiscount} cartTotal={cartTotal} shippingCost={shippingCost} tax={tax} finalTotal={finalTotal} newRappelGenerated={newRappelGenerated} onFinalizeOrder={handleFinalizeOrder} isSalesRep={isSalesRep} assignedClients={assignedClients} selectedClient={selectedClientForOrder} onSelectClient={setSelectedClientForOrder} />;
+        }
         if (currentView === 'order_success') return <OrderSuccessView order={lastOrder} observations={observations} formatCurrency={formatCurrency} onReset={() => setCurrentView('dashboard')} userEmail={currentUser?.email || ''} salesRepPhone={activeRepPhone} />;
         if (currentView === 'client_orders') return <ClientOrdersView currentUser={currentUser!} orders={orders} formatCurrency={formatCurrency} />;
         if (currentView === 'admin_dashboard') return <AdminDashboard onNavigate={setCurrentView} />;
@@ -427,7 +456,7 @@ export default function App() {
                 ? users.filter(u => u.salesRep === currentUser.name || u.salesRepCode === currentUser.salesRepCode)
                 : users;
             const salesReps = users.filter(u => u.role === 'sales');
-            return <div className="p-6 md:p-10 max-w-7xl mx-auto"><AdminClientList clients={displayClients} orders={orders} onEditClient={() => { }} onSaveClient={handleSaveClient} formatCurrency={formatCurrency} isAdmin={currentUser?.role === 'admin'} salesRepsData={salesReps} /></div>;
+            return <div className="p-6 md:p-10 max-w-7xl mx-auto"><AdminClientList clients={displayClients} orders={orders} onEditClient={() => { }} onSaveClient={handleSaveClient} onDeleteClient={currentUser?.role === 'admin' ? handleDeleteClient : undefined} formatCurrency={formatCurrency} isAdmin={currentUser?.role === 'admin'} salesRepsData={salesReps} /></div>;
         }
         if (currentView === 'admin_new_client') {
             const salesReps = users.filter(u => u.role === 'sales');

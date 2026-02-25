@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingCart, Plus, Minus, Check, CheckCircle, ArrowLeft, Truck, ShoppingBag } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Check, CheckCircle, ArrowLeft, Truck, ShoppingBag, Users, AlertTriangle } from 'lucide-react';
 import { CartItem, User, Order } from '../types';
 
 interface CheckoutViewProps {
@@ -31,6 +31,11 @@ interface CheckoutViewProps {
     finalTotal: number;
     newRappelGenerated: number;
     onFinalizeOrder: () => void;
+    // Sales rep order assignment
+    isSalesRep?: boolean;
+    assignedClients?: User[];
+    selectedClient?: User | null;
+    onSelectClient?: (client: User | null) => void;
 }
 
 export const CheckoutView: React.FC<CheckoutViewProps> = ({
@@ -61,7 +66,11 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
     tax,
     finalTotal,
     newRappelGenerated,
-    onFinalizeOrder
+    onFinalizeOrder,
+    isSalesRep = false,
+    assignedClients = [],
+    selectedClient = null,
+    onSelectClient
 }) => {
     const earningThreshold = currentUser.rappelThreshold || 800;
     const redemptionThreshold = earningThreshold * 1.5;
@@ -75,6 +84,51 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
             </button>
 
             <h1 className="text-2xl font-bold text-slate-900 mb-6">Finalizar Pedido</h1>
+
+            {/* Sales Rep Client Selector */}
+            {isSalesRep && (
+                <div className={`rounded-xl p-5 mb-6 border-2 transition-colors ${selectedClient
+                        ? 'bg-green-50 border-green-200'
+                        : 'bg-amber-50 border-amber-300 animate-pulse'
+                    }`}>
+                    <div className="flex items-center gap-3 mb-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${selectedClient ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                            }`}>
+                            <Users size={18} />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                                Asignar Pedido a Cliente
+                            </h3>
+                            <p className="text-xs text-slate-500">Selecciona el cliente para este pedido</p>
+                        </div>
+                    </div>
+                    <select
+                        value={selectedClient?.id || ''}
+                        onChange={(e) => {
+                            const client = assignedClients.find(c => c.id === e.target.value) || null;
+                            onSelectClient?.(client);
+                        }}
+                        className={`w-full px-4 py-3 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-slate-900 border ${selectedClient
+                                ? 'border-green-300 bg-white text-slate-900'
+                                : 'border-amber-400 bg-white text-slate-900'
+                            }`}
+                    >
+                        <option value="">— Seleccionar Cliente —</option>
+                        {assignedClients.map(client => (
+                            <option key={client.id} value={client.id}>
+                                {client.name} {client.delegation ? `(${client.delegation})` : ''}
+                            </option>
+                        ))}
+                    </select>
+                    {!selectedClient && (
+                        <div className="flex items-center gap-2 mt-3 text-amber-700">
+                            <AlertTriangle size={14} />
+                            <p className="text-xs font-bold">Debes asignar un cliente antes de confirmar el pedido</p>
+                        </div>
+                    )}
+                </div>
+            )}
 
             <div className="bg-slate-50 rounded-xl p-4 md:p-6 border border-slate-200 mb-6">
                 <div className="flex items-center justify-between mb-4">
@@ -361,7 +415,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                 <div className="max-w-3xl mx-auto">
                     <button
                         onClick={onFinalizeOrder}
-                        disabled={cart.length === 0}
+                        disabled={cart.length === 0 || (isSalesRep && !selectedClient)}
                         className="w-full bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
                     >
                         CONFIRMAR PEDIDO <CheckCircle size={20} />

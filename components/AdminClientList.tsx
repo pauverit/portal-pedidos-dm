@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit2, CheckCircle, AlertCircle, Clock, ShoppingBag, TrendingUp, X, Save, Eye, EyeOff } from 'lucide-react';
+import { Edit2, Trash2, CheckCircle, AlertCircle, Clock, ShoppingBag, TrendingUp, X, Save, Eye, EyeOff } from 'lucide-react';
 import { User, Order } from '../types';
 import { SALES_REPS } from '../constants';
 
@@ -8,6 +8,7 @@ interface AdminClientListProps {
     orders: Order[];
     onEditClient: (client: User) => void;
     onSaveClient: (client: User) => Promise<void>;
+    onDeleteClient?: (clientId: string) => Promise<void>;
     formatCurrency: (value: number) => string;
     isAdmin?: boolean;
     salesRepsData: User[];
@@ -18,6 +19,7 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
     orders,
     onEditClient,
     onSaveClient,
+    onDeleteClient,
     formatCurrency,
     isAdmin = true,
     salesRepsData
@@ -179,13 +181,28 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                                             </span>
                                         </td>
                                         <td className="px-4 py-3 text-right">
-                                            <button
-                                                onClick={() => startEdit(client)}
-                                                className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
-                                                title="Editar cliente"
-                                            >
-                                                <Edit2 size={15} />
-                                            </button>
+                                            <div className="flex items-center justify-end gap-1">
+                                                <button
+                                                    onClick={() => startEdit(client)}
+                                                    className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                                                    title="Editar cliente"
+                                                >
+                                                    <Edit2 size={15} />
+                                                </button>
+                                                {isAdmin && onDeleteClient && (
+                                                    <button
+                                                        onClick={async () => {
+                                                            if (window.confirm(`¿Estás seguro de que quieres eliminar a "${client.name}"? Esta acción no se puede deshacer.`)) {
+                                                                await onDeleteClient(client.id);
+                                                            }
+                                                        }}
+                                                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Eliminar cliente"
+                                                    >
+                                                        <Trash2 size={15} />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 );
