@@ -17,6 +17,7 @@ import { OrderSuccessView } from './components/OrderSuccessView';
 import { DashboardView } from './components/DashboardView';
 import { SalesDashboard } from './components/SalesDashboard';
 import { AdminSalesManagement } from './components/AdminSalesManagement';
+import { ProfileEditModal } from './components/ProfileEditModal';
 
 import {
     SALES_REPS, SALES_REPS_PHONES, SALES_REPS_EMAILS, INITIAL_PRODUCTS
@@ -59,6 +60,7 @@ export default function App() {
     const offeredVinylIds = useRef<Set<string>>(new Set());
     const [loginError, setLoginError] = useState('');
     const [selectedClientForOrder, setSelectedClientForOrder] = useState<User | null>(null);
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
     // Sync cart prices when a sales rep selects a different client
     useEffect(() => {
@@ -303,7 +305,8 @@ export default function App() {
                     rappel_threshold: updatedClient.rappelThreshold,
                     hide_prices: updatedClient.hidePrices,
                     is_active: updatedClient.isActive,
-                    must_change_password: updatedClient.mustChangePassword
+                    must_change_password: updatedClient.mustChangePassword,
+                    password: updatedClient.password // Added to allow password updates
                 })
                 .eq('id', updatedClient.id);
 
@@ -311,6 +314,35 @@ export default function App() {
             await refreshData();
         } catch (error: any) {
             alert('Error al guardar cliente: ' + error.message);
+        }
+    };
+
+    const handleSaveProfile = async (updates: Partial<User>) => {
+        if (!currentUser) return;
+        try {
+            const { error } = await supabase
+                .from('clients')
+                .update({
+                    company_name: updates.name,
+                    email: updates.email,
+                    phone: updates.phone,
+                    delegation: updates.delegation,
+                    password: updates.password
+                })
+                .eq('id', currentUser.id);
+
+            if (error) throw error;
+
+            // Update local auth state
+            updateCurrentUser(updates);
+
+            // Refresh global users list
+            await refreshData();
+
+            alert('Perfil actualizado correctamente');
+        } catch (error: any) {
+            alert('Error al actualizar el perfil: ' + error.message);
+            throw error;
         }
     };
 
@@ -496,7 +528,16 @@ export default function App() {
 
     return (
         <div className="flex min-h-screen bg-slate-50 font-sans text-slate-900">
-            <Sidebar currentView={currentView} setCurrentView={setCurrentView} cartCount={cart.reduce((a, b) => a + b.quantity, 0)} currentUser={currentUser!} isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} onLogout={handleLogout} />
+            <Sidebar
+                currentView={currentView}
+                setCurrentView={setCurrentView}
+                cartCount={cart.reduce((a, b) => a + b.quantity, 0)}
+                currentUser={currentUser!}
+                isOpen={isMobileMenuOpen}
+                onClose={() => setIsMobileMenuOpen(false)}
+                onLogout={handleLogout}
+                onProfileClick={() => setIsProfileModalOpen(true)}
+            />
             <div className="flex-1 flex flex-col h-screen overflow-y-auto">
                 <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-slate-200 sticky top-0 z-30">
                     <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 text-slate-600">
@@ -527,6 +568,14 @@ export default function App() {
                 </div>
             )}
             <CrossSellModal isOpen={showPromoModal} onClose={() => setShowPromoModal(false)} promoEntries={promoEntries} onAcceptPromo={handleAcceptPromo} formatCurrency={formatCurrency} />
+            {currentUser && (
+                <ProfileEditModal
+                    isOpen={isProfileModalOpen}
+                    onClose={() => setIsProfileModalOpen(false)}
+                    currentUser={currentUser}
+                    onSaveProfile={handleSaveProfile}
+                />
+            )}
         </div>
     );
 }

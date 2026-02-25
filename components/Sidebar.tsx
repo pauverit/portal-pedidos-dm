@@ -10,9 +10,19 @@ interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
   onLogout: () => void;
+  onProfileClick: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, cartCount, currentUser, isOpen, onClose, onLogout }) => {
+export const Sidebar: React.FC<SidebarProps> = ({
+  currentView,
+  setCurrentView,
+  cartCount,
+  currentUser,
+  isOpen,
+  onClose,
+  onLogout,
+  onProfileClick
+}) => {
   // State to track which menu is expanded
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
 
@@ -159,15 +169,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
         </div>
 
         <div className="px-6 py-4">
-          <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-100">
-            <UserCircle className="text-slate-400" size={24} />
-            <div className="overflow-hidden">
-              <p className="text-xs font-bold text-slate-900 truncate">{currentUser?.name}</p>
-              <p className="text-[10px] text-slate-500 uppercase tracking-wider">
+          <button
+            onClick={onProfileClick}
+            className="w-full flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-100 hover:bg-slate-100 hover:border-slate-200 transition-all group text-left"
+            title="Editar mi perfil"
+          >
+            <div className="p-1 bgColor-white rounded-md shadow-sm group-hover:shadow transition-all">
+              <UserCircle className="text-slate-400 group-hover:text-slate-900 transition-colors" size={24} />
+            </div>
+            <div className="overflow-hidden flex-1">
+              <p className="text-xs font-bold text-slate-900 truncate group-hover:text-black">{currentUser?.name}</p>
+              <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
                 {currentUser?.role === 'admin' ? 'Administrador' : currentUser?.role === 'sales' ? 'Comercial' : 'Cliente B2B'}
               </p>
             </div>
-          </div>
+          </button>
         </div>
 
         <nav className="flex-1 px-4 space-y-1 overflow-y-auto no-scrollbar">
