@@ -100,7 +100,14 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({
                 <div className="space-y-6">
                     <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-lg">
                         <h2 className="text-xl font-bold mb-4">Acciones Rápidas</h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <button
+                                onClick={() => onNavigate('cat_flexible_vinilos')}
+                                className="bg-white/10 hover:bg-white/20 p-4 rounded-xl flex flex-col items-center gap-2 transition-colors border border-white/10"
+                            >
+                                <ShoppingBag size={24} />
+                                <span className="text-sm font-medium">Nuevo Pedido</span>
+                            </button>
                             <button
                                 onClick={() => onNavigate('admin_new_client')}
                                 className="bg-white/10 hover:bg-white/20 p-4 rounded-xl flex flex-col items-center gap-2 transition-colors border border-white/10"

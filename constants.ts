@@ -10,20 +10,7 @@ export const ADMIN_USER: User = {
   password: 'admin' // In a real app, this should be hashed
 };
 
-export const DEMO_USER: User = {
-  name: 'Cliente Demo S.L.',
-  id: '#C-DEMO',
-  email: 'demo@cliente.com',
-  role: 'client',
-  rappelAccumulated: 45.50,
-  username: 'demo',
-  password: 'demo',
-  salesRep: 'Javier',
-  delegation: 'Pol. Ind. Juncaril',
-  usedCoupons: []
-};
-
-export const DEFAULT_USERS: User[] = [ADMIN_USER, DEMO_USER];
+export const DEFAULT_USERS: User[] = [ADMIN_USER];
 
 // Mapa de códigos a nombres
 export const SALES_REPS: Record<string, string> = {

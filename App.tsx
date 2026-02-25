@@ -81,10 +81,23 @@ export default function App() {
     const tax = subtotalAfterDiscount * 0.21;
     const finalTotal = subtotalAfterDiscount + tax + shippingCost;
 
-    const loadUserOrders = async (userId: string) => {
+    const loadUserOrders = async (user: User, allUsers: User[]) => {
         try {
-            const userOrders = await orderService.getUserOrders(userId);
-            setOrders(userOrders);
+            if (user.role === 'client') {
+                const userOrders = await orderService.getUserOrders(user.id);
+                setOrders(userOrders);
+            } else if (user.role === 'sales') {
+                // Load orders for all clients assigned to this sales rep
+                const myClientIds = allUsers
+                    .filter(u => u.role === 'client' && (u.salesRep === user.name || u.salesRepCode === user.salesRepCode))
+                    .map(u => u.id);
+                const allOrders = await orderService.getUserOrders();
+                setOrders(allOrders.filter(o => myClientIds.includes(o.userId)));
+            } else {
+                // Admin: load all orders
+                const allOrders = await orderService.getUserOrders();
+                setOrders(allOrders);
+            }
         } catch (error) {
             console.error('Error loading user orders:', error);
         }
@@ -95,7 +108,7 @@ export default function App() {
             if (currentView === 'login') {
                 setCurrentView(currentUser.role === 'admin' ? 'admin_dashboard' : currentUser.role === 'sales' ? 'dashboard' : 'dashboard');
             }
-            loadUserOrders(currentUser.role === 'client' ? currentUser.id : undefined);
+            loadUserOrders(currentUser, users);
         } else {
             setOrders([]);
         }
@@ -446,7 +459,7 @@ export default function App() {
             return <CheckoutView currentUser={selectedClientForOrder || currentUser} cart={cart} onContinueShopping={() => setCurrentView('cat_flexible_vinilos')} onUpdateQuantity={updateQuantity} onAddToCart={addToCart} formatCurrency={formatCurrency} couponCode={couponCode} onCouponCodeChange={setCouponCode} appliedCoupon={appliedCoupon} onApplyCoupon={handleApplyCoupon} onRemoveCoupon={() => setAppliedCoupon(null)} activeRep={activeRep} activeRepPhone={activeRepPhone} totalWeight={totalWeight} shippingMethod={shippingMethod} onShippingMethodChange={setShippingMethod} agencyCost={agencyCost} observations={observations} onObservationsChange={setObservations} useAccumulatedRappel={useAccumulatedRappel} onUseAccumulatedRappelChange={setUseAccumulatedRappel} rappelDiscount={rappelDiscount} cartTotal={cartTotal} shippingCost={shippingCost} tax={tax} finalTotal={finalTotal} newRappelGenerated={newRappelGenerated} onFinalizeOrder={handleFinalizeOrder} isSalesRep={isSalesRep} assignedClients={assignedClients} selectedClient={selectedClientForOrder} onSelectClient={setSelectedClientForOrder} />;
         }
         if (currentView === 'order_success') return <OrderSuccessView order={lastOrder} observations={observations} formatCurrency={formatCurrency} onReset={() => setCurrentView('dashboard')} userEmail={currentUser?.email || ''} salesRepPhone={activeRepPhone} />;
-        if (currentView === 'client_orders') return <ClientOrdersView currentUser={currentUser!} orders={orders} formatCurrency={formatCurrency} />;
+        if (currentView === 'client_orders') return <ClientOrdersView currentUser={currentUser!} orders={orders} formatCurrency={formatCurrency} allUsers={users} />;
         if (currentView === 'admin_dashboard') return <AdminDashboard onNavigate={setCurrentView} />;
         if (currentView === 'admin_products') return <AdminProductList products={products} searchQuery={searchQuery} onSearchChange={setSearchQuery} editingProduct={editingProduct} onEditClick={setEditingProduct} onUpdateProduct={handleUpdateProduct} onCancelEdit={() => setEditingProduct(null)} onEditingProductChange={setEditingProduct} onBack={() => setCurrentView('admin_dashboard')} formatCurrency={formatCurrency} />;
         if (currentView === 'admin_load') return <AdminBulkLoad onSave={handleSaveBulkProducts} currentProducts={products} />;

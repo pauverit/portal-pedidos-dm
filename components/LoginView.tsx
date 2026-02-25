@@ -53,7 +53,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, loginError }) => 
                 </form>
 
                 <div className="mt-8 pt-6 border-t border-slate-100 text-center">
-                    <p className="text-xs text-slate-400">Digital Market Granada &copy; 2023</p>
+                    <p className="text-xs text-slate-400">Digital Market Granada &copy; 2026</p>
                 </div>
             </div>
         </div>

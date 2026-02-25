@@ -44,7 +44,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 </div>
 
                 <div onClick={() => onNavigate('admin_coupons')} className="bg-white p-8 rounded-xl shadow-lg border border-slate-200 cursor-pointer hover:border-purple-300 hover:shadow-purple-100 transition-all group">
-                    <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-111 transition-transform">
+                    <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                         <Droplets className="text-purple-600" size={24} />
                     </div>
                     <h3 className="text-xl font-bold text-slate-900 mb-2">Cupones Promocionales</h3>
