@@ -92,9 +92,19 @@ export const AdminProductList: React.FC<AdminProductListProps> = ({
                                                     type="text"
                                                     value={ep!.name}
                                                     onChange={e => onEditingProductChange({ ...ep!, name: e.target.value })}
-                                                    className="w-full border border-slate-300 rounded px-2 py-1 text-sm"
+                                                    className="w-full border border-slate-300 rounded px-2 py-1 text-sm focus:ring-1 focus:ring-slate-400 outline-none"
                                                 />
                                                 <div className="text-xs text-slate-400">{product.reference}</div>
+                                                <div className="mt-2 pt-2 border-t border-slate-100">
+                                                    <label className="block text-[10px] uppercase font-bold text-slate-400 mb-0.5">Marca</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Marca (ej. Avery, LG, Fedrigoni...)"
+                                                        value={ep!.brand || ''}
+                                                        onChange={e => onEditingProductChange({ ...ep!, brand: e.target.value })}
+                                                        className="w-full border border-slate-300 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-slate-400 outline-none"
+                                                    />
+                                                </div>
                                             </div>
                                         ) : (
                                             <div>
@@ -228,6 +238,6 @@ export const AdminProductList: React.FC<AdminProductListProps> = ({
                     <div className="p-8 text-center text-slate-400">No se encontraron productos.</div>
                 )}
             </div>
-        </div>
+        </div >
     );
 };
