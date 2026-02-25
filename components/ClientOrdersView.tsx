@@ -1,19 +1,26 @@
 import React from 'react';
-import { User, Order, CartItem } from '../types';
+import { User, Order } from '../types';
 import { ShoppingBag } from 'lucide-react';
 
 interface ClientOrdersViewProps {
     currentUser: User | null;
     orders: Order[];
     formatCurrency: (value: number) => string;
+    allUsers?: User[];
 }
 
 export const ClientOrdersView: React.FC<ClientOrdersViewProps> = ({
     currentUser,
     orders,
-    formatCurrency
+    formatCurrency,
+    allUsers = []
 }) => {
-    const userOrders = orders.filter(o => o.userId === currentUser?.id);
+    // For clients, filter to only their orders; for admin/sales orders are pre-filtered by App.tsx
+    const userOrders = currentUser?.role === 'client'
+        ? orders.filter(o => o.userId === currentUser.id)
+        : orders;
+    const isManagerView = currentUser?.role === 'admin' || currentUser?.role === 'sales';
+    const getUserName = (userId: string) => allUsers.find(u => u.id === userId)?.name || userId.slice(-6);
 
     return (
         <div className="p-6 md:p-10 max-w-7xl mx-auto">
@@ -43,6 +50,7 @@ export const ClientOrdersView: React.FC<ClientOrdersViewProps> = ({
                     <thead className="bg-slate-50 border-b border-slate-200 text-slate-500">
                         <tr>
                             <th className="px-6 py-3">Referencia</th>
+                            {isManagerView && <th className="px-6 py-3">Cliente</th>}
                             <th className="px-6 py-3">Fecha</th>
                             <th className="px-6 py-3">Estado</th>
                             <th className="px-6 py-3">Artículos</th>
@@ -52,16 +60,19 @@ export const ClientOrdersView: React.FC<ClientOrdersViewProps> = ({
                     <tbody className="divide-y divide-slate-100">
                         {userOrders.length === 0 ? (
                             <tr>
-                                <td colSpan={5} className="px-6 py-8 text-center text-slate-500">No tienes pedidos registrados aún.</td>
+                                <td colSpan={isManagerView ? 6 : 5} className="px-6 py-8 text-center text-slate-500">No hay pedidos registrados aún.</td>
                             </tr>
                         ) : (
                             userOrders.map((order) => (
                                 <tr key={order.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="px-6 py-4 font-mono font-bold text-slate-900">#{order.id.slice(-6)}</td>
-                                    <td className="px-6 py-4 text-slate-500">{new Date(order.date).toLocaleDateString()}</td>
+                                    {isManagerView && (
+                                        <td className="px-6 py-4 font-medium text-slate-700">{getUserName(order.userId)}</td>
+                                    )}
+                                    <td className="px-6 py-4 text-slate-500">{new Date(order.date).toLocaleDateString('es-ES')}</td>
                                     <td className="px-6 py-4">
                                         <span className="px-2 py-1 rounded text-xs font-bold uppercase bg-blue-100 text-blue-700">
-                                            TRAMITADO
+                                            Tramitado
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-slate-600">

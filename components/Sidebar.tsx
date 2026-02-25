@@ -131,7 +131,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, c
       id: 'client_orders',
       label: 'Mis Pedidos',
       icon: ShoppingBag,
-      roles: ['client', 'admin', 'sales']
+      roles: ['client', 'admin']
     },
   ];
 
