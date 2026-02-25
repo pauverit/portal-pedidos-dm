@@ -24,7 +24,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
     onEdit
 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    const [quantity, setQuantity] = useState(1);
+    const [quantity, setQuantity] = useState<string>('1');
 
     // Configuration State
     const [width, setWidth] = useState<number>(product.width || 1.05);
@@ -62,8 +62,9 @@ export const ProductRow: React.FC<ProductRowProps> = ({
         }
 
 
-        onAddToCart(product, quantity, options);
-        setQuantity(1);
+        const finalQuantity = parseInt(quantity) || 1;
+        onAddToCart(product, finalQuantity, options);
+        setQuantity('1');
         setIsExpanded(false);
     };
 
@@ -149,7 +150,10 @@ export const ProductRow: React.FC<ProductRowProps> = ({
                             type="number"
                             min="1"
                             value={quantity}
-                            onChange={e => setQuantity(parseInt(e.target.value) || 1)}
+                            onChange={e => setQuantity(e.target.value)}
+                            onBlur={() => {
+                                if (quantity === '' || parseInt(quantity) < 1) setQuantity('1');
+                            }}
                             className="w-16 px-2 py-1.5 border border-slate-200 rounded-lg text-sm text-center focus:ring-2 focus:ring-slate-900 outline-none"
                         />
                     </div>
@@ -268,7 +272,10 @@ export const ProductRow: React.FC<ProductRowProps> = ({
                                 type="number"
                                 min="1"
                                 value={quantity}
-                                onChange={e => setQuantity(parseInt(e.target.value) || 1)}
+                                onChange={e => setQuantity(e.target.value)}
+                                onBlur={() => {
+                                    if (quantity === '' || parseInt(quantity) < 1) setQuantity('1');
+                                }}
                                 className="w-16 px-2 py-1 border border-slate-200 rounded-lg text-sm text-center focus:ring-2 focus:ring-slate-900 outline-none"
                             />
                             <button

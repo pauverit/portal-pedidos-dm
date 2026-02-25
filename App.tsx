@@ -456,6 +456,19 @@ export default function App() {
         }
     };
 
+    const handleDeleteProduct = async (productId: string) => {
+        try {
+            const { error } = await supabase
+                .from('products')
+                .delete()
+                .eq('id', productId);
+            if (error) throw error;
+            await refreshData();
+        } catch (error: any) {
+            alert('Error al eliminar producto: ' + error.message);
+        }
+    };
+
     const handleSaveBulkProducts = async (newProducts: Product[]) => {
         try {
             if (newProducts.length === 0) {
@@ -493,7 +506,7 @@ export default function App() {
             }
             return <DashboardView currentUser={currentUser} onNewOrder={() => setCurrentView('cat_flexible_vinilos')} formatCurrency={formatCurrency} />;
         }
-        if (currentView.startsWith('cat_')) return <ProductListView products={products} cart={cart} currentView={currentView} searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} sortOrder={sortOrder} onSortOrderChange={setSortOrder} onAddToCart={addToCart} onUpdateQuantity={updateQuantity} onEditProduct={setEditingProduct} isAdmin={currentUser?.role === 'admin'} formatCurrency={formatCurrency} />;
+        if (currentView.startsWith('cat_')) return <ProductListView products={products} cart={cart} currentView={currentView} searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} sortOrder={sortOrder} onSortOrderChange={setSortOrder} onAddToCart={addToCart} onUpdateQuantity={updateQuantity} onEditProduct={(p) => { setEditingProduct(p); setCurrentView('admin_products'); }} isAdmin={currentUser?.role === 'admin'} formatCurrency={formatCurrency} />;
         if (currentView === 'cart' && currentUser) {
             const isSalesRep = currentUser.role === 'sales';
             const assignedClients = isSalesRep
@@ -504,7 +517,7 @@ export default function App() {
         if (currentView === 'order_success') return <OrderSuccessView order={lastOrder} observations={observations} formatCurrency={formatCurrency} onReset={() => setCurrentView('dashboard')} userEmail={currentUser?.email || ''} salesRepPhone={activeRepPhone} />;
         if (currentView === 'client_orders') return <ClientOrdersView currentUser={currentUser!} orders={orders} formatCurrency={formatCurrency} allUsers={users} />;
         if (currentView === 'admin_dashboard') return <AdminDashboard onNavigate={setCurrentView} />;
-        if (currentView === 'admin_products') return <AdminProductList products={products} searchQuery={searchQuery} onSearchChange={setSearchQuery} editingProduct={editingProduct} onEditClick={setEditingProduct} onUpdateProduct={handleUpdateProduct} onCancelEdit={() => setEditingProduct(null)} onEditingProductChange={setEditingProduct} onBack={() => setCurrentView('admin_dashboard')} formatCurrency={formatCurrency} />;
+        if (currentView === 'admin_products') return <AdminProductList products={products} searchQuery={searchQuery} onSearchChange={setSearchQuery} editingProduct={editingProduct} onEditClick={setEditingProduct} onUpdateProduct={handleUpdateProduct} onDeleteProduct={handleDeleteProduct} onCancelEdit={() => setEditingProduct(null)} onEditingProductChange={setEditingProduct} onBack={() => setCurrentView('admin_dashboard')} formatCurrency={formatCurrency} />;
         if (currentView === 'admin_load') return <AdminBulkLoad onSave={handleSaveBulkProducts} currentProducts={products} />;
         if (currentView === 'admin_bulk_edit') return <AdminBulkEdit products={products} onSave={handleBulkEditProducts} onBack={() => setCurrentView('admin_dashboard')} />;
         if (currentView === 'admin_client_list') {

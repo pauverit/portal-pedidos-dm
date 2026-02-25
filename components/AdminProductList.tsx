@@ -1,6 +1,6 @@
 import React from 'react';
 import { Product } from '../types';
-import { ArrowLeft, ShoppingBag, Search, Check, X } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, Search, Check, X, Trash2 } from 'lucide-react';
 
 interface AdminProductListProps {
     products: Product[];
@@ -9,6 +9,7 @@ interface AdminProductListProps {
     editingProduct: Product | null;
     onEditClick: (product: Product) => void;
     onUpdateProduct: (product: Product) => void;
+    onDeleteProduct: (productId: string) => void;
     onCancelEdit: () => void;
     onEditingProductChange: (product: Product) => void;
     onBack: () => void;
@@ -34,6 +35,7 @@ export const AdminProductList: React.FC<AdminProductListProps> = ({
     editingProduct,
     onEditClick,
     onUpdateProduct,
+    onDeleteProduct,
     onCancelEdit,
     onEditingProductChange,
     onBack,
@@ -196,12 +198,25 @@ export const AdminProductList: React.FC<AdminProductListProps> = ({
                                                 </button>
                                             </div>
                                         ) : (
-                                            <button
-                                                onClick={() => onEditClick(product)}
-                                                className="text-blue-600 hover:text-blue-800 font-bold text-xs bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded transition-colors"
-                                            >
-                                                Editar
-                                            </button>
+                                            <div className="flex justify-end gap-2">
+                                                <button
+                                                    onClick={() => onEditClick(product)}
+                                                    className="text-blue-600 hover:text-blue-800 font-bold text-xs bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded transition-colors"
+                                                >
+                                                    Editar
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        if (window.confirm('¿Estás seguro de que deseas eliminar este producto?')) {
+                                                            onDeleteProduct(product.id);
+                                                        }
+                                                    }}
+                                                    className="text-red-600 hover:text-red-800 p-1.5 bg-red-50 hover:bg-red-100 rounded transition-colors"
+                                                    title="Eliminar producto"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
                                         )}
                                     </td>
                                 </tr>
