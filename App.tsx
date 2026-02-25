@@ -451,6 +451,7 @@ export default function App() {
                 .eq('id', product.id);
             if (error) throw error;
             await refreshData();
+            setEditingProduct(null); // Clear editing state to close the edit row
         } catch (error: any) {
             alert('Error al actualizar producto: ' + error.message);
         }
