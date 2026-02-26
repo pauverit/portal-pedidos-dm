@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Save, Eye, EyeOff, UserCircle } from 'lucide-react';
 import { User } from '../types';
+import { useToast } from './Toast';
 
 interface ProfileEditModalProps {
     isOpen: boolean;
@@ -24,6 +25,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
     });
     const [showPassword, setShowPassword] = useState(false);
     const [saving, setSaving] = useState(false);
+    const { toast } = useToast();
 
     if (!isOpen) return null;
 
@@ -34,7 +36,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
             onClose();
         } catch (e) {
             console.error(e);
-            alert('Error al guardar el perfil');
+            toast('Error al guardar el perfil', 'error');
         } finally {
             setSaving(false);
         }

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Edit2, Trash2, CheckCircle, AlertCircle, Clock, ShoppingBag, TrendingUp, X, Save, Eye, EyeOff } from 'lucide-react';
 import { User, Order } from '../types';
 import { SALES_REPS } from '../constants';
+import { useToast } from './Toast';
 
 interface AdminClientListProps {
     clients: User[];
@@ -29,6 +30,8 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
     const [editForm, setEditForm] = useState<Partial<User>>({});
     const [showPassword, setShowPassword] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [pendingDeleteClientId, setPendingDeleteClientId] = useState<string | null>(null);
+    const { toast } = useToast();
 
     const filteredClients = clients
         .filter(c => c.role === 'client')
@@ -60,16 +63,14 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
 
     const handleSave = async () => {
         if (!editingClient) return;
-        if (isAdmin && !editForm.salesRep) {
-            alert('El comercial asignado es obligatorio.');
-            return;
-        }
         setSaving(true);
         try {
             await onSaveClient({ ...editingClient, ...editForm });
             setEditingClient(null);
+            toast('Cliente guardado correctamente', 'success');
         } catch (e) {
             console.error(e);
+            toast('Error al guardar el cliente', 'error');
         } finally {
             setSaving(false);
         }
@@ -191,11 +192,7 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                                                 </button>
                                                 {isAdmin && onDeleteClient && (
                                                     <button
-                                                        onClick={async () => {
-                                                            if (window.confirm(`¿Estás seguro de que quieres eliminar a "${client.name}"? Esta acción no se puede deshacer.`)) {
-                                                                await onDeleteClient(client.id);
-                                                            }
-                                                        }}
+                                                        onClick={() => setPendingDeleteClientId(client.id)}
                                                         className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                                         title="Eliminar cliente"
                                                     >
@@ -357,6 +354,35 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                     </div>
                 </div>
             )}
+
+            {/* Inline confirm modal for client deletion */}
+            {pendingDeleteClientId && onDeleteClient && (() => {
+                const target = clients.find(c => c.id === pendingDeleteClientId);
+                return (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm border border-slate-200 p-6">
+                            <h3 className="text-lg font-bold text-slate-900 mb-2">¿Eliminar cliente?</h3>
+                            <p className="text-sm text-slate-600 mb-6">
+                                Esto eliminará a <strong>{target?.name}</strong> permanentemente. Esta acción no se puede deshacer.
+                            </p>
+                            <div className="flex justify-end gap-3">
+                                <button
+                                    onClick={() => setPendingDeleteClientId(null)}
+                                    className="px-4 py-2 text-sm text-slate-500 hover:text-slate-800"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={async () => { await onDeleteClient(pendingDeleteClientId); setPendingDeleteClientId(null); }}
+                                    className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-lg transition-colors"
+                                >
+                                    Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
         </div>
     );
 };

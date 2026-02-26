@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Ticket, Plus, Trash2, Copy, Check } from 'lucide-react';
+import { Ticket, Plus, Trash2, Copy, Check, AlertCircle } from 'lucide-react';
+import { useToast } from './Toast';
 
 export interface Coupon {
     id?: string;
@@ -25,6 +26,8 @@ interface AdminCouponsProps {
 export const AdminCoupons: React.FC<AdminCouponsProps> = ({ coupons, onAddCoupon, onUpdateCoupon, onDeleteCoupon }) => {
     const [showModal, setShowModal] = useState(false);
     const [copiedCode, setCopiedCode] = useState<string | null>(null);
+    const [formError, setFormError] = useState('');
+    const { toast } = useToast();
     const [newCoupon, setNewCoupon] = useState<Partial<Coupon>>({
         code: '',
         discountType: 'percentage',
@@ -46,18 +49,18 @@ export const AdminCoupons: React.FC<AdminCouponsProps> = ({ coupons, onAddCoupon
 
     const handleAddCoupon = () => {
         if (!newCoupon.code || newCoupon.code.length < 4) {
-            alert('El código debe tener al menos 4 caracteres');
+            setFormError('El código debe tener al menos 4 caracteres');
             return;
         }
         if (coupons.some(c => c.code.toUpperCase() === newCoupon.code?.toUpperCase())) {
-            alert('Ya existe un cupón con ese código');
+            setFormError('Ya existe un cupón con ese código');
             return;
         }
         if (!newCoupon.discountValue || newCoupon.discountValue <= 0) {
-            alert('El descuento debe ser mayor que 0');
+            setFormError('El descuento debe ser mayor que 0');
             return;
         }
-
+        setFormError('');
         onAddCoupon({
             code: newCoupon.code.toUpperCase(),
             discountType: newCoupon.discountType || 'percentage',
@@ -68,6 +71,7 @@ export const AdminCoupons: React.FC<AdminCouponsProps> = ({ coupons, onAddCoupon
             description: newCoupon.description
         });
         setShowModal(false);
+        setFormError('');
         setNewCoupon({
             code: '',
             discountType: 'percentage',
@@ -84,9 +88,8 @@ export const AdminCoupons: React.FC<AdminCouponsProps> = ({ coupons, onAddCoupon
     };
 
     const deleteCoupon = (code: string) => {
-        if (confirm(`¿Eliminar el cupón ${code}?`)) {
-            onDeleteCoupon(code);
-        }
+        onDeleteCoupon(code);
+        toast(`Cupón ${code} eliminado`, 'success');
     };
 
     const copyToClipboard = (code: string) => {
@@ -160,14 +163,14 @@ export const AdminCoupons: React.FC<AdminCouponsProps> = ({ coupons, onAddCoupon
                                     </td>
                                     <td className="px-4 py-3">
                                         <span className="font-bold text-green-600">
-                                            {coupon.discountType === 'percentage' 
-                                                ? `${coupon.discountValue}%` 
+                                            {coupon.discountType === 'percentage'
+                                                ? `${coupon.discountValue}%`
                                                 : `${coupon.discountValue}€`}
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 text-center text-slate-600">
-                                        {coupon.minOrderAmount > 0 
-                                            ? `${coupon.minOrderAmount}€` 
+                                        {coupon.minOrderAmount > 0
+                                            ? `${coupon.minOrderAmount}€`
                                             : 'Sin mínimo'}
                                     </td>
                                     <td className="px-4 py-3 text-center">
@@ -178,11 +181,10 @@ export const AdminCoupons: React.FC<AdminCouponsProps> = ({ coupons, onAddCoupon
                                     <td className="px-4 py-3 text-center">
                                         <button
                                             onClick={() => toggleCouponActive(coupon.code, coupon.isActive)}
-                                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${
-                                                coupon.isActive 
-                                                    ? 'bg-green-100 text-green-700' 
-                                                    : 'bg-slate-100 text-slate-500'
-                                            }`}
+                                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${coupon.isActive
+                                                ? 'bg-green-100 text-green-700'
+                                                : 'bg-slate-100 text-slate-500'
+                                                }`}
                                         >
                                             {coupon.isActive ? 'Activo' : 'Inactivo'}
                                         </button>
@@ -308,6 +310,13 @@ export const AdminCoupons: React.FC<AdminCouponsProps> = ({ coupons, onAddCoupon
                                 />
                                 <span className="text-sm text-slate-700">Cupón activo</span>
                             </label>
+
+                            {formError && (
+                                <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2 rounded-lg">
+                                    <AlertCircle size={16} className="shrink-0" />
+                                    {formError}
+                                </div>
+                            )}
                         </div>
 
                         <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">

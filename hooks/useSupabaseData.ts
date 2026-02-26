@@ -50,6 +50,7 @@ export function useSupabaseData() {
                     allowFinish: p.allow_finish,
                     allowBacking: p.allow_backing,
                     allowAdhesive: p.allow_adhesive,
+                    widthOptions: Array.isArray(p.width_options) ? p.width_options : undefined,
                 }));
                 setProducts(mappedProducts);
             }

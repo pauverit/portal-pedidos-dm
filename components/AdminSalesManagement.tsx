@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { UserPlus, Edit2, TrendingUp, Users, ShoppingBag, Save, X, Eye, EyeOff, Search, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { User, Order } from '../types';
 import { supabase } from '../lib/supabase';
+import { useToast } from './Toast';
 
 interface AdminSalesManagementProps {
     salesReps: User[];
@@ -24,6 +25,8 @@ export const AdminSalesManagement: React.FC<AdminSalesManagementProps> = ({
     const [expandedRep, setExpandedRep] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [pendingDeleteRep, setPendingDeleteRep] = useState<User | null>(null);
+    const { toast } = useToast();
 
     const [formData, setFormData] = useState({
         name: '',
@@ -88,24 +91,32 @@ export const AdminSalesManagement: React.FC<AdminSalesManagementProps> = ({
             setIsAdding(false);
             setEditingRep(null);
             setFormData({ name: '', username: '', password: '', email: '', phone: '', salesRepCode: '' });
+            toast(editingRep ? 'Comercial actualizado' : 'Comercial creado correctamente', 'success');
         } catch (error: any) {
-            alert('Error: ' + error.message);
+            toast('Error: ' + error.message, 'error');
         } finally {
             setSaving(false);
         }
     };
 
     const handleDelete = async (rep: User) => {
-        if (!confirm(`¿Eliminar al comercial "${rep.name}"? Esta acción no se puede deshacer.`)) return;
+        setPendingDeleteRep(rep);
+    };
+
+    const confirmDelete = async () => {
+        if (!pendingDeleteRep) return;
         try {
             const { error } = await supabase
                 .from('clients')
                 .delete()
-                .eq('id', rep.id);
+                .eq('id', pendingDeleteRep.id);
             if (error) throw error;
             await onRefresh();
+            toast('Comercial eliminado', 'success');
         } catch (error: any) {
-            alert('Error al eliminar comercial: ' + error.message);
+            toast('Error al eliminar comercial: ' + error.message, 'error');
+        } finally {
+            setPendingDeleteRep(null);
         }
     };
 
@@ -357,6 +368,32 @@ export const AdminSalesManagement: React.FC<AdminSalesManagementProps> = ({
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Inline confirm modal for rep deletion */}
+            {pendingDeleteRep && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm border border-slate-200 p-6">
+                        <h3 className="text-lg font-bold text-slate-900 mb-2">¿Eliminar comercial?</h3>
+                        <p className="text-sm text-slate-600 mb-6">
+                            Esto eliminará a <strong>{pendingDeleteRep.name}</strong> permanentemente. Esta acción no se puede deshacer.
+                        </p>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => setPendingDeleteRep(null)}
+                                className="px-4 py-2 text-sm text-slate-500 hover:text-slate-800 font-bold"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-lg transition-colors"
+                            >
+                                Eliminar
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

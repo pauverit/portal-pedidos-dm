@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Save, AlertCircle, CheckCircle, X, Trash2, Download, FileSpreadsheet } from 'lucide-react';
 import { Product, ProductCategory } from '../types';
+import { useToast } from './Toast';
 
 interface AdminBulkLoadProps {
     onSave: (products: Product[]) => void;
@@ -36,6 +37,8 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave, currentPro
     const [rawInput, setRawInput] = useState('');
     const [parsedItems, setParsedItems] = useState<ParsedItem[]>([]);
     const [showPreview, setShowPreview] = useState(false);
+    const [showDeleteCatalogConfirm, setShowDeleteCatalogConfirm] = useState(false);
+    const { toast } = useToast();
 
     const normalizeCategory = (cat: string): ProductCategory | null => {
         const lower = cat.toLowerCase().trim();
@@ -108,7 +111,7 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave, currentPro
 
     const handleSave = () => {
         const validItems = parsedItems.filter(i => i.isValid);
-        if (validItems.length === 0) { alert("No hay productos válidos para guardar."); return; }
+        if (validItems.length === 0) { toast('No hay productos válidos para guardar', 'error'); return; }
 
         const newProducts: Product[] = validItems.map((item, i) => {
             const isFlexible = item.category === 'flexible';
@@ -118,13 +121,10 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave, currentPro
                 name: item.name,
                 category: item.category as ProductCategory,
                 subcategory: item.subcategory,
-                // For flexible: price IS the price per m². For others: unit price.
                 price: isFlexible ? 0 : item.price,
                 pricePerM2: isFlexible ? item.price : undefined,
                 unit: isFlexible ? 'bobina' : 'ud',
                 isFlexible,
-                // width: NOT stored — client picks it at order time
-                // length: stored as the roll's standard length (50m default)
                 width: undefined,
                 length: isFlexible ? item.length : undefined,
                 inStock: true,
@@ -133,7 +133,6 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave, currentPro
                 weight: item.weight || 0,
                 volume: item.volume || undefined,
                 materialType: item.materialType as any || undefined,
-                // Configurable options
                 allowFinish: item.allowFinish,
                 allowBacking: item.allowBacking,
                 allowAdhesive: item.allowAdhesive,
@@ -144,11 +143,11 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave, currentPro
         setRawInput('');
         setParsedItems([]);
         setShowPreview(false);
-        alert(`${newProducts.length} productos importados correctamente.`);
+        toast(`${newProducts.length} producto${newProducts.length !== 1 ? 's' : ''} importado${newProducts.length !== 1 ? 's' : ''} correctamente`, 'success');
     };
 
     const handleExport = () => {
-        if (!currentProducts || currentProducts.length === 0) { alert('No hay productos para exportar.'); return; }
+        if (!currentProducts || currentProducts.length === 0) { toast('No hay productos para exportar', 'info'); return; }
 
         const header = [
             'Referencia', 'Nombre', 'Categoría', 'Subcategoría',
@@ -205,11 +204,7 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave, currentPro
                         <Download size={16} /> Exportar Excel
                     </button>
                     <button
-                        onClick={() => {
-                            if (confirm('¿ESTÁS SEGURO? Esto eliminará TODOS los productos actuales.')) {
-                                if (confirm('CONFIRMACIÓN FINAL: ¿Borrar todo el catálogo?')) { onSave([]); }
-                            }
-                        }}
+                        onClick={() => setShowDeleteCatalogConfirm(true)}
                         className="bg-red-100 text-red-600 px-4 py-2 rounded hover:bg-red-200 text-sm font-bold flex items-center gap-2"
                     >
                         <Trash2 size={16} /> Eliminar Catálogo
@@ -341,6 +336,32 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave, currentPro
                         >
                             Confirmar Importación
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Inline confirm modal for catalog deletion */}
+            {showDeleteCatalogConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm border border-slate-200 p-6">
+                        <h3 className="text-lg font-bold text-red-600 mb-2">⚠️ ¿Eliminar catálogo completo?</h3>
+                        <p className="text-sm text-slate-600 mb-6">
+                            Esto eliminará <strong>TODOS los productos actuales</strong> de forma permanente. Esta acción no se puede deshacer.
+                        </p>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowDeleteCatalogConfirm(false)}
+                                className="px-4 py-2 text-sm text-slate-500 hover:text-slate-800 font-bold"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={() => { onSave([]); setShowDeleteCatalogConfirm(false); toast('Catálogo eliminado', 'success'); }}
+                                className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-lg transition-colors"
+                            >
+                                Sí, borrar todo
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

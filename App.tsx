@@ -18,6 +18,8 @@ import { DashboardView } from './components/DashboardView';
 import { SalesDashboard } from './components/SalesDashboard';
 import { AdminSalesManagement } from './components/AdminSalesManagement';
 import { ProfileEditModal } from './components/ProfileEditModal';
+import { AdminProductEditModal } from './components/AdminProductEditModal';
+import { useToast } from './components/Toast';
 
 import {
     SALES_REPS, SALES_REPS_PHONES, SALES_REPS_EMAILS, INITIAL_PRODUCTS
@@ -42,6 +44,7 @@ export default function App() {
     } = useSupabaseData();
     const { currentUser, setCurrentUser, login, logout, updateCurrentUser } = useAuth();
     const { cart, setCart, addToCart, updateQuantity, clearCart, syncCartPrices } = useCart(currentUser);
+    const { toast } = useToast();
 
     const [currentView, setCurrentView] = useState('login');
     const [searchQuery, setSearchQuery] = useState('');
@@ -158,7 +161,7 @@ export default function App() {
             const discount = dynamicCoupon.discountType === 'percentage' ? cartTotal * (dynamicCoupon.discountValue / 100) : dynamicCoupon.discountValue;
             setAppliedCoupon({ code, discount });
         } else {
-            alert('Cupón no válido');
+            toast('Cupón no válido o inactivo', 'error');
         }
     };
 
@@ -166,7 +169,7 @@ export default function App() {
         if (!currentUser) return;
         // Sales rep must select a client
         if (currentUser.role === 'sales' && !selectedClientForOrder) {
-            alert('Debes seleccionar un cliente para asignar el pedido antes de confirmar.');
+            toast('Debes seleccionar un cliente para asignar el pedido antes de confirmar.', 'error');
             return;
         }
         const effectiveUser = (currentUser.role === 'sales' && selectedClientForOrder) ? selectedClientForOrder : currentUser;
@@ -201,7 +204,7 @@ export default function App() {
             setSelectedClientForOrder(null);
             setCurrentView('client_orders');
         } catch (error: any) {
-            alert('Error: ' + error.message);
+            toast('Error al confirmar el pedido: ' + error.message, 'error');
         }
     };
 
@@ -313,7 +316,7 @@ export default function App() {
             if (error) throw error;
             await refreshData();
         } catch (error: any) {
-            alert('Error al guardar cliente: ' + error.message);
+            toast('Error al guardar cliente: ' + error.message, 'error');
         }
     };
 
@@ -338,10 +341,9 @@ export default function App() {
 
             // Refresh global users list
             await refreshData();
-
-            alert('Perfil actualizado correctamente');
+            toast('Perfil actualizado correctamente', 'success');
         } catch (error: any) {
-            alert('Error al actualizar el perfil: ' + error.message);
+            toast('Error al actualizar el perfil: ' + error.message, 'error');
             throw error;
         }
     };
@@ -355,7 +357,7 @@ export default function App() {
             if (error) throw error;
             await refreshData();
         } catch (error: any) {
-            alert('Error al eliminar cliente: ' + error.message);
+            toast('Error al eliminar cliente: ' + error.message, 'error');
         }
     };
 
@@ -394,7 +396,7 @@ export default function App() {
             if (error) throw error;
             await refreshData();
         } catch (error: any) {
-            alert('Error al crear cupón: ' + error.message);
+            toast('Error al crear cupón: ' + error.message, 'error');
         }
     };
 
@@ -404,7 +406,7 @@ export default function App() {
             if (error) throw error;
             await refreshData();
         } catch (error: any) {
-            alert('Error al actualizar cupón: ' + error.message);
+            toast('Error al actualizar cupón: ' + error.message, 'error');
         }
     };
 
@@ -414,7 +416,7 @@ export default function App() {
             if (error) throw error;
             await refreshData();
         } catch (error: any) {
-            alert('Error al eliminar cupón: ' + error.message);
+            toast('Error al eliminar cupón: ' + error.message, 'error');
         }
     };
 
@@ -426,7 +428,8 @@ export default function App() {
         price: p.price,
         unit: p.unit,
         is_flexible: p.isFlexible,
-        width: p.width,
+        width: p.widthOptions?.[0] ?? p.width,
+        width_options: p.widthOptions ?? null,
         length: p.length,
         price_per_m2: p.pricePerM2,
         volume: p.volume,
@@ -451,9 +454,11 @@ export default function App() {
                 .eq('id', product.id);
             if (error) throw error;
             await refreshData();
-            setEditingProduct(null); // Clear editing state to close the edit row
+            setEditingProduct(null);
+            toast('Producto actualizado correctamente', 'success');
         } catch (error: any) {
-            alert('Error al actualizar producto: ' + error.message);
+            toast('Error al actualizar producto: ' + error.message, 'error');
+            throw error; // Re-throw so modal can catch it and stay open
         }
     };
 
@@ -466,7 +471,7 @@ export default function App() {
             if (error) throw error;
             await refreshData();
         } catch (error: any) {
-            alert('Error al eliminar producto: ' + error.message);
+            toast('Error al eliminar producto: ' + error.message, 'error');
         }
     };
 
@@ -484,7 +489,7 @@ export default function App() {
             }
             await refreshData();
         } catch (error: any) {
-            alert('Error en carga masiva: ' + error.message);
+            toast('Error en carga masiva: ' + error.message, 'error');
         }
     };
 
@@ -496,7 +501,7 @@ export default function App() {
             }
             await refreshData();
         } catch (error: any) {
-            alert('Error en edición masiva: ' + error.message);
+            toast('Error en edición masiva: ' + error.message, 'error');
         }
     };
 
@@ -507,7 +512,7 @@ export default function App() {
             }
             return <DashboardView currentUser={currentUser} onNewOrder={() => setCurrentView('cat_flexible_vinilos')} formatCurrency={formatCurrency} />;
         }
-        if (currentView.startsWith('cat_')) return <ProductListView products={products} cart={cart} currentView={currentView} searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} sortOrder={sortOrder} onSortOrderChange={setSortOrder} onAddToCart={addToCart} onUpdateQuantity={updateQuantity} onEditProduct={(p) => { setEditingProduct(p); setCurrentView('admin_products'); }} isAdmin={currentUser?.role === 'admin'} formatCurrency={formatCurrency} />;
+        if (currentView.startsWith('cat_')) return <ProductListView products={products} cart={cart} currentView={currentView} searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} sortOrder={sortOrder} onSortOrderChange={setSortOrder} onAddToCart={addToCart} onUpdateQuantity={updateQuantity} onEditProduct={setEditingProduct} isAdmin={currentUser?.role === 'admin'} formatCurrency={formatCurrency} />;
         if (currentView === 'cart' && currentUser) {
             const isSalesRep = currentUser.role === 'sales';
             const assignedClients = isSalesRep
@@ -588,6 +593,13 @@ export default function App() {
                     onClose={() => setIsProfileModalOpen(false)}
                     currentUser={currentUser}
                     onSaveProfile={handleSaveProfile}
+                />
+            )}
+            {editingProduct && currentView.startsWith('cat_') && (
+                <AdminProductEditModal
+                    product={editingProduct}
+                    onSave={handleUpdateProduct}
+                    onClose={() => setEditingProduct(null)}
                 />
             )}
         </div>

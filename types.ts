@@ -10,7 +10,8 @@ export interface Product {
   unit: string;
   // Flexible specific
   isFlexible?: boolean;
-  width?: number; // meters
+  width?: number; // meters (canonical / first width)
+  widthOptions?: number[]; // all available widths for this product
   length?: number; // meters
   pricePerM2?: number;
   // Ink specific

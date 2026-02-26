@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Product } from '../types';
 import { ArrowLeft, ShoppingBag, Search, Check, X, Trash2 } from 'lucide-react';
+import { useToast } from './Toast';
 
 interface AdminProductListProps {
     products: Product[];
@@ -41,6 +42,9 @@ export const AdminProductList: React.FC<AdminProductListProps> = ({
     onBack,
     formatCurrency
 }) => {
+    const [pendingDeleteProductId, setPendingDeleteProductId] = useState<string | null>(null);
+    const { toast } = useToast();
+
     const filtered = products.filter(p =>
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.reference.toLowerCase().includes(searchQuery.toLowerCase())
@@ -216,11 +220,7 @@ export const AdminProductList: React.FC<AdminProductListProps> = ({
                                                     Editar
                                                 </button>
                                                 <button
-                                                    onClick={() => {
-                                                        if (window.confirm('¿Estás seguro de que deseas eliminar este producto?')) {
-                                                            onDeleteProduct(product.id);
-                                                        }
-                                                    }}
+                                                    onClick={() => setPendingDeleteProductId(product.id)}
                                                     className="text-red-600 hover:text-red-800 p-1.5 bg-red-50 hover:bg-red-100 rounded transition-colors"
                                                     title="Eliminar producto"
                                                 >
@@ -238,6 +238,35 @@ export const AdminProductList: React.FC<AdminProductListProps> = ({
                     <div className="p-8 text-center text-slate-400">No se encontraron productos.</div>
                 )}
             </div>
-        </div >
+
+            {/* Inline confirm modal for product deletion */}
+            {pendingDeleteProductId && (() => {
+                const product = products.find(p => p.id === pendingDeleteProductId);
+                return (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm border border-slate-200 p-6">
+                            <h3 className="text-lg font-bold text-slate-900 mb-2">¿Eliminar producto?</h3>
+                            <p className="text-sm text-slate-600 mb-6">
+                                Se eliminará <strong>{product?.name}</strong> permanentemente.
+                            </p>
+                            <div className="flex justify-end gap-3">
+                                <button
+                                    onClick={() => setPendingDeleteProductId(null)}
+                                    className="px-4 py-2 text-sm text-slate-500 hover:text-slate-800"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={() => { onDeleteProduct(pendingDeleteProductId); setPendingDeleteProductId(null); }}
+                                    className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-lg transition-colors"
+                                >
+                                    Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
+        </div>
     );
 };

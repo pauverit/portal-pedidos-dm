@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { UserPlus, Save, Eye, EyeOff } from 'lucide-react';
 import { User } from '../types';
+import { useToast } from './Toast';
 
 interface AdminNewClientProps {
     onSave: (clientData: any) => Promise<void>;
@@ -23,11 +24,12 @@ export const AdminNewClient: React.FC<AdminNewClientProps> = ({ onSave, onBack, 
     });
     const [showPassword, setShowPassword] = useState(false);
     const [saving, setSaving] = useState(false);
+    const { toast } = useToast();
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.username || !formData.password || (isAdmin && !formData.salesRep)) {
-            alert('Usuario, contraseña y comercial son obligatorios');
+            toast('Usuario, contraseña y comercial son obligatorios', 'error');
             return;
         }
         setSaving(true);
@@ -35,7 +37,7 @@ export const AdminNewClient: React.FC<AdminNewClientProps> = ({ onSave, onBack, 
             await onSave(formData);
             onBack();
         } catch (error: any) {
-            alert('Error: ' + error.message);
+            toast('Error: ' + error.message, 'error');
         } finally {
             setSaving(false);
         }

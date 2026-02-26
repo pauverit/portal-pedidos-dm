@@ -50,15 +50,9 @@ export const ProductRow: React.FC<ProductRowProps> = ({
             options = {};
             options.width = width;
 
-            if (product.allowFinish || isVinyl(product) || isLaminate(product)) {
-                options.finish = finish;
-            }
-            if (product.allowBacking || (isVinyl(product) && !isLaminate(product))) {
-                options.backing = backing;
-            }
-            if (product.allowAdhesive || (product.materialType === 'monomeric' && isVinyl(product))) {
-                options.adhesive = adhesive;
-            }
+            if (showFinish) options.finish = finish;
+            if (showBacking) options.backing = backing;
+            if (showAdhesive) options.adhesive = adhesive;
         }
 
 
@@ -68,10 +62,25 @@ export const ProductRow: React.FC<ProductRowProps> = ({
         setIsExpanded(false);
     };
 
-    // Width options per subcategory
-    const widthOptions = isLona(product)
-        ? [1.05, 1.37, 1.60, 2.20, 2.50, 3.20]
-        : [1.05, 1.37, 1.52, 1.60];
+    // Width options: use per-product list if set by admin, otherwise fall back to category defaults
+    const widthOptions = (product as any).widthOptions?.length
+        ? (product as any).widthOptions as number[]
+        : isLona(product)
+            ? [1.05, 1.37, 1.60, 2.20, 2.50, 3.20]
+            : [1.05, 1.37, 1.52, 1.60];
+
+    // Determine visibility of each option:
+    // - explicit `true` always shows,  explicit `false` always hides
+    // - `undefined` (not yet configured by admin) falls back to category heuristics
+    const showFinish =
+        product.allowFinish === true ||
+        (product.allowFinish !== false && (isVinyl(product) || isLaminate(product)));
+    const showBacking =
+        product.allowBacking === true ||
+        (product.allowBacking !== false && isVinyl(product) && !isLaminate(product));
+    const showAdhesive =
+        product.allowAdhesive === true ||
+        (product.allowAdhesive !== false && product.materialType === 'monomeric' && isVinyl(product));
 
     const renderConfigurator = () => (
         <div className="px-4 py-3 bg-slate-50 border-t border-slate-100">
@@ -94,7 +103,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
                 </div>
 
                 {/* Finish */}
-                {(product.allowFinish || isVinyl(product) || isLaminate(product)) && (
+                {showFinish && (
                     <div>
                         <label className="block text-xs font-medium text-slate-600 mb-1.5">Acabado</label>
                         <div className="flex gap-1.5">
@@ -109,7 +118,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
                 )}
 
                 {/* Backing (vinyls only) */}
-                {(product.allowBacking || (isVinyl(product) && !isLaminate(product))) && (
+                {showBacking && (
                     <div>
                         <label className="block text-xs font-medium text-slate-600 mb-1.5">Trasera</label>
                         {product.materialType === 'monomeric' && (product.brand?.toLowerCase().includes('fedrigoni') || product.name.toLowerCase().includes('fedrigoni')) ? (
@@ -128,7 +137,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
                 )}
 
                 {/* Adhesive (monomeric vinyls) */}
-                {(product.allowAdhesive || (product.materialType === 'monomeric' && isVinyl(product))) && (
+                {showAdhesive && (
                     <div>
                         <label className="block text-xs font-medium text-slate-600 mb-1.5">Adhesivo</label>
                         <div className="flex gap-1.5">
