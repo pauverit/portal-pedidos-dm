@@ -69,13 +69,28 @@ export interface SalesRep {
 
 export interface Order {
   id: string;
+  orderNumber?: string; // Human-readable: DDMMYY-HHmmss-XXXX
   userId: string;
   date: string;
   items: CartItem[];
   total: number;
-  status: 'pending' | 'processing' | 'completed' | 'cancelled';
+  status: 'pending' | 'processing' | 'completed' | 'cancelled' | 'tramitado';
   shippingMethod: 'agency' | 'own';
   salesRep?: string;
   rappelDiscount: number;
   couponDiscount: number;
+}
+
+export interface Coupon {
+  id?: string;
+  code: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  minOrderAmount: number;
+  maxUses: number;
+  usesCount: number;
+  isActive: boolean;
+  createdAt: string;
+  description?: string;
+  expiresAt?: string;
 }

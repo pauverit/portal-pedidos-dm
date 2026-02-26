@@ -1,5 +1,5 @@
 import React from 'react';
-import { UserPlus, Download, Settings, Droplets } from 'lucide-react';
+import { UserPlus, Download, Settings, Droplets, Package, Users } from 'lucide-react';
 
 interface AdminDashboardProps {
     onNavigate: (view: string) => void;
@@ -49,6 +49,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     </div>
                     <h3 className="text-xl font-bold text-slate-900 mb-2">Cupones Promocionales</h3>
                     <p className="text-slate-500">Crear y gestionar códigos de descuento de un solo uso.</p>
+                </div>
+
+                <div onClick={() => onNavigate('admin_products')} className="bg-white p-8 rounded-xl shadow-lg border border-slate-200 cursor-pointer hover:border-teal-300 hover:shadow-teal-100 transition-all group">
+                    <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <Package className="text-teal-600" size={24} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">Gestión de Productos</h3>
+                    <p className="text-slate-500">Ver, editar y eliminar productos del catálogo individualmente.</p>
+                </div>
+
+                <div onClick={() => onNavigate('admin_sales_management')} className="bg-white p-8 rounded-xl shadow-lg border border-slate-200 cursor-pointer hover:border-indigo-300 hover:shadow-indigo-100 transition-all group">
+                    <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <Users className="text-indigo-600" size={24} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">Gestión de Comerciales</h3>
+                    <p className="text-slate-500">Supervisar la cartera de clientes y ventas de cada comercial.</p>
                 </div>
             </div>
         </div>

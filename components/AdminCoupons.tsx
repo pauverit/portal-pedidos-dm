@@ -1,20 +1,7 @@
 import React, { useState } from 'react';
 import { Ticket, Plus, Trash2, Copy, Check, AlertCircle } from 'lucide-react';
 import { useToast } from './Toast';
-
-export interface Coupon {
-    id?: string;
-    code: string;
-    discountType: 'percentage' | 'fixed';
-    discountValue: number;
-    minOrderAmount: number;
-    maxUses: number;
-    usesCount: number;
-    isActive: boolean;
-    createdAt: string;
-    description?: string;
-    expiresAt?: string;
-}
+import { Coupon } from '../types';
 
 interface AdminCouponsProps {
     coupons: Coupon[];

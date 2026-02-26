@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Product, User, ProductCategory } from '../types';
-import { INITIAL_PRODUCTS, DEFAULT_USERS } from '../constants';
-import { Coupon } from '../components/AdminCoupons';
+import { Product, User, ProductCategory, Coupon } from '../types';
+import { INITIAL_PRODUCTS } from '../constants';
 
 export function useSupabaseData() {
     const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
-    const [users, setUsers] = useState<User[]>(DEFAULT_USERS);
+    const [users, setUsers] = useState<User[]>([]);
+
     const [promoCoupons, setPromoCoupons] = useState<Coupon[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -83,7 +83,7 @@ export function useSupabaseData() {
                     isActive: c.is_active ?? !c.must_change_password,
                     usedCoupons: c.used_coupons || []
                 }));
-                setUsers([DEFAULT_USERS[0], ...mappedClients]);
+                setUsers(mappedClients);
             }
 
             // Load Coupons

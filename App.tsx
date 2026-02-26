@@ -40,7 +40,7 @@ const formatCurrency = (value: number) =>
 
 export default function App() {
     const {
-        products, users, setUsers, promoCoupons, setPromoCoupons, refreshData
+        products, users, setUsers, promoCoupons, setPromoCoupons, refreshData, loading
     } = useSupabaseData();
     const { currentUser, setCurrentUser, login, logout, updateCurrentUser } = useAuth();
     const { cart, setCart, addToCart, updateQuantity, clearCart, syncCartPrices } = useCart(currentUser);
@@ -188,11 +188,12 @@ export default function App() {
 
             const newOrder: Order = {
                 id: results.order.id,
+                orderNumber: results.orderNumber,
                 userId: effectiveUser.id,
                 date: new Date().toISOString(),
                 items: [...cart],
                 total: finalTotal,
-                status: 'processing',
+                status: 'tramitado',
                 shippingMethod,
                 salesRep: activeRep || undefined,
                 rappelDiscount,
@@ -204,7 +205,7 @@ export default function App() {
             updateCurrentUser({ rappelAccumulated: results.newRappelTotal });
             clearCart();
             setSelectedClientForOrder(null);
-            setCurrentView('client_orders');
+            setCurrentView('order_success');
         } catch (error: any) {
             toast('Error al confirmar el pedido: ' + error.message, 'error');
         } finally {
@@ -548,6 +549,19 @@ export default function App() {
     };
 
     if (currentView === 'login') return <LoginView onLogin={handleLogin} loginError={loginError} />;
+
+    // Show loading screen while Supabase data is being fetched
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4">
+                <img src="/logo.png" alt="DigitalMarket" className="h-12 w-auto opacity-70" />
+                <div className="flex items-center gap-3 text-slate-500">
+                    <div className="w-5 h-5 border-2 border-slate-300 border-t-slate-700 rounded-full animate-spin" />
+                    <span className="text-sm font-medium">Cargando datos...</span>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex min-h-screen bg-slate-50 font-sans text-slate-900">

@@ -32,7 +32,7 @@ export const OrderSuccessView: React.FC<OrderSuccessViewProps> = ({
                 <div className="space-y-3 text-sm">
                     <div className="flex justify-between">
                         <span className="text-slate-500">Referencia Pedido:</span>
-                        <span className="font-mono font-bold">#{order?.id.slice(-6)}</span>
+                        <span className="font-mono font-bold">#{order?.orderNumber || order?.id.slice(-6)}</span>
                     </div>
                     <div className="flex justify-between">
                         <span className="text-slate-500">Total:</span>

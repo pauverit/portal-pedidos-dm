@@ -150,6 +150,14 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({
                     ) : (
                         monthOrders.map(order => {
                             const client = myClients.find(c => c.id === order.userId);
+                            const statusLabels: Record<string, { label: string; className: string }> = {
+                                tramitado: { label: 'Tramitado', className: 'bg-blue-100 text-blue-700' },
+                                processing: { label: 'En proceso', className: 'bg-amber-100 text-amber-700' },
+                                completed: { label: 'Completado', className: 'bg-green-100 text-green-700' },
+                                cancelled: { label: 'Cancelado', className: 'bg-red-100 text-red-700' },
+                                pending: { label: 'Pendiente', className: 'bg-slate-100 text-slate-600' },
+                            };
+                            const statusInfo = statusLabels[order.status] || statusLabels['tramitado'];
                             return (
                                 <div key={order.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
                                     <div>
@@ -158,8 +166,8 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({
                                     </div>
                                     <div className="text-right">
                                         <p className="font-bold text-slate-900">{formatCurrency(order.total)}</p>
-                                        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-700">
-                                            Tramitado
+                                        <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${statusInfo.className}`}>
+                                            {statusInfo.label}
                                         </span>
                                     </div>
                                 </div>
