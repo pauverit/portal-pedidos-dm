@@ -36,8 +36,10 @@ export const orderService = {
         const year = now.getFullYear().toString().slice(-2);
         const hours = now.getHours().toString().padStart(2, '0');
         const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
+        const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
 
-        const orderNumber = `${day}${month}${year}-${hours}${minutes}`;
+        const orderNumber = `${day}${month}${year}-${hours}${minutes}${seconds}-${randomStr}`;
 
         // 1. Mark/Upsert Client
         const clientData: any = {

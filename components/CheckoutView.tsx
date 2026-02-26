@@ -31,6 +31,7 @@ interface CheckoutViewProps {
     finalTotal: number;
     newRappelGenerated: number;
     onFinalizeOrder: () => void;
+    isFinalizing?: boolean;
     // Sales rep order assignment
     isSalesRep?: boolean;
     assignedClients?: User[];
@@ -67,6 +68,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
     finalTotal,
     newRappelGenerated,
     onFinalizeOrder,
+    isFinalizing = false,
     isSalesRep = false,
     assignedClients = [],
     selectedClient = null,
@@ -88,8 +90,8 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
             {/* Sales Rep Client Selector */}
             {isSalesRep && (
                 <div className={`rounded-xl p-5 mb-6 border-2 transition-colors ${selectedClient
-                        ? 'bg-green-50 border-green-200'
-                        : 'bg-amber-50 border-amber-300 animate-pulse'
+                    ? 'bg-green-50 border-green-200'
+                    : 'bg-amber-50 border-amber-300 animate-pulse'
                     }`}>
                     <div className="flex items-center gap-3 mb-3">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${selectedClient ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
@@ -110,8 +112,8 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                             onSelectClient?.(client);
                         }}
                         className={`w-full px-4 py-3 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-slate-900 border ${selectedClient
-                                ? 'border-green-300 bg-white text-slate-900'
-                                : 'border-amber-400 bg-white text-slate-900'
+                            ? 'border-green-300 bg-white text-slate-900'
+                            : 'border-amber-400 bg-white text-slate-900'
                             }`}
                     >
                         <option value="">— Seleccionar Cliente —</option>
@@ -415,10 +417,14 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                 <div className="max-w-3xl mx-auto">
                     <button
                         onClick={onFinalizeOrder}
-                        disabled={cart.length === 0 || (isSalesRep && !selectedClient)}
+                        disabled={cart.length === 0 || (isSalesRep && !selectedClient) || isFinalizing}
                         className="w-full bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
                     >
-                        CONFIRMAR PEDIDO <CheckCircle size={20} />
+                        {isFinalizing ? (
+                            <>PROCESANDO PEDIDO... <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /></>
+                        ) : (
+                            <>CONFIRMAR PEDIDO <CheckCircle size={20} /></>
+                        )}
                     </button>
                 </div>
             </div>
