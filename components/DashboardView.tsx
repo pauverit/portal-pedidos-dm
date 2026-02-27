@@ -75,7 +75,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ currentUser, onNew
                     <div className="relative z-10">
                         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Saldo Rappel Disponible</h3>
                         <p className="text-5xl font-black">{formatCurrency(currentUser.rappelAccumulated || 0)}</p>
-                        <p className="text-xs text-slate-400 mt-4">* Caducidad 12 meses desde generación.</p>
+
+                        <div className="mt-6 pt-4 border-t border-white/10 space-y-2">
+                            <p className="text-sm font-medium flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 bg-green-400 rounded-full shadow-[0_0_8px_rgba(74,222,128,0.5)]" />
+                                Acumulas un <span className="text-green-400 font-bold">3%</span> en pedidos {'>'} <span className="font-bold">{formatCurrency(currentUser.rappelThreshold || 300)}</span>
+                            </p>
+                            <p className="text-[11px] text-slate-400">
+                                * Canjeable en pedidos superiores a {formatCurrency((currentUser.rappelThreshold || 300) * 1.5)}
+                            </p>
+                            <p className="text-[10px] text-slate-500 italic">
+                                La caducidad es de 12 meses desde su generación.
+                            </p>
+                        </div>
                     </div>
                 </div>
 
@@ -105,8 +117,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ currentUser, onNew
                                     </div>
                                     {item.badge && (
                                         <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full tracking-wider ${item.badge === 'Próximamente' ? 'bg-slate-100 text-slate-400' :
-                                                item.badge === 'WhatsApp' ? 'bg-green-100 text-green-700' :
-                                                    'bg-blue-100 text-blue-700'
+                                            item.badge === 'WhatsApp' ? 'bg-green-100 text-green-700' :
+                                                'bg-blue-100 text-blue-700'
                                             }`}>
                                             {item.badge}
                                         </span>
