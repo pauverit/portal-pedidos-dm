@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Portal B2B – Guía de Funcionalidades</title>
+    <style>
+        /* ── Print & General ─────────────────────── */
+        @page {
+            size: A4;
+            margin: 2.2cm 2.5cm 2.2cm 2.5cm;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
+            font-size: 11pt;
+            color: #1a1a2e;
+            line-height: 1.6;
+            background: #fff;
+        }
+
+        /* ── Cover ───────────────────────────────── */
+        .cover {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 26cm;
+            padding: 3cm 0;
+            text-align: center;
+            page-break-after: always;
+            border-bottom: 4px solid #0f3460;
+        }
+        .cover .brand { font-size: 10pt; color: #888; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 1.2cm; }
+        .cover h1 { font-size: 32pt; font-weight: 900; color: #0f3460; line-height: 1.2; margin-bottom: 0.4cm; }
+        .cover .subtitle { font-size: 15pt; color: #444; margin-bottom: 1.8cm; }
+        .cover .divider { width: 80px; height: 4px; background: #e94560; margin: 0 auto 1.8cm; border-radius: 2px; }
+        .cover .meta { font-size: 10pt; color: #888; line-height: 2; }
+        .cover .meta strong { color: #0f3460; }
+
+        /* ── TOC ─────────────────────────────────── */
+        .toc { page-break-after: always; }
+        .toc h2 { font-size: 16pt; color: #0f3460; margin-bottom: 0.8cm; border-bottom: 2px solid #0f3460; padding-bottom: 4px; }
+        .toc ol { padding-left: 1.2cm; }
+        .toc li { padding: 5px 0; font-size: 11pt; }
+        .toc li .dots { color: #ccc; }
+        .toc .section-title { color: #0f3460; font-weight: 700; }
+        .toc .sub { font-size: 10pt; color: #555; list-style-type: none; padding-left: 1.2cm; }
+        .toc .sub li { padding: 2px 0; }
+
+        /* ── Section ─────────────────────────────── */
+        .section { page-break-before: always; }
+        .section-header {
+            background: #0f3460;
+            color: #fff;
+            padding: 14px 20px;
+            border-radius: 6px;
+            margin-bottom: 0.6cm;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .section-header .num {
+            background: #e94560;
+            color: #fff;
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 14pt; flex-shrink: 0;
+        }
+        .section-header h2 { font-size: 16pt; font-weight: 700; }
+
+        h3 {
+            font-size: 12pt;
+            color: #0f3460;
+            margin: 0.5cm 0 0.2cm;
+            border-left: 4px solid #e94560;
+            padding-left: 8px;
+        }
+
+        p { margin-bottom: 0.3cm; }
+        ul, ol { padding-left: 1.2cm; margin-bottom: 0.3cm; }
+        li { margin-bottom: 3px; }
+
+        /* ── Feature Card ────────────────────────── */
+        .feature-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 14px 18px;
+            margin-bottom: 0.4cm;
+            background: #f9fbff;
+        }
+        .feature-card .tag {
+            display: inline-block;
+            font-size: 8pt;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .tag.perfil-cliente { background: #dbeafe; color: #1e40af; }
+        .tag.perfil-comercial { background: #d1fae5; color: #065f46; }
+        .tag.perfil-admin { background: #fef3c7; color: #92400e; }
+        .tag.todos { background: #f3e8ff; color: #6b21a8; }
+        .feature-card .title { font-weight: 700; font-size: 12pt; color: #1a1a2e; margin-bottom: 4px; }
+        .feature-card p { font-size: 10.5pt; margin: 0; color: #444; }
+
+        /* ── Role Table ──────────────────────────── */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0.3cm 0;
+            font-size: 10pt;
+        }
+        th {
+            background: #0f3460;
+            color: #fff;
+            padding: 8px 12px;
+            text-align: left;
+            font-weight: 700;
+        }
+        td {
+            padding: 7px 12px;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: top;
+        }
+        tr:nth-child(even) td { background: #f9fbff; }
+        .tick { color: #16a34a; font-weight: 700; }
+        .cross { color: #dc2626; font-weight: 700; }
+
+        /* ── Callout ─────────────────────────────── */
+        .callout {
+            border-left: 5px solid #e94560;
+            background: #fff5f5;
+            padding: 10px 14px;
+            margin: 0.3cm 0;
+            border-radius: 0 6px 6px 0;
+            font-size: 10.5pt;
+        }
+        .callout.info {
+            border-color: #0f3460;
+            background: #eff6ff;
+        }
+        .callout strong { display: block; margin-bottom: 3px; }
+
+        /* ── Footer ──────────────────────────────── */
+        footer {
+            text-align: center;
+            font-size: 9pt;
+            color: #999;
+            margin-top: 1.5cm;
+            border-top: 1px solid #eee;
+            padding-top: 0.4cm;
+        }
+
+        @media print {
+            body { font-size: 10.5pt; }
+            .cover { min-height: auto; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- PORTADA ───────────────────────────────────────────── -->
+<div class="cover">
+    <div class="brand">Digital Market Granada</div>
+    <h1>Portal B2B<br>de Pedidos</h1>
+    <div class="subtitle">Guía Completa de Funcionalidades</div>
+    <div class="divider"></div>
+    <div class="meta">
+        <strong>Versión:</strong> 1.0 &nbsp;·&nbsp;
+        <strong>Fecha:</strong> Febrero 2026<br>
+        <strong>Documento preparado para:</strong> Reunión de dirección
+    </div>
+</div>
+
+<!-- ÍNDICE ────────────────────────────────────────────── -->
+<div class="toc">
+    <h2>Índice de Contenidos</h2>
+    <ol>
+        <li><span class="section-title">Descripción General del Sistema</span></li>
+        <li><span class="section-title">Perfiles de Usuario</span></li>
+        <li><span class="section-title">Módulo de Catálogo y Pedidos</span>
+            <ul class="sub">
+                <li>- Catálogo de productos</li>
+                <li>- Carrito de compra</li>
+                <li>- Proceso de confirmación</li>
+            </ul>
+        </li>
+        <li><span class="section-title">Sistema de Rappel (Fidelización)</span></li>
+        <li><span class="section-title">Cupones Promocionales</span></li>
+        <li><span class="section-title">Panel de Comerciales</span></li>
+        <li><span class="section-title">Panel de Administración</span></li>
+        <li><span class="section-title">Notificaciones y Emails Automáticos</span></li>
+        <li><span class="section-title">Accesos Rápidos</span></li>
+    </ol>
+</div>
+
+<!-- 1. DESCRIPCIÓN GENERAL ────────────────────────────── -->
+<div class="section">
+    <div class="section-header">
+        <div class="num">1</div>
+        <h2>Descripción General del Sistema</h2>
+    </div>
+    <p>El <strong>Portal B2B de Digital Market Granada</strong> es una plataforma web privada de gestión de pedidos diseñada exclusivamente para clientes empresariales. Permite realizar pedidos online de forma ágil, consultar historiales de compra, gestionar descuentos acumulados (rappel) y coordinar la actividad entre comerciales y clientes.</p>
+
+    <div class="callout info">
+        <strong>🌐 Acceso</strong>
+        La plataforma es accesible desde cualquier dispositivo con navegador (ordenador, tablet, móvil) mediante credenciales personalizadas. No requiere instalación de ningún software.
+    </div>
+
+    <h3>Tecnología</h3>
+    <ul>
+        <li>Aplicación web moderna (React + TypeScript)</li>
+        <li>Base de datos en la nube (Supabase / PostgreSQL)</li>
+        <li>Notificaciones por email automáticas (EmailJS)</li>
+        <li>Tiempo de respuesta inmediato — sin recargas de página</li>
+    </ul>
+</div>
+
+<!-- 2. PERFILES DE USUARIO ────────────────────────────── -->
+<div class="section">
+    <div class="section-header">
+        <div class="num">2</div>
+        <h2>Perfiles de Usuario</h2>
+    </div>
+    <p>El sistema dispone de <strong>tres perfiles</strong> diferenciados, cada uno con acceso a funcionalidades específicas:</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Funcionalidad</th>
+                <th>Cliente</th>
+                <th>Comercial</th>
+                <th>Administrador</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Navegar el catálogo y hacer pedidos</td><td class="tick">✔</td><td class="tick">✔</td><td class="tick">✔</td></tr>
+            <tr><td>Ver su historial de pedidos</td><td class="tick">✔</td><td class="tick">✔ (de sus clientes)</td><td class="tick">✔ (todos)</td></tr>
+            <tr><td>Gestionar rappel acumulado</td><td class="tick">✔</td><td class="cross">—</td><td class="tick">✔</td></tr>
+            <tr><td>Aplicar cupones de descuento</td><td class="tick">✔</td><td class="tick">✔</td><td class="tick">✔</td></tr>
+            <tr><td>Hacer pedidos en nombre de clientes</td><td class="cross">—</td><td class="tick">✔</td><td class="tick">✔</td></tr>
+            <tr><td>Ver dashboard de ventas mensuales</td><td class="cross">—</td><td class="tick">✔</td><td class="tick">✔</td></tr>
+            <tr><td>Dar de alta nuevos clientes</td><td class="cross">—</td><td class="tick">✔</td><td class="tick">✔</td></tr>
+            <tr><td>Gestionar productos del catálogo</td><td class="cross">—</td><td class="cross">—</td><td class="tick">✔</td></tr>
+            <tr><td>Crear/gestionar cupones</td><td class="cross">—</td><td class="cross">—</td><td class="tick">✔</td></tr>
+            <tr><td>Supervisar todos los comerciales</td><td class="cross">—</td><td class="cross">—</td><td class="tick">✔</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- 3. CATÁLOGO Y PEDIDOS ─────────────────────────────── -->
+<div class="section">
+    <div class="section-header">
+        <div class="num">3</div>
+        <h2>Módulo de Catálogo y Pedidos</h2>
+    </div>
+
+    <h3>Catálogo Organizado por Familias</h3>
+    <p>Los productos están organizados en categorías y subfamilias para una navegación rápida:</p>
+
+    <div class="feature-card">
+        <span class="tag todos">Todos los usuarios</span>
+        <div class="title">Familias de producto disponibles</div>
+        <ul>
+            <li><strong>Materiales Flexibles:</strong> Vinilos, Laminados, Wrapping, Lonas, Papeles, Textiles, Lienzos, Corte Colores, Otros</li>
+            <li><strong>Soportes Rígidos:</strong> PVC, Composite, Cartón Pluma, Metacrilato, Otros</li>
+            <li><strong>Accesorios:</strong> Herramientas, Ollados, Refuerzos, Adhesivos, Otros</li>
+            <li><strong>Displays:</strong> Roll-ups, X-Banners, Muros Pop-up, Mostradores, Otros</li>
+            <li><strong>Tintas y Consumibles:</strong> Series L600/700, L800, R1000, R2000, DTF y más</li>
+        </ul>
+    </div>
+
+    <h3>Características del Catálogo</h3>
+    <ul>
+        <li>Búsqueda en tiempo real por referencia, nombre o marca</li>
+        <li>Filtro y ordenación por precio (mayor/menor)</li>
+        <li>Para materiales flexibles: selector de <strong>ancho, acabado (brillo/mate), adhesivo y tipo de trasera</strong></li>
+        <li>Precio calculado automáticamente en función de las dimensiones (€/m²)</li>
+        <li>Posibilidad de asignar <strong>precios personalizados por cliente</strong></li>
+        <li>Opción de ocultar precios para clientes específicos</li>
+    </ul>
+
+    <h3>Carrito de Compra</h3>
+    <ul>
+        <li>Carrito persistente — se guarda aunque el usuario cierre el navegador</li>
+        <li>Ajuste de cantidades directamente desde el carrito</li>
+        <li>Cálculo automático de peso total del pedido</li>
+        <li>Detección automática de promociones cruzadas (Vinilo + Laminado)</li>
+    </ul>
+
+    <h3>Proceso de Confirmación de Pedido</h3>
+    <p>Al confirmar, el sistema guía al usuario por 4 pasos en una sola pantalla:</p>
+    <ol>
+        <li>Aplicar cupón de descuento (opcional)</li>
+        <li>Seleccionar método de envío: <strong>Agencia 24h (TIPSA)</strong> o <strong>Reparto Propio</strong></li>
+        <li>Añadir observaciones o instrucciones especiales</li>
+        <li>Revisar el resumen económico y confirmar</li>
+    </ol>
+
+    <div class="callout">
+        <strong>📦 Envío gratuito</strong>
+        Los pedidos superiores a 400€ y con un peso ≤ 25kg obtienen envío gratuito por agencia automáticamente.
+    </div>
+</div>
+
+<!-- 4. SISTEMA DE RAPPEL ───────────────────────────────── -->
+<div class="section">
+    <div class="section-header">
+        <div class="num">4</div>
+        <h2>Sistema de Rappel (Fidelización por Volumen)</h2>
+    </div>
+    <p>El portal incorpora un <strong>sistema de rappel automático</strong> para incentivar la fidelización de los clientes B2B.</p>
+
+    <h3>Cómo funciona</h3>
+    <div class="feature-card">
+        <span class="tag perfil-cliente">Clientes</span>
+        <div class="title">Acumulación de rappel</div>
+        <p>Cuando el importe de un pedido supera el <strong>umbral de generación</strong> configurado para ese cliente (por defecto 800€), el sistema genera automáticamente un <strong>3% del importe</strong> como saldo de rappel.</p>
+    </div>
+
+    <div class="feature-card">
+        <span class="tag perfil-cliente">Clientes</span>
+        <div class="title">Canje de rappel</div>
+        <p>El cliente puede canjear su saldo acumulado cuando el importe del pedido supere <strong>1,5 veces su umbral</strong> de generación (ej. umbral 800€ → mínimo de pedido para canjear = 1.200€). El descuento se aplica directamente al total antes de IVA.</p>
+    </div>
+
+    <h3>Configuración por cliente</h3>
+    <ul>
+        <li>El administrador puede establecer un <strong>umbral personalizado</strong> por cliente (entre 500€ y 1.000€)</li>
+        <li>El saldo se muestra en el dashboard principal del cliente</li>
+        <li>Caducidad del saldo: 12 meses desde su generación</li>
+    </ul>
+</div>
+
+<!-- 5. CUPONES ────────────────────────────────────────── -->
+<div class="section">
+    <div class="section-header">
+        <div class="num">5</div>
+        <h2>Cupones Promocionales</h2>
+    </div>
+
+    <div class="feature-card">
+        <span class="tag perfil-admin">Administrador</span>
+        <div class="title">Generación de Cupones</div>
+        <p>El administrador puede crear cupones de descuento con los siguientes parámetros:</p>
+    </div>
+
+    <ul>
+        <li><strong>Tipo:</strong> Porcentaje (%) o importe fijo (€)</li>
+        <li><strong>Importe mínimo de pedido</strong> para que sea válido</li>
+        <li><strong>Número máximo de usos</strong> (incluyendo un solo uso)</li>
+        <li><strong>Activación/desactivación</strong> manual en cualquier momento</li>
+        <li>Generación automática de código alfanumérico único</li>
+        <li>Descripción interna para identificar el cupón</li>
+    </ul>
+
+    <div class="callout info">
+        <strong>💡 Uso</strong>
+        El cliente introduce el código en el carrito antes de confirmar el pedido. El sistema valida que no haya sido ya utilizado por ese cliente y aplica el descuento automáticamente.
+    </div>
+</div>
+
+<!-- 6. PANEL COMERCIALES ──────────────────────────────── -->
+<div class="section">
+    <div class="section-header">
+        <div class="num">6</div>
+        <h2>Panel de Comerciales</h2>
+    </div>
+    <p>Los usuarios con perfil <strong>Comercial</strong> disponen de un dashboard propio con herramientas de gestión de su cartera.</p>
+
+    <h3>Dashboard Mensual</h3>
+    <div class="feature-card">
+        <span class="tag perfil-comercial">Comercial</span>
+        <div class="title">Resumen de actividad</div>
+        <p>Vista mensual navegable con número de pedidos, facturación total del mes, total de clientes gestionados y rappel acumulado de todo su portfolio.</p>
+    </div>
+
+    <h3>Gestión de Pedidos en Nombre del Cliente</h3>
+    <div class="feature-card">
+        <span class="tag perfil-comercial">Comercial</span>
+        <div class="title">Pedido asistido</div>
+        <p>El comercial puede acceder al catálogo, añadir productos al carrito y, <strong>al confirmar, asignar el pedido a cualquiera de sus clientes</strong>. El sistema aplica automáticamente los precios personalizados de ese cliente.</p>
+    </div>
+
+    <h3>Alta de Nuevos Clientes</h3>
+    <ul>
+        <li>Formulario completo: nombre, usuario, contraseña temporal, email, teléfono, delegación</li>
+        <li>Configuración del umbral de rappel desde el alta</li>
+        <li>El nuevo cliente queda asignado automáticamente al comercial que lo registra</li>
+        <li>El cliente debe cambiar su contraseña en el primer acceso</li>
+    </ul>
+
+    <h3>Listado de Clientes</h3>
+    <ul>
+        <li>Vista del portfolio completo con búsqueda y filtros</li>
+        <li>Edición inline de datos del cliente</li>
+        <li>Consulta del historial de pedidos por cliente</li>
+        <li>Visualización del saldo rappel acumulado de cada cliente</li>
+    </ul>
+</div>
+
+<!-- 7. PANEL ADMINISTRACIÓN ───────────────────────────── -->
+<div class="section">
+    <div class="section-header">
+        <div class="num">7</div>
+        <h2>Panel de Administración</h2>
+    </div>
+    <p>El administrador tiene acceso completo a todas las funcionalidades del sistema desde un panel centralizado.</p>
+
+    <h3>Gestión del Catálogo</h3>
+    <div class="feature-card">
+        <span class="tag perfil-admin">Administrador</span>
+        <div class="title">Carga Masiva de Productos</div>
+        <p>Importación de catálogos completos mediante CSV, con mapeo automático de campos y previsualización antes de confirmar.</p>
+    </div>
+
+    <div class="feature-card">
+        <span class="tag perfil-admin">Administrador</span>
+        <div class="title">Edición Masiva</div>
+        <p>Modificación simultánea de precios, pesos y descripciones de múltiples productos en una tabla editable, sin necesidad de abrir cada producto por separado.</p>
+    </div>
+
+    <div class="feature-card">
+        <span class="tag perfil-admin">Administrador</span>
+        <div class="title">Edición Individual de Producto</div>
+        <p>Modal completo para editar todos los atributos de un producto: nombre, referencia, precio, precio por m², categoría, marcas, opciones de ancho, acabados, tipo de trasera y adhesivo.</p>
+    </div>
+
+    <h3>Supervisión Comercial</h3>
+    <ul>
+        <li>Vista global de todos los comerciales con estadísticas de ventas</li>
+        <li>Portfolio de clientes por comercial</li>
+        <li>Pedidos totales y facturación por comercial</li>
+        <li>Posibilidad de añadir o eliminar comerciales</li>
+    </ul>
+
+    <h3>Gestión de Clientes</h3>
+    <ul>
+        <li>Listado completo de todos los clientes del sistema</li>
+        <li>Edición de todos los parámetros del cliente (precios, rappel, comercial asignado, etc.)</li>
+        <li>Activación/desactivación de clientes</li>
+        <li>Asignación de precios personalizados por referencia de producto</li>
+    </ul>
+</div>
+
+<!-- 8. EMAILS ─────────────────────────────────────────── -->
+<div class="section">
+    <div class="section-header">
+        <div class="num">8</div>
+        <h2>Notificaciones y Emails Automáticos</h2>
+    </div>
+    <p>Al confirmar cada pedido, el sistema envía automáticamente un <strong>email de confirmación</strong> con el detalle completo a dos destinatarios:</p>
+
+    <table>
+        <thead>
+            <tr><th>Destinatario</th><th>Contenido del email</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>El cliente</strong></td>
+                <td>Confirmación con número de pedido, listado de artículos, subtotal, descuentos aplicados, IVA, total y método de envío.</td>
+            </tr>
+            <tr>
+                <td><strong>El comercial asignado</strong></td>
+                <td>El mismo detalle del pedido, para que pueda tramitarlo o hacer seguimiento sin entrar al portal.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="callout info">
+        <strong>ℹ️ Fiabilidad en móviles</strong>
+        El sistema está diseñado para que, si el envío del email falla por una conexión débil (habitual en tablets o móviles), el pedido quede igualmente registrado en la base de datos y el cliente vea la confirmación. El email se intenta enviar en segundo plano.
+    </div>
+</div>
+
+<!-- 9. ACCESOS RÁPIDOS ────────────────────────────────── -->
+<div class="section">
+    <div class="section-header">
+        <div class="num">9</div>
+        <h2>Accesos Rápidos desde el Dashboard</h2>
+    </div>
+    <p>Desde el dashboard del cliente se ofrecen accesos directos a recursos externos de valor:</p>
+
+    <div class="feature-card">
+        <span class="tag perfil-cliente">Clientes</span>
+        <div class="title">🖥 HP PrintOS</div>
+        <p>Enlace directo al portal de gestión de impresión de HP para clientes con equipos HP.</p>
+    </div>
+
+    <div class="feature-card">
+        <span class="tag perfil-cliente">Clientes</span>
+        <div class="title">💬 Soporte Técnico por WhatsApp</div>
+        <p>Botón de contacto directo con el número de soporte técnico vía WhatsApp.</p>
+    </div>
+
+    <div class="feature-card">
+        <span class="tag perfil-cliente">Próximamente</span>
+        <div class="title">📄 Fichas Técnicas / Certificados HP</div>
+        <p>Repositorio de fichas técnicas de materiales en PDF y certificados de homologación HP. En desarrollo.</p>
+    </div>
+
+    <footer>
+        <p>Portal B2B – Guía de Funcionalidades &nbsp;·&nbsp; Digital Market Granada &nbsp;·&nbsp; Febrero 2026</p>
+        <p>Documento confidencial para uso interno</p>
+    </footer>
+</div>
+
+</body>
+</html>

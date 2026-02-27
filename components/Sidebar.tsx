@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, ShoppingCart, Settings, LogOut, Printer, Database, UserCircle, ChevronDown, ChevronRight, Layers, Box, Wrench, UserPlus, X, ShoppingBag, Scroll, Monitor } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Settings, LogOut, Printer, Database, UserCircle, ChevronDown, ChevronRight, Layers, Box, Wrench, UserPlus, X, ShoppingBag, Scroll, Monitor, Eye, EyeOff } from 'lucide-react';
 import { User } from '../types';
 
 interface SidebarProps {
@@ -25,6 +25,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   // State to track which menu is expanded
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
+
+  // Admin-only: hidden items control
+  const [hiddenItems, setHiddenItems] = useState<Set<string>>(new Set());
+  const [showVisibilityPanel, setShowVisibilityPanel] = useState(false);
+
+  const toggleHidden = (id: string) => {
+    setHiddenItems(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const toggleMenu = (menuId: string) => {
     setExpandedMenu(expandedMenu === menuId ? null : menuId);
@@ -145,7 +158,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
   ];
 
-  const filteredItems = menuStructure.filter(item => currentUser && item.roles.includes(currentUser.role));
+  // Items visible to current user role (admins also apply their hidden-items filter)
+  const filteredItems = menuStructure.filter(item => {
+    if (!currentUser || !item.roles.includes(currentUser.role)) return false;
+    if (currentUser.role === 'admin' && hiddenItems.has(item.id)) return false;
+    return true;
+  });
+
+  // Items that admin can toggle visibility for (catalog families + shopping cart)
+  const visibilityControllable = menuStructure.filter(item =>
+    ['flexible', 'rigid', 'accessory', 'display', 'cat_ink_all'].includes(item.id)
+  );
 
   return (
     <>
@@ -239,29 +262,76 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             );
           })}
+
+          {/* Admin visibility control panel */}
+          {currentUser?.role === 'admin' && (
+            <div className="mt-4 pt-3 border-t border-slate-100">
+              <button
+                onClick={() => setShowVisibilityPanel(v => !v)}
+                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${showVisibilityPanel
+                    ? 'bg-slate-900 text-white'
+                    : 'text-slate-400 hover:text-slate-700 hover:bg-slate-50'
+                  }`}
+                title="Controlar visibilidad del menú"
+              >
+                {showVisibilityPanel ? <EyeOff size={14} /> : <Eye size={14} />}
+                Ocultar / Mostrar secciones
+              </button>
+
+              {showVisibilityPanel && (
+                <div className="mt-2 space-y-1 px-1">
+                  {/* Cart / Venta */}
+                  <label className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer hover:bg-slate-50 group">
+                    <input
+                      type="checkbox"
+                      checked={!hiddenItems.has('cart_section')}
+                      onChange={() => toggleHidden('cart_section')}
+                      className="accent-slate-800 w-3.5 h-3.5"
+                    />
+                    <ShoppingCart size={13} className="text-slate-400 group-hover:text-slate-700" />
+                    <span className="text-xs text-slate-600 group-hover:text-slate-900">Mi Pedido (Venta)</span>
+                  </label>
+
+                  {visibilityControllable.map(item => (
+                    <label key={item.id} className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer hover:bg-slate-50 group">
+                      <input
+                        type="checkbox"
+                        checked={!hiddenItems.has(item.id)}
+                        onChange={() => toggleHidden(item.id)}
+                        className="accent-slate-800 w-3.5 h-3.5"
+                      />
+                      <item.icon size={13} className="text-slate-400 group-hover:text-slate-700" />
+                      <span className="text-xs text-slate-600 group-hover:text-slate-900">{item.label}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </nav>
 
         <div className="p-4 border-t border-slate-100">
-          {(currentUser?.role === 'client' || currentUser?.role === 'admin' || currentUser?.role === 'sales') && (
-            <button
-              onClick={() => {
-                setCurrentView('cart');
-                onClose();
-              }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors mb-2 ${currentView === 'cart' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50'
-                }`}
-            >
-              <div className="relative">
-                <ShoppingCart size={20} />
-                {cartCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full">
-                    {cartCount}
-                  </span>
-                )}
-              </div>
-              Mi Pedido
-            </button>
-          )}
+          {(currentUser?.role === 'client' || currentUser?.role === 'admin' || currentUser?.role === 'sales') &&
+            !hiddenItems.has('cart_section') && (
+              <button
+                onClick={() => {
+                  setCurrentView('cart');
+                  onClose();
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors mb-2 ${currentView === 'cart' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+              >
+                <div className="relative">
+                  <ShoppingCart size={20} />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full">
+                      {cartCount}
+                    </span>
+                  )}
+                </div>
+                Mi Pedido
+              </button>
+            )}
           <button
             onClick={onLogout}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors">
