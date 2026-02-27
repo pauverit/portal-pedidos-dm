@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, ShoppingCart, Settings, LogOut, Printer, Database, UserCircle, ChevronDown, ChevronRight, Layers, Box, Wrench, UserPlus, X, ShoppingBag, Scroll, Monitor, Eye, EyeOff } from 'lucide-react';
 import { User } from '../types';
 
@@ -40,8 +40,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const toggleMenu = (menuId: string) => {
-    setExpandedMenu(expandedMenu === menuId ? null : menuId);
+    setExpandedMenu(expandedMenu === menuId ? 'none' : menuId);
   };
+
+  // Auto-expand menu when view changes, but only if not manually collapsed
+  useEffect(() => {
+    const parentItem = menuStructure.find(item =>
+      item.subItems?.some(sub => sub.id === currentView)
+    );
+    if (parentItem && expandedMenu !== 'none') {
+      setExpandedMenu(parentItem.id);
+    } else if (!parentItem && expandedMenu !== 'none') {
+      setExpandedMenu(null);
+    }
+  }, [currentView]);
+
 
   const menuStructure = [
     {
@@ -162,6 +175,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const filteredItems = menuStructure.filter(item => {
     if (!currentUser || !item.roles.includes(currentUser.role)) return false;
     if (currentUser.role === 'admin' && hiddenItems.has(item.id)) return false;
+    if (currentUser.role === 'client' && (currentUser.hiddenCategories || []).includes(item.id)) return false;
     return true;
   });
 
@@ -213,7 +227,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {filteredItems.map((item) => {
             const hasSubItems = item.subItems && item.subItems.length > 0;
             const isActive = currentView === item.id || (hasSubItems && item.subItems?.some(sub => sub.id === currentView));
-            const isExpanded = expandedMenu === item.id || (hasSubItems && isActive);
+            const isExpanded = expandedMenu === item.id;
 
             return (
               <div key={item.id}>
@@ -269,8 +283,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 onClick={() => setShowVisibilityPanel(v => !v)}
                 className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${showVisibilityPanel
-                    ? 'bg-slate-900 text-white'
-                    : 'text-slate-400 hover:text-slate-700 hover:bg-slate-50'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-400 hover:text-slate-700 hover:bg-slate-50'
                   }`}
                 title="Controlar visibilidad del menú"
               >

@@ -81,7 +81,8 @@ export function useSupabaseData() {
                     rappelThreshold: Number(c.rappel_threshold) || 800,
                     mustChangePassword: c.must_change_password ?? false,
                     isActive: c.is_active ?? !c.must_change_password,
-                    usedCoupons: c.used_coupons || []
+                    usedCoupons: c.used_coupons || [],
+                    hiddenCategories: c.hidden_categories || [],
                 }));
                 setUsers(mappedClients);
             }

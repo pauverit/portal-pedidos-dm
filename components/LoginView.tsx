@@ -30,6 +30,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, loginError }) => 
                             type="text"
                             value={username}
                             onChange={e => setUsername(e.target.value)}
+                            autoCapitalize="none"
+                            autoCorrect="off"
                             className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-transparent outline-none transition-all text-slate-900"
                             placeholder="Introduce tu usuario"
                         />

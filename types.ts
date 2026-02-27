@@ -59,6 +59,7 @@ export interface User {
   isActive?: boolean; // true = client has completed first login and activation
   usedCoupons?: string[];
   salesRepCode?: string; // For sales representatives
+  hiddenCategories?: string[]; // IDs of catalog families hidden for this client
 }
 
 export interface SalesRep {

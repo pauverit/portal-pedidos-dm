@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { Edit2, Trash2, CheckCircle, AlertCircle, Clock, ShoppingBag, TrendingUp, X, Save, Eye, EyeOff } from 'lucide-react';
-import { User, Order } from '../types';
+import { Edit2, Trash2, CheckCircle, AlertCircle, Clock, ShoppingBag, TrendingUp, X, Save, Eye, EyeOff, Tag } from 'lucide-react';
+import { User, Order, Product } from '../types';
 import { SALES_REPS } from '../constants';
 import { useToast } from './Toast';
+import { ClientCustomPricesEditor } from './ClientCustomPricesEditor';
 
 interface AdminClientListProps {
     clients: User[];
     orders: Order[];
+    products: Product[];
     onEditClient: (client: User) => void;
     onSaveClient: (client: User) => Promise<void>;
     onDeleteClient?: (clientId: string) => Promise<void>;
@@ -18,6 +20,7 @@ interface AdminClientListProps {
 export const AdminClientList: React.FC<AdminClientListProps> = ({
     clients,
     orders,
+    products,
     onEditClient,
     onSaveClient,
     onDeleteClient,
@@ -25,12 +28,30 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
     isAdmin = true,
     salesRepsData
 }) => {
+    const CATALOG_FAMILIES = [
+        { id: 'flexible', label: 'Materiales Flexibles' },
+        { id: 'rigid', label: 'Rígidos' },
+        { id: 'accessory', label: 'Accesorios' },
+        { id: 'display', label: 'Displays' },
+        { id: 'cat_ink_all', label: 'Tintas & Consumibles' },
+    ];
+
+    const toggleEditCategory = (id: string) => {
+        setEditForm(prev => {
+            const current = (prev.hiddenCategories || []);
+            const updated = current.includes(id)
+                ? current.filter(c => c !== id)
+                : [...current, id];
+            return { ...prev, hiddenCategories: updated };
+        });
+    };
     const [searchQuery, setSearchQuery] = useState('');
     const [editingClient, setEditingClient] = useState<User | null>(null);
     const [editForm, setEditForm] = useState<Partial<User>>({});
     const [showPassword, setShowPassword] = useState(false);
     const [saving, setSaving] = useState(false);
     const [pendingDeleteClientId, setPendingDeleteClientId] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<'general' | 'prices'>('general');
     const { toast } = useToast();
 
     const filteredClients = clients
@@ -58,6 +79,7 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
             hidePrices: client.hidePrices || false,
             isActive: client.isActive ?? true,
             mustChangePassword: client.mustChangePassword ?? false,
+            hiddenCategories: client.hiddenCategories || [],
         });
     };
 
@@ -101,6 +123,7 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                                 <th className="px-4 py-3 text-center">Contraseña</th>
                                 <th className="px-4 py-3 text-center">Pedidos</th>
                                 <th className="px-4 py-3 text-center">Cupones</th>
+                                <th className="px-4 py-3 text-right">Mín. Rappel</th>
                                 <th className="px-4 py-3 text-right">Rappel</th>
                                 <th className="px-4 py-3 text-right">Acciones</th>
                             </tr>
@@ -108,7 +131,7 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                         <tbody className="divide-y divide-slate-100">
                             {filteredClients.length === 0 && (
                                 <tr>
-                                    <td colSpan={8} className="px-4 py-8 text-center text-slate-400 text-sm">
+                                    <td colSpan={9} className="px-4 py-8 text-center text-slate-400 text-sm">
                                         No hay clientes registrados
                                     </td>
                                 </tr>
@@ -177,6 +200,10 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                                             )}
                                         </td>
                                         <td className="px-4 py-3 text-right">
+                                            <div className="font-semibold text-slate-700">{client.rappelThreshold || 300}€</div>
+                                            <div className="text-[10px] text-slate-400 uppercase tracking-tight">mín. pedido</div>
+                                        </td>
+                                        <td className="px-4 py-3 text-right">
                                             <span className={`font-bold ${client.rappelAccumulated > 0 ? 'text-green-600' : 'text-slate-400'}`}>
                                                 {formatCurrency(client.rappelAccumulated)}
                                             </span>
@@ -223,118 +250,188 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                             </button>
                         </div>
 
-                        <div className={`p-6 space-y-4 max-h-[70vh] overflow-y-auto relative ${saving ? 'opacity-50 pointer-events-none' : ''}`}>
+                        {/* Tabs */}
+                        <div className="flex border-b border-slate-200">
+                            <button
+                                onClick={() => setActiveTab('general')}
+                                className={`flex-1 py-3 text-sm font-semibold transition-colors ${activeTab === 'general' ? 'text-slate-900 border-b-2 border-slate-900' : 'text-slate-400 hover:text-slate-700'}`}
+                            >
+                                Datos generales
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('prices')}
+                                className={`flex-1 py-3 text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${activeTab === 'prices' ? 'text-amber-700 border-b-2 border-amber-500' : 'text-slate-400 hover:text-slate-700'}`}
+                            >
+                                <Tag size={14} />
+                                Precios especiales
+                                {Object.keys(editForm.customPrices || {}).length > 0 && (
+                                    <span className="bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                                        {Object.keys(editForm.customPrices || {}).length}
+                                    </span>
+                                )}
+                            </button>
+                        </div>
+
+                        <div className={`p-6 space-y-4 max-h-[65vh] overflow-y-auto relative ${saving ? 'opacity-50 pointer-events-none' : ''}`}>
                             {saving && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-white/20 z-10">
                                     <div className="w-8 h-8 border-4 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
                                 </div>
                             )}
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Empresa *</label>
-                                    <input
-                                        value={editForm.name || ''}
-                                        onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))}
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Email</label>
-                                    <input
-                                        value={editForm.email || ''}
-                                        onChange={e => setEditForm(p => ({ ...p, email: e.target.value }))}
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Teléfono</label>
-                                    <input
-                                        value={editForm.phone || ''}
-                                        onChange={e => setEditForm(p => ({ ...p, phone: e.target.value }))}
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Delegación</label>
-                                    <input
-                                        value={editForm.delegation || ''}
-                                        onChange={e => setEditForm(p => ({ ...p, delegation: e.target.value }))}
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
-                                    />
-                                </div>
-                            </div>
 
-                            {isAdmin && (
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Comercial Asignado *</label>
-                                    <select
-                                        value={editForm.salesRep || ''}
-                                        onChange={e => setEditForm(p => ({ ...p, salesRep: e.target.value }))}
-                                        className={`w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none ${!editForm.salesRep ? 'border-red-300 bg-red-50' : 'border-slate-300'}`}
-                                    >
-                                        <option value="">— Seleccionar Comercial —</option>
-                                        {salesRepsData.map(rep => (
-                                            <option key={rep.id} value={rep.name}>{rep.name}</option>
-                                        ))}
-                                    </select>
-                                    {!editForm.salesRep && (
-                                        <p className="text-xs text-red-500 mt-1">⚠️ El comercial es obligatorio</p>
+                            {/* TAB: General */}
+                            {activeTab === 'general' && (
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Empresa *</label>
+                                            <input
+                                                value={editForm.name || ''}
+                                                onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))}
+                                                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Email</label>
+                                            <input
+                                                value={editForm.email || ''}
+                                                onChange={e => setEditForm(p => ({ ...p, email: e.target.value }))}
+                                                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Teléfono</label>
+                                            <input
+                                                value={editForm.phone || ''}
+                                                onChange={e => setEditForm(p => ({ ...p, phone: e.target.value }))}
+                                                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Delegación</label>
+                                            <input
+                                                value={editForm.delegation || ''}
+                                                onChange={e => setEditForm(p => ({ ...p, delegation: e.target.value }))}
+                                                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {isAdmin && (
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Comercial Asignado *</label>
+                                            <select
+                                                value={editForm.salesRep || ''}
+                                                onChange={e => setEditForm(p => ({ ...p, salesRep: e.target.value }))}
+                                                className={`w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none ${!editForm.salesRep ? 'border-red-300 bg-red-50' : 'border-slate-300'}`}
+                                            >
+                                                <option value="">— Seleccionar Comercial —</option>
+                                                {salesRepsData.map(rep => (
+                                                    <option key={rep.id} value={rep.name}>{rep.name}</option>
+                                                ))}
+                                            </select>
+                                            {!editForm.salesRep && (
+                                                <p className="text-xs text-red-500 mt-1">⚠️ El comercial es obligatorio</p>
+                                            )}
+                                        </div>
                                     )}
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Rappel Umbral (€) *</label>
+                                        <div className="flex items-center gap-3">
+                                            <input
+                                                type="range"
+                                                min="300"
+                                                max="1000"
+                                                step="50"
+                                                value={editForm.rappelThreshold || 300}
+                                                onChange={e => setEditForm(p => ({ ...p, rappelThreshold: Number(e.target.value) }))}
+                                                className="flex-1 accent-slate-800"
+                                            />
+                                            <input
+                                                type="number"
+                                                min="300"
+                                                max="1000"
+                                                step="50"
+                                                value={editForm.rappelThreshold || 300}
+                                                onChange={e => setEditForm(p => ({ ...p, rappelThreshold: Number(e.target.value) }))}
+                                                className="w-24 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none text-center font-bold"
+                                            />
+                                        </div>
+                                        <p className="text-[10px] text-slate-500 mt-1 uppercase font-bold tracking-tight">Mín. 300€ / Máx. 1000€ · pasos de 50€</p>
+                                    </div>
+
+                                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-800">
+                                        <p className="font-bold mb-1">Información de Rappel:</p>
+                                        <ul className="list-disc list-inside space-y-0.5">
+                                            <li>Acumula <strong>3% de beneficio</strong> &gt; umbral.</li>
+                                            <li>Canjea en pedidos &gt; <strong>1.5x umbral</strong>.</li>
+                                        </ul>
+                                    </div>
+
+                                    <div className="flex gap-4 flex-wrap pt-1">
+                                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                                            <input
+                                                type="checkbox"
+                                                checked={editForm.hidePrices || false}
+                                                onChange={e => setEditForm(p => ({ ...p, hidePrices: e.target.checked }))}
+                                                className="w-4 h-4 rounded"
+                                            />
+                                            <span className="text-sm text-slate-700">Ocultar precios</span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                                            <input
+                                                type="checkbox"
+                                                checked={editForm.isActive || false}
+                                                onChange={e => setEditForm(p => ({ ...p, isActive: e.target.checked }))}
+                                                className="w-4 h-4 rounded"
+                                            />
+                                            <span className="text-sm text-slate-700">Cuenta activa</span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                                            <input
+                                                type="checkbox"
+                                                checked={editForm.mustChangePassword || false}
+                                                onChange={e => setEditForm(p => ({ ...p, mustChangePassword: e.target.checked }))}
+                                                className="w-4 h-4 rounded"
+                                            />
+                                            <span className="text-sm text-slate-700">Forzar cambio de clave</span>
+                                        </label>
+                                    </div>
+
+                                    {/* Catalog access control */}
+                                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                                        <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Acceso al catálogo</p>
+                                        <p className="text-xs text-slate-500 mb-3">Desactiva las familias que este cliente NO podrá ver en su portal.</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {CATALOG_FAMILIES.map(family => (
+                                                <label key={family.id} className="flex items-center gap-2 cursor-pointer select-none bg-white border border-slate-200 rounded-lg px-3 py-1.5 hover:bg-slate-50 transition-colors">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={!(editForm.hiddenCategories || []).includes(family.id)}
+                                                        onChange={() => toggleEditCategory(family.id)}
+                                                        className="accent-slate-800 w-3.5 h-3.5"
+                                                    />
+                                                    <span className="text-xs text-slate-700 font-medium">{family.label}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
                             )}
 
-                            <div>
-                                <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Rappel Umbral (€) *</label>
-                                <input
-                                    type="number"
-                                    min="500"
-                                    max="1000"
-                                    value={editForm.rappelThreshold || 800}
-                                    onChange={e => setEditForm(p => ({ ...p, rappelThreshold: Number(e.target.value) }))}
-                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
+                            {/* TAB: Custom Prices */}
+                            {activeTab === 'prices' && (
+                                <ClientCustomPricesEditor
+                                    products={products}
+                                    customPrices={editForm.customPrices || {}}
+                                    onChange={prices => setEditForm(p => ({ ...p, customPrices: prices }))}
                                 />
-                                <p className="text-[10px] text-slate-500 mt-1 uppercase font-bold tracking-tight">Mín. 500€ / Máx. 1000€</p>
-                            </div>
+                            )}
 
-                            <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-800">
-                                <p className="font-bold mb-1">Información de Rappel:</p>
-                                <ul className="list-disc list-inside space-y-0.5">
-                                    <li>Acumula <strong>3% de beneficio</strong> &gt; umbral.</li>
-                                    <li>Canjea en pedidos &gt; <strong>1.5x umbral</strong>.</li>
-                                </ul>
-                            </div>
+                        </div>{/* end scrollable body */}
 
-                            <div className="flex gap-4 flex-wrap pt-1">
-                                <label className="flex items-center gap-2 cursor-pointer select-none">
-                                    <input
-                                        type="checkbox"
-                                        checked={editForm.hidePrices || false}
-                                        onChange={e => setEditForm(p => ({ ...p, hidePrices: e.target.checked }))}
-                                        className="w-4 h-4 rounded"
-                                    />
-                                    <span className="text-sm text-slate-700">Ocultar precios</span>
-                                </label>
-                                <label className="flex items-center gap-2 cursor-pointer select-none">
-                                    <input
-                                        type="checkbox"
-                                        checked={editForm.isActive || false}
-                                        onChange={e => setEditForm(p => ({ ...p, isActive: e.target.checked }))}
-                                        className="w-4 h-4 rounded"
-                                    />
-                                    <span className="text-sm text-slate-700">Cuenta activa</span>
-                                </label>
-                                <label className="flex items-center gap-2 cursor-pointer select-none">
-                                    <input
-                                        type="checkbox"
-                                        checked={editForm.mustChangePassword || false}
-                                        onChange={e => setEditForm(p => ({ ...p, mustChangePassword: e.target.checked }))}
-                                        className="w-4 h-4 rounded"
-                                    />
-                                    <span className="text-sm text-slate-700">Forzar cambio de clave</span>
-                                </label>
-                            </div>
-                        </div>
-
+                        {/* Modal footer */}
                         <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
                             <button
                                 onClick={() => setEditingClient(null)}
@@ -386,3 +483,4 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
         </div>
     );
 };
+
