@@ -41,27 +41,15 @@ export const orderService = {
 
         const orderNumber = `${day}${month}${year}-${hours}${minutes}${seconds}-${randomStr}`;
 
-        // 1. Mark/Upsert Client
-        const clientData: any = {
-            email: currentUser.email,
-            company_name: currentUser.name || currentUser.email.split('@')[0]
-        };
-        if (currentUser.username) clientData.username = currentUser.username;
-        if (currentUser.phone) clientData.phone = currentUser.phone;
-
-        const { data: client, error: clientError } = await supabase
-            .from('clients')
-            .upsert(clientData, { onConflict: 'email' })
-            .select()
-            .single();
-
-        if (clientError) throw new Error(`Client error: ${clientError.message}`);
+        // 1. Use the already-authenticated client's ID directly — no upsert needed
+        const clientId = currentUser.id;
+        if (!clientId) throw new Error('No se pudo identificar el cliente.');
 
         // 2. Create Order
         const { data: order, error: orderError } = await supabase
             .from('orders')
             .insert({
-                client_id: client.id,
+                client_id: clientId,
                 order_number: orderNumber,
                 total: finalTotal,
                 sales_rep: activeRep,
@@ -163,25 +151,25 @@ export const orderService = {
         sendEmails(); // fire-and-forget
 
         // 5. Update Rappel
-        const newRappelTotal = (client.rappel_accumulated - (useAccumulatedRappel ? rappelDiscount : 0)) + newRappelGenerated;
+        const currentRappel = currentUser.rappelAccumulated || 0;
+        const newRappelTotal = (currentRappel - (useAccumulatedRappel ? rappelDiscount : 0)) + newRappelGenerated;
         await supabase
             .from('clients')
             .update({ rappel_accumulated: newRappelTotal })
-            .eq('id', client.id);
+            .eq('id', clientId);
 
-        // 6. Coupons — mark as used on the actual client, not the logged-in user
+        // 6. Coupons
         if (appliedCoupon) {
-            const effectiveClientId = client.id; // always the order's client
             const { data: clientData } = await supabase
                 .from('clients')
                 .select('used_coupons')
-                .eq('id', effectiveClientId)
+                .eq('id', clientId)
                 .single();
             const updatedUsedCoupons = [...((clientData?.used_coupons as string[]) || []), appliedCoupon.code];
             await supabase
                 .from('clients')
                 .update({ used_coupons: updatedUsedCoupons })
-                .eq('id', effectiveClientId);
+                .eq('id', clientId);
         }
 
         return {

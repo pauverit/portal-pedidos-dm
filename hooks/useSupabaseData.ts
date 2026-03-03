@@ -6,9 +6,9 @@ import { INITIAL_PRODUCTS } from '../constants';
 export function useSupabaseData() {
     const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
     const [users, setUsers] = useState<User[]>([]);
-
     const [promoCoupons, setPromoCoupons] = useState<Coupon[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
 
     const loadInitialData = async () => {
         if (!supabase) {
@@ -109,8 +109,9 @@ export function useSupabaseData() {
                 }));
                 setPromoCoupons(mappedCoupons);
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error loading Supabase data:', err);
+            setLoadError('Error al cargar los datos. Comprueba tu conexión o la configuración de Supabase.');
         } finally {
             setLoading(false);
         }
@@ -128,6 +129,7 @@ export function useSupabaseData() {
         promoCoupons,
         setPromoCoupons,
         loading,
+        loadError,
         refreshData: loadInitialData
     };
 }

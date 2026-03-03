@@ -1,6 +1,37 @@
 import { Product } from '../types';
 
 /**
+ * Hashes a password string using SHA-256 via the browser-native Web Crypto API.
+ * Returns the hash as a hex string (64 chars).
+ * NOTE: SHA-256 is not bcrypt — for a production system use a backend with bcrypt.
+ * This is a significant improvement over plaintext for a learning/demo project.
+ */
+export const hashPassword = async (password: string): Promise<string> => {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    // Use window.crypto.subtle explicitly to avoid conflict with Node.js crypto module
+    const subtle = (window.crypto || globalThis.crypto).subtle;
+    const hashBuffer = await subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+};
+
+/**
+ * Compares a plaintext password with a stored hash.
+ * Works both if the stored value is a SHA-256 hex hash OR a legacy plaintext password.
+ */
+export const comparePassword = async (plain: string, stored: string): Promise<boolean> => {
+    // If stored value looks like a SHA-256 hash (64 hex chars), compare as hash
+    if (/^[a-f0-9]{64}$/.test(stored)) {
+        const hashed = await hashPassword(plain);
+        return hashed === stored;
+    }
+    // Legacy: plaintext comparison (to stay backwards-compatible)
+    return plain === stored;
+};
+
+
+/**
  * Extracts width and length dimensions from a string (such as a product reference or name).
  * It looks for patterns like "1.22x50", "152x50", or combined reference codes like "12250".
  */
@@ -117,3 +148,28 @@ export const calculateWeight = (
     const finalWeight = parseFloat(((areaM2 * gramsPerM2) / 1000).toFixed(3));
     return finalWeight;
 };
+
+/**
+ * Compresses an image file in the browser using Canvas API.
+ * Resizes to max 1024px on the longest side and re-encodes as JPEG at 70% quality.
+ * Typical result: 4-5 MB phone photo → 80-200 KB.
+ */
+export const compressImage = (file: File, maxPx = 1024, quality = 0.7): Promise<Blob> =>
+    new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+            URL.revokeObjectURL(url);
+            const { width, height } = img;
+            const scale = Math.min(1, maxPx / Math.max(width, height));
+            const w = Math.round(width * scale);
+            const h = Math.round(height * scale);
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
+            canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Canvas toBlob failed')), 'image/jpeg', quality);
+        };
+        img.onerror = reject;
+        img.src = url;
+    });

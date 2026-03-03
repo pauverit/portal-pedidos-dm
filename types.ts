@@ -41,9 +41,9 @@ export interface User {
   name: string;
   id: string;
   email: string;
-  role: 'admin' | 'client' | 'sales';
+  role: 'admin' | 'client' | 'sales' | 'tech' | 'tech_lead';
   rappelAccumulated: number;
-  rappelThreshold?: number; // New: custom threshold for rappel accumulation
+  rappelThreshold?: number;
   // Auth fields
   username?: string;
   password?: string;
@@ -52,14 +52,15 @@ export interface User {
   // B2B Specifics
   salesRep?: string;
   delegation?: string;
+  zone?: string; // For technicians: their assigned zone/area
   // Pricing
   hidePrices?: boolean;
-  customPrices?: Record<string, number>; // Map reference -> price
-  mustChangePassword?: boolean; // true = force password change on first login
-  isActive?: boolean; // true = client has completed first login and activation
+  customPrices?: Record<string, number>;
+  mustChangePassword?: boolean;
+  isActive?: boolean;
   usedCoupons?: string[];
-  salesRepCode?: string; // For sales representatives
-  hiddenCategories?: string[]; // IDs of catalog families hidden for this client
+  salesRepCode?: string;
+  hiddenCategories?: string[];
 }
 
 export interface SalesRep {
@@ -94,4 +95,104 @@ export interface Coupon {
   createdAt: string;
   description?: string;
   expiresAt?: string;
+}
+
+// ─── SAT Module Types ─────────────────────────────────────────────────────────
+
+export interface Machine {
+  id: string;
+  clientId: string;
+  serialNumber: string;
+  model: string;
+  brand: string;
+  installDate?: string;
+  warrantyExpires?: string;
+  status: 'active' | 'inactive' | 'decommissioned';
+  notes?: string;
+  createdAt?: string;
+  imageUrl?: string;
+  // Joined data
+  clientName?: string;
+  hasActiveContract?: boolean;
+}
+
+export interface MaintenanceContract {
+  id: string;
+  machineId: string;
+  type: 'basic' | 'full' | 'premium';
+  startDate: string;
+  endDate: string;
+  annualCost: number;
+  active: boolean;
+  notes?: string;
+}
+
+export type IncidentStatus = 'pending' | 'in_progress' | 'closed';
+export type IncidentSeverity = 'low' | 'normal' | 'high' | 'urgent';
+
+export interface Incident {
+  id: string;
+  reference: string; // INC00001
+  clientId: string;
+  machineId?: string;
+  description: string;
+  status: IncidentStatus;
+  severity: IncidentSeverity;
+  assignedTo?: string; // technician user id
+  assignedToName?: string;
+  createdBy?: string;
+  createdByName?: string;
+  createdAt: string;
+  closedAt?: string;
+  // Joined
+  clientName?: string;
+  machineName?: string;
+}
+
+export type WorkOrderStatus = 'pending' | 'in_progress' | 'closed';
+
+export interface WorkOrder {
+  id: string;
+  reference: string; // PAR00001
+  incidentId?: string;
+  machineId?: string;
+  clientId: string;
+  technicianId?: string;
+  technicianName?: string;
+  scheduledDate?: string;
+  startDate?: string;
+  endDate?: string;
+  status: WorkOrderStatus;
+  diagnosis?: string;
+  resolution?: string;
+  hoursWorked?: number;
+  materialsCost: number;
+  laborCost: number;
+  rappelDiscount: number;
+  total: number;
+  clientSignature?: string; // base64
+  createdAt: string;
+  // Joined
+  clientName?: string;
+  machineName?: string;
+}
+
+export interface SatCall {
+  id: string;
+  clientId: string;
+  direction: 'inbound' | 'outbound';
+  operatorId?: string;
+  operatorName?: string;
+  summary?: string;
+  incidentId?: string;
+  callDate: string;
+}
+
+export interface IncidentComment {
+  id: string;
+  incidentId: string;
+  authorId: string;
+  authorName?: string;
+  body: string;
+  createdAt: string;
 }

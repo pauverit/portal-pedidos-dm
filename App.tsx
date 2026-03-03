@@ -16,7 +16,23 @@ import { CheckoutView } from './components/CheckoutView';
 import { OrderSuccessView } from './components/OrderSuccessView';
 import { DashboardView } from './components/DashboardView';
 import { SalesDashboard } from './components/SalesDashboard';
+import { SatDashboard } from './components/SatDashboard';
 import { AdminSalesManagement } from './components/AdminSalesManagement';
+import { AdminTechManagement } from './components/AdminTechManagement';
+import { IncidentList } from './components/IncidentList';
+import { IncidentDetail } from './components/IncidentDetail';
+import { NewIncidentModal } from './components/NewIncidentModal';
+import { AdminBulkImportSAT } from './components/AdminBulkImportSAT';
+import { MachinesPanel } from './components/MachinesPanel';
+import { WorkOrderList } from './components/WorkOrderList';
+import { WorkOrderDetail } from './components/WorkOrderDetail';
+import { NewWorkOrderModal } from './components/NewWorkOrderModal';
+import { SATPartsList } from './components/SATPartsList';
+import { SATPartDetail } from './components/SATPartDetail';
+import { NewSATPartModal } from './components/NewSATPartModal';
+import { useIncidents } from './hooks/useIncidents';
+import { useWorkOrders } from './hooks/useWorkOrders';
+import { useSATParts } from './hooks/useSATParts';
 import { ProfileEditModal } from './components/ProfileEditModal';
 import { AdminProductEditModal } from './components/AdminProductEditModal';
 import { useToast } from './components/Toast';
@@ -25,7 +41,7 @@ import {
     SALES_REPS, SALES_REPS_PHONES, SALES_REPS_EMAILS, INITIAL_PRODUCTS
 } from './constants';
 import { Product, CartItem, User, Order } from './types';
-import { isVinyl, isLaminate } from './lib/utils';
+import { isVinyl, isLaminate, comparePassword, hashPassword } from './lib/utils';
 import { orderService } from './services/orderService';
 import { useSupabaseData } from './hooks/useSupabaseData';
 import { useCart } from './hooks/useCart';
@@ -40,7 +56,7 @@ const formatCurrency = (value: number) =>
 
 export default function App() {
     const {
-        products, users, setUsers, promoCoupons, setPromoCoupons, refreshData, loading
+        products, users, setUsers, promoCoupons, setPromoCoupons, refreshData, loading, loadError
     } = useSupabaseData();
     const { currentUser, setCurrentUser, login, logout, updateCurrentUser } = useAuth();
     const { cart, setCart, addToCart, updateQuantity, clearCart, syncCartPrices } = useCart(currentUser);
@@ -65,6 +81,27 @@ export default function App() {
     const [selectedClientForOrder, setSelectedClientForOrder] = useState<User | null>(null);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [isFinalizing, setIsFinalizing] = useState(false);
+    const [selectedIncident, setSelectedIncident] = useState<any>(null);
+    const [showNewIncidentModal, setShowNewIncidentModal] = useState(false);
+    const [selectedWorkOrder, setSelectedWorkOrder] = useState<any>(null);
+    const [showNewWorkOrderModal, setShowNewWorkOrderModal] = useState(false);
+    const [woPreselect, setWoPreselect] = useState<{ clientId?: string; machineId?: string; incidentId?: string }>({});
+    const [selectedPart, setSelectedPart] = useState<any>(null);
+    const [showNewPartModal, setShowNewPartModal] = useState(false);
+
+    // SAT incidents
+    const { incidents, loading: incidentsLoading, load: loadIncidents, createIncident } = useIncidents({
+        technicianId: currentUser?.role === 'tech' ? currentUser.id : undefined,
+        autoLoad: false,
+    });
+    // SAT work orders
+    const { workOrders, loading: workOrdersLoading, load: loadWorkOrders, createWorkOrder, updateWorkOrder } = useWorkOrders({
+        technicianId: currentUser?.role === 'tech' ? currentUser.id : undefined,
+    });
+    // Unified SAT parts
+    const { parts: satParts, loading: satPartsLoading, load: loadSatParts, createPart, updatePart } = useSATParts({
+        technicianId: currentUser?.role === 'tech' ? currentUser.id : undefined,
+    });
 
     // Sync cart prices when a sales rep selects a different client
     useEffect(() => {
@@ -123,7 +160,11 @@ export default function App() {
     useEffect(() => {
         if (currentUser) {
             if (currentView === 'login') {
-                setCurrentView(currentUser.role === 'admin' ? 'admin_dashboard' : currentUser.role === 'sales' ? 'dashboard' : 'dashboard');
+                setCurrentView(
+                    currentUser.role === 'admin' ? 'admin_dashboard'
+                        : (currentUser.role === 'tech' || currentUser.role === 'tech_lead') ? 'sat_dashboard'
+                            : 'dashboard'
+                );
             }
             loadUserOrders(currentUser, users);
         } else {
@@ -131,14 +172,31 @@ export default function App() {
         }
     }, [currentUser]);
 
-    const handleLogin = (u: string, p: string) => {
-        const foundUser = users.find(user => user.username?.toLowerCase() === u.toLowerCase().trim() && user.password === p);
-        if (foundUser) {
-            login(foundUser);
-            setLoginError('');
-        } else {
-            setLoginError('Credenciales incorrectas');
+    // Load incidents when entering SAT incident views
+    useEffect(() => {
+        if (currentView === 'sat_incidents' || currentView === 'sat_new_incident') {
+            loadIncidents();
         }
+        if (!currentView.startsWith('sat_incident')) {
+            setSelectedIncident(null);
+        }
+        // Reset unified parts selection when leaving/entering sat_parts
+        if (currentView !== 'sat_parts') {
+            setSelectedPart(null);
+        }
+    }, [currentView]);
+
+    const handleLogin = async (u: string, p: string) => {
+        const candidate = users.find(user => user.username?.toLowerCase() === u.toLowerCase().trim());
+        if (candidate && candidate.password) {
+            const ok = await comparePassword(p, candidate.password);
+            if (ok) {
+                login(candidate);
+                setLoginError('');
+                return;
+            }
+        }
+        setLoginError('Credenciales incorrectas');
     };
 
     const handleLogout = () => {
@@ -337,7 +395,7 @@ export default function App() {
                     email: updates.email,
                     phone: updates.phone,
                     delegation: updates.delegation,
-                    password: updates.password
+                    password: updates.password ? await hashPassword(updates.password) : undefined
                 })
                 .eq('id', currentUser.id);
 
@@ -521,6 +579,148 @@ export default function App() {
             }
             return <DashboardView currentUser={currentUser} onNewOrder={() => setCurrentView('cat_flexible_vinilos')} formatCurrency={formatCurrency} />;
         }
+        if (currentView === 'sat_dashboard' && currentUser) {
+            return <SatDashboard currentUser={currentUser} onNavigate={setCurrentView} />;
+        }
+        if ((currentView === 'sat_incidents' || currentView === 'sat_new_incident') && currentUser) {
+            const technicians = users.filter(u => u.role === 'tech' || u.role === 'tech_lead');
+            if (selectedIncident) {
+                return (
+                    <IncidentDetail
+                        incident={selectedIncident}
+                        currentUser={currentUser}
+                        technicians={technicians}
+                        onBack={() => setSelectedIncident(null)}
+                        onRefresh={() => { loadIncidents(); setSelectedIncident(null); }}
+                        onNewWorkOrder={(incId) => {
+                            setWoPreselect({ clientId: selectedIncident.clientId, incidentId: incId });
+                            setShowNewWorkOrderModal(true);
+                            setCurrentView('sat_work_orders');
+                        }}
+                    />
+                );
+            }
+            return (
+                <>
+                    <IncidentList
+                        incidents={incidents}
+                        loading={incidentsLoading}
+                        currentUser={currentUser}
+                        technicians={technicians}
+                        clients={users}
+                        onRefresh={loadIncidents}
+                        onNewIncident={() => setShowNewIncidentModal(true)}
+                        onViewIncident={setSelectedIncident}
+                    />
+                    {showNewIncidentModal && (
+                        <NewIncidentModal
+                            clients={users}
+                            technicians={technicians}
+                            currentUser={currentUser}
+                            onClose={() => setShowNewIncidentModal(false)}
+                            onSave={async (data) => {
+                                await createIncident(data);
+                                setShowNewIncidentModal(false);
+                                toast('Incidencia creada correctamente', 'success');
+                            }}
+                        />
+                    )}
+                </>
+            );
+        }
+        if ((currentView === 'sat_work_orders' || currentView === 'sat_new_work_order') && currentUser) {
+            const technicians = users.filter(u => u.role === 'tech' || u.role === 'tech_lead');
+            const machines = [] as any[]; // loaded inside WorkOrderDetail from useMachines lazily
+            if (selectedWorkOrder) {
+                return (
+                    <WorkOrderDetail
+                        workOrder={selectedWorkOrder}
+                        currentUser={currentUser}
+                        technicians={technicians}
+                        machines={[]}  // loaded inside component
+                        onBack={() => setSelectedWorkOrder(null)}
+                        onSave={async (id, updates) => {
+                            await updateWorkOrder(id, updates);
+                            await loadWorkOrders();
+                            setSelectedWorkOrder(null);
+                        }}
+                    />
+                );
+            }
+            return (
+                <>
+                    <WorkOrderList
+                        workOrders={workOrders}
+                        loading={workOrdersLoading}
+                        currentUser={currentUser}
+                        technicians={technicians}
+                        onRefresh={loadWorkOrders}
+                        onNewWorkOrder={() => { setWoPreselect({}); setShowNewWorkOrderModal(true); }}
+                        onViewWorkOrder={setSelectedWorkOrder}
+                    />
+                    {showNewWorkOrderModal && (
+                        <NewWorkOrderModal
+                            clients={users}
+                            technicians={technicians}
+                            currentUser={currentUser}
+                            preselectedClientId={woPreselect.clientId}
+                            preselectedMachineId={woPreselect.machineId}
+                            preselectedIncidentId={woPreselect.incidentId}
+                            onClose={() => setShowNewWorkOrderModal(false)}
+                            onSave={async (data) => {
+                                await createWorkOrder(data);
+                                setShowNewWorkOrderModal(false);
+                                toast('Parte de trabajo creado', 'success');
+                                loadWorkOrders();
+                            }}
+                        />
+                    )}
+                </>
+            );
+        }
+        if (currentView === 'sat_parts' && currentUser) {
+            const technicians = users.filter(u => u.role === 'tech' || u.role === 'tech_lead');
+            if (selectedPart) {
+                return (
+                    <SATPartDetail
+                        part={selectedPart}
+                        currentUser={currentUser}
+                        technicians={technicians}
+                        clients={users}
+                        onBack={() => setSelectedPart(null)}
+                        onSave={async (id, updates) => { await updatePart(id, updates); await loadSatParts(); }}
+                        onRefresh={() => { loadSatParts(); setSelectedPart(null); }}
+                    />
+                );
+            }
+            return (
+                <>
+                    <SATPartsList
+                        parts={satParts}
+                        loading={satPartsLoading}
+                        currentUser={currentUser}
+                        technicians={technicians}
+                        onRefresh={loadSatParts}
+                        onNewPart={() => setShowNewPartModal(true)}
+                        onViewPart={p => { setSelectedPart(p); loadSatParts(); }}
+                    />
+                    {showNewPartModal && (
+                        <NewSATPartModal
+                            clients={users}
+                            technicians={technicians}
+                            currentUser={currentUser}
+                            onClose={() => setShowNewPartModal(false)}
+                            onSave={async (data) => {
+                                await createPart(data);
+                                setShowNewPartModal(false);
+                                toast('Parte creado correctamente', 'success');
+                                loadSatParts();
+                            }}
+                        />
+                    )}
+                </>
+            );
+        }
         if (currentView.startsWith('cat_')) return <ProductListView products={products} cart={cart} currentView={currentView} searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} sortOrder={sortOrder} onSortOrderChange={setSortOrder} onAddToCart={addToCart} onUpdateQuantity={updateQuantity} onEditProduct={setEditingProduct} isAdmin={currentUser?.role === 'admin'} formatCurrency={formatCurrency} />;
         if (currentView === 'cart' && currentUser) {
             const isSalesRep = currentUser.role === 'sales';
@@ -548,11 +748,41 @@ export default function App() {
         }
         if (currentView === 'admin_coupons') return <div className="p-6 md:p-10 max-w-7xl mx-auto"><AdminCoupons coupons={promoCoupons} onAddCoupon={handleAddCoupon} onUpdateCoupon={handleUpdateCoupon} onDeleteCoupon={handleDeleteCoupon} /></div>;
         if (currentView === 'admin_sales_management') return <AdminSalesManagement salesReps={users.filter(u => u.role === 'sales')} clients={users} orders={orders} onRefresh={refreshData} formatCurrency={formatCurrency} />;
-
+        if (currentView === 'admin_tech_management') return <AdminTechManagement technicians={users.filter(u => u.role === 'tech' || u.role === 'tech_lead')} onRefresh={refreshData} />;
+        if (currentView === 'admin_bulk_import_sat' && currentUser?.role === 'admin') return <AdminBulkImportSAT />;
+        if (currentView === 'sat_machines' && currentUser) return (
+            <MachinesPanel
+                currentUser={currentUser}
+                clients={users}
+                onNewIncident={(machineId, clientId) => {
+                    setShowNewIncidentModal(true);
+                    setCurrentView('sat_incidents');
+                }}
+            />
+        );
         return <div className="p-10">Vista no encontrada ({currentView})</div>;
     };
 
     if (currentView === 'login') return <LoginView onLogin={handleLogin} loginError={loginError} />;
+
+    // Show error screen if Supabase data loading failed
+    if (loadError) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4 p-6">
+                <img src="/logo.png" alt="DigitalMarket" className="h-12 w-auto opacity-70" />
+                <div className="bg-white border border-red-200 rounded-2xl p-6 max-w-md w-full text-center shadow-sm">
+                    <p className="text-red-600 font-bold text-lg mb-2">Error de conexión</p>
+                    <p className="text-slate-500 text-sm">{loadError}</p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="mt-4 px-5 py-2 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-slate-700 transition-colors"
+                    >
+                        Reintentar
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     // Show loading screen while Supabase data is being fetched
     if (loading) {

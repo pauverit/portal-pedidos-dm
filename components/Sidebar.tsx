@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, ShoppingCart, Settings, LogOut, Printer, Database, UserCircle, ChevronDown, ChevronRight, Layers, Box, Wrench, UserPlus, X, ShoppingBag, Scroll, Monitor, Eye, EyeOff } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Settings, LogOut, Printer, Database, UserCircle, ChevronDown, ChevronRight, Layers, Box, Wrench, UserPlus, Upload, X, ShoppingBag, Scroll, Monitor, Eye, EyeOff, AlertTriangle, ClipboardList } from 'lucide-react';
 import { User } from '../types';
 
 interface SidebarProps {
@@ -169,6 +169,37 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: ShoppingBag,
       roles: ['client', 'admin']
     },
+    // ── SAT module ────────────────────────────────────────────────
+    {
+      id: 'sat_dashboard',
+      label: 'SAT — Panel',
+      icon: Wrench,
+      roles: ['tech', 'tech_lead', 'admin'],
+    },
+    {
+      id: 'sat_parts',
+      label: 'Incidencias & Partes',
+      icon: ClipboardList,
+      roles: ['tech', 'tech_lead', 'admin', 'client'],
+    },
+    {
+      id: 'sat_machines',
+      label: 'Máquinas',
+      icon: Database,
+      roles: ['tech_lead', 'admin'],
+    },
+    {
+      id: 'admin_tech_management',
+      label: 'Gestión de Técnicos',
+      icon: UserPlus,
+      roles: ['tech_lead', 'admin'],
+    },
+    {
+      id: 'admin_bulk_import_sat',
+      label: 'Carga Masiva SAT',
+      icon: Upload,
+      roles: ['admin'],
+    },
   ];
 
   // Items visible to current user role (admins also apply their hidden-items filter)
@@ -217,7 +248,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="overflow-hidden flex-1">
               <p className="text-xs font-bold text-slate-900 truncate group-hover:text-black">{currentUser?.name}</p>
               <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
-                {currentUser?.role === 'admin' ? 'Administrador' : currentUser?.role === 'sales' ? 'Comercial' : 'Cliente B2B'}
+                {currentUser?.role === 'admin' ? 'Administrador'
+                  : currentUser?.role === 'sales' ? 'Comercial'
+                    : currentUser?.role === 'tech_lead' ? 'Jefe de Técnicos'
+                      : currentUser?.role === 'tech' ? 'Técnico'
+                        : 'Cliente B2B'}
               </p>
             </div>
           </button>

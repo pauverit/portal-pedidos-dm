@@ -54,13 +54,12 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({
     // 3. Current Month Commission
     const currentMonthComm = monthTotal * COMMISSION_RATE;
 
-    // 4. Same Month Previous Year Commission
+    // 4. Same Month Previous Year — for billing comparison
     const lastYearMonthOrders = myOrders.filter(o => {
         const d = new Date(o.date);
         return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear - 1;
     });
     const lastYearMonthTotal = lastYearMonthOrders.reduce((s, o) => s + o.total, 0);
-    const lastYearMonthComm = lastYearMonthTotal * COMMISSION_RATE;
 
     // Current month label
     const isCurrentMonth = selectedMonth === now.getMonth() && selectedYear === now.getFullYear();
@@ -86,8 +85,7 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({
         }
     };
 
-    const totalSales = myOrders.reduce((sum, o) => sum + o.total, 0);
-    const totalRappel = myClients.reduce((sum, c) => sum + (c.rappelAccumulated || 0), 0);
+
 
     const stats = [
         { label: 'Mis Clientes', value: myClients.length, icon: Users, color: 'bg-blue-500' },
