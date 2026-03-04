@@ -390,10 +390,11 @@ export default function App() {
                 .from('clients')
                 .update({
                     company_name: updatedClient.name,
+                    username: updatedClient.username,
                     email: updatedClient.email,
                     phone: updatedClient.phone,
                     sales_rep: updatedClient.salesRep,
-                    delegation: updatedClient.delegation,
+                    zone: updatedClient.zone,
                     rappel_threshold: updatedClient.rappelThreshold,
                     hide_prices: updatedClient.hidePrices,
                     is_active: updatedClient.isActive,
@@ -420,7 +421,7 @@ export default function App() {
                     company_name: updates.name,
                     email: updates.email,
                     phone: updates.phone,
-                    delegation: updates.delegation,
+                    zone: updates.zone,
                     password: updates.password ? await hashPassword(updates.password) : undefined
                 })
                 .eq('id', currentUser.id);
@@ -462,7 +463,7 @@ export default function App() {
                 phone: clientData.phone,
                 sales_rep: currentUser?.role === 'sales' ? currentUser.name : clientData.salesRep,
                 sales_rep_code: currentUser?.role === 'sales' ? currentUser.salesRepCode : undefined,
-                delegation: clientData.delegation,
+                zone: clientData.zone,
                 rappel_threshold: clientData.rappelThreshold,
                 hide_prices: clientData.hidePrices,
                 hidden_categories: clientData.hiddenCategories || [],

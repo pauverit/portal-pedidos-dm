@@ -83,6 +83,7 @@ export function useSupabaseData() {
                     isActive: c.is_active ?? !c.must_change_password,
                     usedCoupons: c.used_coupons || [],
                     hiddenCategories: c.hidden_categories || [],
+                    zone: c.zone,
                 }));
                 setUsers(mappedClients);
             }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { UserPlus, Download, Settings, Droplets, Package, Users } from 'lucide-react';
+import { UserPlus, Download, Settings, Droplets, Package, Users, Database } from 'lucide-react';
 
 interface AdminDashboardProps {
     onNavigate: (view: string) => void;
@@ -65,6 +65,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     </div>
                     <h3 className="text-xl font-bold text-slate-900 mb-2">Gestión de Comerciales</h3>
                     <p className="text-slate-500">Supervisar la cartera de clientes y ventas de cada comercial.</p>
+                </div>
+
+                <div onClick={() => onNavigate('sat_machines')} className="bg-white p-8 rounded-xl shadow-lg border border-slate-200 cursor-pointer hover:border-orange-300 hover:shadow-orange-100 transition-all group">
+                    <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <Database className="text-orange-600" size={24} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">Gestión de Máquinas</h3>
+                    <p className="text-slate-500">Administrar el parque de máquinas, garantías y documentos técnicos.</p>
                 </div>
             </div>
         </div>

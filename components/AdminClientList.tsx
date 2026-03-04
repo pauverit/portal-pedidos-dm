@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit2, Trash2, CheckCircle, AlertCircle, Clock, ShoppingBag, TrendingUp, X, Save, Eye, EyeOff, Tag, UserCheck } from 'lucide-react';
+import { Edit2, Trash2, CheckCircle, AlertCircle, Clock, ShoppingBag, TrendingUp, X, Save, Eye, EyeOff, Tag, UserCheck, Monitor, Info } from 'lucide-react';
 import { User, Order, Product } from '../types';
 import { SALES_REPS } from '../constants';
 import { useToast } from './Toast';
@@ -57,8 +57,31 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
     const [saving, setSaving] = useState(false);
     const [activatingId, setActivatingId] = useState<string | null>(null);
     const [pendingDeleteClientId, setPendingDeleteClientId] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<'general' | 'prices'>('general');
+    const [activeTab, setActiveTab] = useState<'general' | 'prices' | 'machines'>('general');
+    const [clientMachines, setClientMachines] = useState<any[]>([]);
+    const [loadingMachines, setLoadingMachines] = useState(false);
     const { toast } = useToast();
+
+    React.useEffect(() => {
+        if (activeTab === 'machines' && editingClient) {
+            const fetchMachines = async () => {
+                setLoadingMachines(true);
+                try {
+                    const { data, error } = await supabase
+                        .from('machines')
+                        .select('*')
+                        .eq('client_id', editingClient.id);
+                    if (error) throw error;
+                    setClientMachines(data || []);
+                } catch (error: any) {
+                    toast('Error al cargar máquinas: ' + error.message, 'error');
+                } finally {
+                    setLoadingMachines(false);
+                }
+            };
+            fetchMachines();
+        }
+    }, [activeTab, editingClient]);
 
     const handleQuickActivate = async (client: User) => {
         setActivatingId(client.id);
@@ -76,7 +99,7 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
 
     // Derived filter options from actual data
     const salesRepOptions = [...new Set(allClients.map(c => c.salesRep).filter(Boolean))] as string[];
-    const zoneOptions = [...new Set(allClients.map(c => c.delegation).filter(Boolean))] as string[];
+    const zoneOptions = [...new Set(allClients.map(c => c.zone).filter(Boolean))] as string[];
 
     const filteredClients = allClients
         .filter(c => !showPendingOnly || !(c.isActive ?? !c.mustChangePassword))
@@ -90,13 +113,14 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
             const active = c.isActive ?? !c.mustChangePassword;
             return filterStatus === 'active' ? active : !active;
         })
-        .filter(c => !filterZone || c.delegation === filterZone)
+        .filter(c => !filterZone || c.zone === filterZone)
         .filter(c =>
             !searchQuery ||
             c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             (c.username || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
             (c.salesRep || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (c.delegation || '').toLowerCase().includes(searchQuery.toLowerCase())
+            (c.delegation || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (c.zone || '').toLowerCase().includes(searchQuery.toLowerCase())
         );
 
     const pendingCount = allClients.filter(c => !(c.isActive ?? !c.mustChangePassword)).length;
@@ -120,13 +144,16 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
             email: client.email,
             phone: client.phone || '',
             salesRep: client.salesRep || '',
-            delegation: client.delegation || '',
+            zone: client.zone || '',
+            username: client.username || '',
             rappelThreshold: client.rappelThreshold || 800,
             hidePrices: client.hidePrices || false,
             isActive: client.isActive ?? true,
             mustChangePassword: client.mustChangePassword ?? false,
             hiddenCategories: client.hiddenCategories || [],
+            customPrices: client.customPrices || {},
         });
+        setActiveTab('general');
     };
 
     const handleSave = async () => {
@@ -182,7 +209,7 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                         <option value="pending">⏳ Pendiente</option>
                     </select>
 
-                    {/* Zona / Delegación */}
+                    {/* Zona / Provincia */}
                     {zoneOptions.length > 0 && (
                         <select
                             value={filterZone}
@@ -190,7 +217,7 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                             className={`border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none cursor-pointer ${filterZone ? 'border-indigo-400 bg-indigo-50 text-indigo-800 font-semibold' : 'border-slate-200 text-slate-600'
                                 }`}
                         >
-                            <option value="">Todas las zonas</option>
+                            <option value="">Todas las provincias</option>
                             {zoneOptions.map(z => <option key={z} value={z}>{z}</option>)}
                         </select>
                     )}
@@ -263,8 +290,8 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                                         <td className="px-4 py-3">
                                             <div className="font-semibold text-slate-900">{client.name}</div>
                                             <div className="text-xs text-slate-400">@{client.username}</div>
-                                            {client.delegation && (
-                                                <div className="text-xs text-slate-400">{client.delegation}</div>
+                                            {client.zone && (
+                                                <div className="text-xs text-slate-500 font-medium italic">{client.zone}</div>
                                             )}
                                         </td>
                                         <td className="px-4 py-3">
@@ -368,8 +395,8 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
             {/* Edit Modal */}
             {editingClient && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200 overflow-hidden">
-                        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between shrink-0">
                             <div>
                                 <h2 className="font-bold text-lg">Editar Cliente</h2>
                                 <p className="text-slate-400 text-sm">{editingClient.name}</p>
@@ -380,7 +407,7 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                         </div>
 
                         {/* Tabs */}
-                        <div className="flex border-b border-slate-200">
+                        <div className="flex border-b border-slate-200 shrink-0">
                             <button
                                 onClick={() => setActiveTab('general')}
                                 className={`flex-1 py-3 text-sm font-semibold transition-colors ${activeTab === 'general' ? 'text-slate-900 border-b-2 border-slate-900' : 'text-slate-400 hover:text-slate-700'}`}
@@ -399,9 +426,16 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                                     </span>
                                 )}
                             </button>
+                            <button
+                                onClick={() => setActiveTab('machines')}
+                                className={`flex-1 py-3 text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${activeTab === 'machines' ? 'text-blue-700 border-b-2 border-blue-500' : 'text-slate-400 hover:text-slate-700'}`}
+                            >
+                                <Monitor size={14} />
+                                Máquinas
+                            </button>
                         </div>
 
-                        <div className={`p-6 space-y-4 max-h-[65vh] overflow-y-auto relative ${saving ? 'opacity-50 pointer-events-none' : ''}`}>
+                        <div className="flex-1 overflow-y-auto p-6 relative">
                             {saving && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-white/20 z-10">
                                     <div className="w-8 h-8 border-4 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
@@ -413,10 +447,26 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Empresa *</label>
+                                            <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Nombre de Empresa *</label>
                                             <input
                                                 value={editForm.name || ''}
                                                 onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))}
+                                                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Usuario (Login) *</label>
+                                            <input
+                                                value={editForm.username || ''}
+                                                onChange={e => setEditForm(p => ({ ...p, username: e.target.value.toLowerCase().trim() }))}
+                                                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Provincia / Zona</label>
+                                            <input
+                                                value={editForm.zone || ''}
+                                                onChange={e => setEditForm(p => ({ ...p, zone: e.target.value }))}
                                                 className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
                                             />
                                         </div>
@@ -433,14 +483,6 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                                             <input
                                                 value={editForm.phone || ''}
                                                 onChange={e => setEditForm(p => ({ ...p, phone: e.target.value }))}
-                                                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Delegación</label>
-                                            <input
-                                                value={editForm.delegation || ''}
-                                                onChange={e => setEditForm(p => ({ ...p, delegation: e.target.value }))}
                                                 className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
                                             />
                                         </div>
@@ -532,7 +574,7 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                                     <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
                                         <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Acceso al catálogo</p>
                                         <p className="text-xs text-slate-500 mb-3">Desactiva las familias que este cliente NO podrá ver en su portal.</p>
-                                        <div className="flex flex-wrap gap-2">
+                                        <div className="flex wrap gap-2">
                                             {CATALOG_FAMILIES.map(family => (
                                                 <label key={family.id} className="flex items-center gap-2 cursor-pointer select-none bg-white border border-slate-200 rounded-lg px-3 py-1.5 hover:bg-slate-50 transition-colors">
                                                     <input
@@ -549,19 +591,71 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                                 </div>
                             )}
 
-                            {/* TAB: Custom Prices */}
+                            {/* TAB: Prices */}
                             {activeTab === 'prices' && (
                                 <ClientCustomPricesEditor
                                     products={products}
                                     customPrices={editForm.customPrices || {}}
-                                    onChange={prices => setEditForm(p => ({ ...p, customPrices: prices }))}
+                                    onChange={(newPrices) => setEditForm(p => ({ ...p, customPrices: newPrices }))}
+                                    formatCurrency={formatCurrency}
                                 />
                             )}
 
-                        </div>{/* end scrollable body */}
+                            {/* TAB: Machines */}
+                            {activeTab === 'machines' && (
+                                <div className="space-y-4">
+                                    {loadingMachines ? (
+                                        <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                                            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-3"></div>
+                                            <p className="text-sm font-medium">Cargando máquinas...</p>
+                                        </div>
+                                    ) : clientMachines.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center py-12 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                                            <Monitor size={48} className="mb-4 opacity-20" />
+                                            <p className="font-semibold text-slate-900">Sin máquinas instaladas</p>
+                                            <p className="text-xs max-w-[200px] text-center mt-1">Este cliente no tiene activos registrados en el sistema.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase px-1">
+                                                <Monitor size={14} />
+                                                Activos Instalados ({clientMachines.length})
+                                            </div>
+                                            <div className="grid gap-3">
+                                                {clientMachines.map(m => (
+                                                    <div key={m.id} className="bg-white border border-slate-200 rounded-xl p-3 shadow-sm hover:border-blue-200 transition-colors">
+                                                        <div className="flex items-start justify-between mb-2">
+                                                            <div>
+                                                                <div className="font-bold text-slate-900 leading-tight">{m.brand} {m.model}</div>
+                                                                <div className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded inline-block font-mono mt-1">SN: {m.serial_number}</div>
+                                                            </div>
+                                                            <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${m.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+                                                                {m.status === 'active' ? 'ACTIVA' : m.status.toUpperCase()}
+                                                            </div>
+                                                        </div>
+                                                        {m.warranty_expires && (
+                                                            <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-2 bg-slate-50 p-2 rounded-lg">
+                                                                <AlertCircle size={12} className={new Date(m.warranty_expires) < new Date() ? "text-red-500" : "text-emerald-500"} />
+                                                                <span className="font-medium">Garantía: {new Date(m.warranty_expires).toLocaleDateString('es-ES')}</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 flex gap-3 text-blue-800">
+                                                <Info size={16} className="shrink-0 mt-0.5" />
+                                                <div className="text-xs leading-relaxed">
+                                                    Para crear nuevas incidencias o partes técnicos, usa el buscador global de activos.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
 
                         {/* Modal footer */}
-                        <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
+                        <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3 shrink-0">
                             <button
                                 onClick={() => setEditingClient(null)}
                                 className="px-4 py-2 text-sm text-slate-500 hover:text-slate-800"
@@ -599,7 +693,10 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                                     Cancelar
                                 </button>
                                 <button
-                                    onClick={async () => { await onDeleteClient(pendingDeleteClientId); setPendingDeleteClientId(null); }}
+                                    onClick={async () => {
+                                        await onDeleteClient(pendingDeleteClientId);
+                                        setPendingDeleteClientId(null);
+                                    }}
                                     className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-lg transition-colors"
                                 >
                                     Eliminar
@@ -612,4 +709,3 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
         </div>
     );
 };
-

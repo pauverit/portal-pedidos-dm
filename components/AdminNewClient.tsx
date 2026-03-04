@@ -28,7 +28,7 @@ export const AdminNewClient: React.FC<AdminNewClientProps> = ({ onSave, onBack, 
         username: '',
         password: '',
         salesRep: '',
-        delegation: '',
+        zone: '',
         rappelThreshold: 300,
         hidePrices: false,
         hiddenCategories: [] as string[],
@@ -172,6 +172,16 @@ export const AdminNewClient: React.FC<AdminNewClientProps> = ({ onSave, onBack, 
                                         value={formData.phone}
                                         onChange={e => setFormData({ ...formData, phone: e.target.value })}
                                         className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Provincia / Zona</label>
+                                    <input
+                                        type="text"
+                                        value={formData.zone}
+                                        onChange={e => setFormData({ ...formData, zone: e.target.value })}
+                                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none"
+                                        placeholder="Ej: Valencia"
                                     />
                                 </div>
                                 <div>
