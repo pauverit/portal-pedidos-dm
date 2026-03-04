@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Phone, Loader, PhoneIncoming, PhoneOutgoing } from 'lucide-react';
 import { User } from '../types';
+import { ClientSearchInput } from './ClientSearchInput';
 
 interface NewCallModalProps {
     clients: User[];
@@ -59,17 +60,13 @@ export const NewCallModal: React.FC<NewCallModalProps> = ({
                     {/* Client selector */}
                     <div>
                         <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Cliente *</label>
-                        <select
+                        <ClientSearchInput
+                            clients={clients}
                             value={clientId}
-                            onChange={e => setClientId(e.target.value)}
-                            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-slate-50"
+                            onChange={setClientId}
+                            filterFn={c => c.role === 'client' && (c.salesRep === currentUser.name || c.salesRepCode === currentUser.salesRepCode)}
                             required
-                        >
-                            <option value="">Seleccionar cliente...</option>
-                            {myClients.map(c => (
-                                <option key={c.id} value={c.id}>{c.name}</option>
-                            ))}
-                        </select>
+                        />
                     </div>
 
                     {/* Date & time */}

@@ -18,7 +18,7 @@ type ImportResult = { ok: number; errors: { row: number; msg: string }[] };
 
 // ─── Templates ────────────────────────────────────────────────────────────────
 
-const CLIENT_TEMPLATE = `nombre;usuario;email;telefono;zona\nACME SL;acme;acme@ejemplo.es;666111222;Madrid\nSerplo SA;serplo;serplo@ejemplo.es;666333444;Málaga`;
+const CLIENT_TEMPLATE = `nombre;usuario;email;telefono;zona;comercial_email\nACME SL;acme;acme@ejemplo.es;666111222;Madrid;comercial@empresa.com\nSerplo SA;serplo;serplo@ejemplo.es;666333444;Málaga;comercial@empresa.com`;
 const MACHINE_TEMPLATE = `cliente_email;marca;modelo;numero_serie;garantia_hasta\nacme@ejemplo.es;HP;DesignJet T650;SN12345;2026-12-31\nserlo@ejemplo.es;Canon;imagePROGRAF TX-3100;CN99999;2025-06-30`;
 
 const downloadCsv = (content: string, name: string) => {
@@ -165,6 +165,22 @@ export const AdminBulkImportSAT: React.FC = () => {
         let ok = 0;
         const errors: { row: number; msg: string }[] = [];
 
+        // Pre-fetch all commercial emails referenced in the CSV to build a lookup map
+        const commercialEmails = [...new Set(
+            rows.map(r => r.comercial_email?.trim()).filter(Boolean)
+        )];
+        let salesRepMap: Record<string, { name: string; code: string }> = {};
+        if (commercialEmails.length > 0) {
+            const { data: reps } = await supabase
+                .from('clients')
+                .select('email, company_name, sales_rep_code')
+                .in('email', commercialEmails)
+                .in('role', ['sales', 'tech_lead', 'admin']);
+            (reps || []).forEach((r: any) => {
+                salesRepMap[r.email] = { name: r.company_name, code: r.sales_rep_code || '' };
+            });
+        }
+
         for (let i = 0; i < rows.length; i++) {
             const r = rows[i];
             const rowNum = i + 2; // header = row 1
@@ -172,6 +188,7 @@ export const AdminBulkImportSAT: React.FC = () => {
             if (!r.usuario?.trim()) { errors.push({ row: rowNum, msg: 'usuario es obligatorio' }); continue; }
 
             const email = r.email?.trim() || `${r.usuario.trim()}@tech.internal`;
+            const repInfo = r.comercial_email ? salesRepMap[r.comercial_email.trim()] : undefined;
 
             const { error } = await supabase.from('clients').upsert({
                 company_name: r.nombre.trim(),
@@ -182,6 +199,11 @@ export const AdminBulkImportSAT: React.FC = () => {
                 role: 'client',
                 rappel_accumulated: 0,
                 password: 'changeme',
+                // Pending activation — commercial must visit and activate
+                is_active: false,
+                must_change_password: true,
+                // Assign commercial if matched
+                ...(repInfo ? { sales_rep: repInfo.name, sales_rep_code: repInfo.code } : {}),
             }, { onConflict: 'email' });
 
             if (error) errors.push({ row: rowNum, msg: error.message });
@@ -242,7 +264,7 @@ export const AdminBulkImportSAT: React.FC = () => {
                 title="1. Importar Clientes"
                 templateContent={CLIENT_TEMPLATE}
                 templateName="plantilla_clientes.csv"
-                columns={['nombre', 'usuario', 'email', 'telefono', 'zona']}
+                columns={['nombre', 'usuario', 'email', 'telefono', 'zona', 'comercial_email']}
                 onImport={importClients}
             />
 

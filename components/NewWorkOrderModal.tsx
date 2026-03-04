@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, ClipboardList, Loader } from 'lucide-react';
 import { User as UserType, Machine } from '../types';
 import { useMachines } from '../hooks/useMachines';
+import { ClientSearchInput } from './ClientSearchInput';
 
 interface NewWorkOrderModalProps {
     clients: UserType[];
@@ -98,11 +99,12 @@ export const NewWorkOrderModal: React.FC<NewWorkOrderModalProps> = ({
                     {/* Client */}
                     <div>
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Cliente *</label>
-                        <select className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-900"
-                            value={clientId} onChange={e => { setClientId(e.target.value); setMachineId(''); }} required>
-                            <option value="">Seleccionar cliente…</option>
-                            {clientList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                        </select>
+                        <ClientSearchInput
+                            clients={clients}
+                            value={clientId}
+                            onChange={id => { setClientId(id); setMachineId(''); }}
+                            required
+                        />
                     </div>
 
                     {/* Machine */}

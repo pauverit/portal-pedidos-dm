@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Edit2, Trash2, CheckCircle, AlertCircle, Clock, ShoppingBag, TrendingUp, X, Save, Eye, EyeOff, Tag } from 'lucide-react';
+import { Edit2, Trash2, CheckCircle, AlertCircle, Clock, ShoppingBag, TrendingUp, X, Save, Eye, EyeOff, Tag, UserCheck } from 'lucide-react';
 import { User, Order, Product } from '../types';
 import { SALES_REPS } from '../constants';
 import { useToast } from './Toast';
 import { ClientCustomPricesEditor } from './ClientCustomPricesEditor';
+import { supabase } from '../lib/supabase';
 
 interface AdminClientListProps {
     clients: User[];
@@ -46,16 +47,50 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
         });
     };
     const [searchQuery, setSearchQuery] = useState('');
+    const [showPendingOnly, setShowPendingOnly] = useState(false);
+    const [filterSalesRep, setFilterSalesRep] = useState('');
+    const [filterStatus, setFilterStatus] = useState(''); // '' | 'active' | 'pending'
+    const [filterZone, setFilterZone] = useState('');
     const [editingClient, setEditingClient] = useState<User | null>(null);
     const [editForm, setEditForm] = useState<Partial<User>>({});
     const [showPassword, setShowPassword] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [activatingId, setActivatingId] = useState<string | null>(null);
     const [pendingDeleteClientId, setPendingDeleteClientId] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'general' | 'prices'>('general');
     const { toast } = useToast();
 
-    const filteredClients = clients
-        .filter(c => c.role === 'client')
+    const handleQuickActivate = async (client: User) => {
+        setActivatingId(client.id);
+        try {
+            await onSaveClient({ ...client, isActive: true, mustChangePassword: false });
+            toast(`✅ ${client.name} activado correctamente`, 'success');
+        } catch {
+            toast('Error al activar el cliente', 'error');
+        } finally {
+            setActivatingId(null);
+        }
+    };
+
+    const allClients = clients.filter(c => c.role === 'client');
+
+    // Derived filter options from actual data
+    const salesRepOptions = [...new Set(allClients.map(c => c.salesRep).filter(Boolean))] as string[];
+    const zoneOptions = [...new Set(allClients.map(c => c.delegation).filter(Boolean))] as string[];
+
+    const filteredClients = allClients
+        .filter(c => !showPendingOnly || !(c.isActive ?? !c.mustChangePassword))
+        .filter(c => {
+            if (!filterSalesRep) return true;
+            if (filterSalesRep === '__none__') return !c.salesRep;
+            return c.salesRep === filterSalesRep;
+        })
+        .filter(c => {
+            if (!filterStatus) return true;
+            const active = c.isActive ?? !c.mustChangePassword;
+            return filterStatus === 'active' ? active : !active;
+        })
+        .filter(c => !filterZone || c.delegation === filterZone)
         .filter(c =>
             !searchQuery ||
             c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -63,6 +98,17 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
             (c.salesRep || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
             (c.delegation || '').toLowerCase().includes(searchQuery.toLowerCase())
         );
+
+    const pendingCount = allClients.filter(c => !(c.isActive ?? !c.mustChangePassword)).length;
+    const activeFilterCount = [filterSalesRep, filterStatus, filterZone, showPendingOnly ? '1' : ''].filter(Boolean).length;
+
+    const clearAllFilters = () => {
+        setSearchQuery('');
+        setShowPendingOnly(false);
+        setFilterSalesRep('');
+        setFilterStatus('');
+        setFilterZone('');
+    };
 
     const getClientOrders = (clientId: string) =>
         orders.filter(o => o.userId === clientId);
@@ -100,15 +146,85 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
 
     return (
         <div className="relative">
-            {/* Search */}
-            <div className="mb-4">
-                <input
-                    type="text"
-                    placeholder="Buscar por empresa, usuario, comercial o delegación..."
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    className="w-full max-w-md pl-4 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-900 outline-none"
-                />
+            {/* Filter toolbar */}
+            <div className="mb-4 space-y-2">
+                {/* Row 1: search + dropdowns + pending */}
+                <div className="flex flex-wrap items-center gap-2">
+                    <input
+                        type="text"
+                        placeholder="Buscar empresa, usuario…"
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        className="flex-1 min-w-[180px] max-w-xs pl-4 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-900 outline-none"
+                    />
+
+                    {/* Comercial */}
+                    <select
+                        value={filterSalesRep}
+                        onChange={e => setFilterSalesRep(e.target.value)}
+                        className={`border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none cursor-pointer ${filterSalesRep ? 'border-indigo-400 bg-indigo-50 text-indigo-800 font-semibold' : 'border-slate-200 text-slate-600'
+                            }`}
+                    >
+                        <option value="">Todos los comerciales</option>
+                        <option value="__none__">Sin asignar</option>
+                        {salesRepOptions.map(r => <option key={r} value={r}>{r}</option>)}
+                    </select>
+
+                    {/* Estado */}
+                    <select
+                        value={filterStatus}
+                        onChange={e => setFilterStatus(e.target.value)}
+                        className={`border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none cursor-pointer ${filterStatus ? 'border-indigo-400 bg-indigo-50 text-indigo-800 font-semibold' : 'border-slate-200 text-slate-600'
+                            }`}
+                    >
+                        <option value="">Todos los estados</option>
+                        <option value="active">✅ Activo</option>
+                        <option value="pending">⏳ Pendiente</option>
+                    </select>
+
+                    {/* Zona / Delegación */}
+                    {zoneOptions.length > 0 && (
+                        <select
+                            value={filterZone}
+                            onChange={e => setFilterZone(e.target.value)}
+                            className={`border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none cursor-pointer ${filterZone ? 'border-indigo-400 bg-indigo-50 text-indigo-800 font-semibold' : 'border-slate-200 text-slate-600'
+                                }`}
+                        >
+                            <option value="">Todas las zonas</option>
+                            {zoneOptions.map(z => <option key={z} value={z}>{z}</option>)}
+                        </select>
+                    )}
+
+                    {/* Pendientes */}
+                    <button
+                        onClick={() => setShowPendingOnly(p => !p)}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold border-2 transition-colors ${showPendingOnly
+                            ? 'bg-amber-50 border-amber-400 text-amber-800'
+                            : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                            }`}
+                    >
+                        <Clock size={13} />
+                        Pendientes
+                        {pendingCount > 0 && (
+                            <span className="bg-amber-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full">{pendingCount}</span>
+                        )}
+                    </button>
+
+                    {/* Clear all */}
+                    {activeFilterCount > 0 && (
+                        <button
+                            onClick={clearAllFilters}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 border border-slate-200 transition-colors"
+                        >
+                            <X size={13} /> Limpiar ({activeFilterCount})
+                        </button>
+                    )}
+                </div>
+
+                {/* Results count */}
+                <p className="text-xs text-slate-400">
+                    Mostrando <strong className="text-slate-700">{filteredClients.length}</strong> de <strong className="text-slate-700">{allClients.length}</strong> clientes
+                </p>
             </div>
 
             {/* Client Table */}
@@ -210,6 +326,19 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                                         </td>
                                         <td className="px-4 py-3 text-right">
                                             <div className="flex items-center justify-end gap-1">
+                                                {!isActive && (
+                                                    <button
+                                                        onClick={() => handleQuickActivate(client)}
+                                                        disabled={activatingId === client.id}
+                                                        className="flex items-center gap-1 px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-colors disabled:opacity-50"
+                                                        title="Activar cliente"
+                                                    >
+                                                        {activatingId === client.id
+                                                            ? <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
+                                                            : <UserCheck size={12} />}
+                                                        Activar
+                                                    </button>
+                                                )}
                                                 <button
                                                     onClick={() => startEdit(client)}
                                                     className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"

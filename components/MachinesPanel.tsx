@@ -9,6 +9,7 @@ import { useMachines } from '../hooks/useMachines';
 import { compressImage } from '../lib/utils';
 import { supabase } from '../lib/supabase';
 import { useToast } from './Toast';
+import { ClientSearchInput } from './ClientSearchInput';
 
 interface MachinesPanelProps {
     currentUser: UserType;
@@ -194,15 +195,12 @@ const MachineDetail: React.FC<MachineDetailProps> = ({
                     {/* Client */}
                     <div>
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Cliente *</label>
-                        <select
-                            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-900"
+                        <ClientSearchInput
+                            clients={clients}
                             value={form.clientId}
-                            onChange={e => setForm(f => ({ ...f, clientId: e.target.value }))}
+                            onChange={id => setForm(f => ({ ...f, clientId: id }))}
                             required
-                        >
-                            <option value="">Seleccionar cliente…</option>
-                            {clientList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                        </select>
+                        />
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
