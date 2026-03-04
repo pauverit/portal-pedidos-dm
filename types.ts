@@ -196,3 +196,57 @@ export interface IncidentComment {
   body: string;
   createdAt: string;
 }
+
+// ─── CRM Module Types ─────────────────────────────────────────────────────────
+
+export interface ClientVisit {
+  id: string;
+  clientId: string;
+  clientName?: string;
+  salesRepId: string;
+  salesRepName?: string;
+  visitDate: string;
+  notes?: string;
+  nextAction?: string;
+  createdAt: string;
+}
+
+export interface ClientCall {
+  id: string;
+  clientId: string;
+  clientName?: string;
+  salesRepId: string;
+  salesRepName?: string;
+  callDate: string;
+  direction: 'outbound' | 'inbound';
+  summary?: string;
+  createdAt: string;
+}
+
+// ─── Expenses Module Types ────────────────────────────────────────────────────
+
+export type ExpenseType = 'restaurant' | 'km' | 'hotel' | 'other';
+
+export interface Expense {
+  id: string;
+  userId: string;
+  userRole: 'sales' | 'tech' | 'tech_lead' | 'admin';
+  expenseDate: string;
+  type: ExpenseType;
+  description?: string;
+  amount: number;
+  km?: number;
+  kmRate?: number;
+  ticketImageUrl?: string;
+  createdAt: string;
+}
+
+export interface ExpenseMonthlyReport {
+  month: number;
+  year: number;
+  totalAmount: number;
+  totalKm: number;
+  totalKmAmount: number;
+  byType: Record<ExpenseType, { count: number; amount: number; km?: number }>;
+  expenses: Expense[];
+}

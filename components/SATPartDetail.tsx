@@ -130,6 +130,7 @@ export const SATPartDetail: React.FC<Props> = ({
 
     const isTechLead = currentUser.role === 'tech_lead' || currentUser.role === 'admin';
     const isTech = currentUser.role === 'tech' || isTechLead;
+    const isClient = currentUser.role === 'client';
     const client = clients.find(c => c.id === part.clientId);
     const st = STATUS_CONFIG[form.status];
     const StatusIcon = st.icon;
@@ -269,7 +270,7 @@ export const SATPartDetail: React.FC<Props> = ({
                                 <PenLine size={14} /> Obtener firma
                             </button>
                         )}
-                        {!isFinal && (
+                        {!isFinal && !isClient && (
                             <button onClick={handleSave} disabled={saving}
                                 className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-slate-700 disabled:opacity-50 transition-colors">
                                 {saving ? <Loader size={14} className="animate-spin" /> : <Save size={14} />}
@@ -313,7 +314,7 @@ export const SATPartDetail: React.FC<Props> = ({
                             <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Descripción del problema</label>
                             <textarea rows={3}
                                 className="w-full text-sm text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-slate-900 rounded-lg px-2 py-1"
-                                value={form.description} readOnly={isFinal}
+                                value={form.description} readOnly={isFinal || isClient}
                                 onChange={e => f('description', e.target.value)} />
                         </div>
 
@@ -437,7 +438,7 @@ export const SATPartDetail: React.FC<Props> = ({
                                         <textarea rows={7}
                                             className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-slate-900"
                                             placeholder="Describe los trabajos realizados, piezas cambiadas, solución aplicada…"
-                                            value={form.resolution} readOnly={isFinal}
+                                            value={form.resolution} readOnly={isFinal || isClient}
                                             onChange={e => {
                                                 const val = e.target.value;
                                                 // Auto-transition to in_progress when tech starts writing
@@ -447,7 +448,7 @@ export const SATPartDetail: React.FC<Props> = ({
                                                     f('resolution', val);
                                                 }
                                             }} />
-                                        {!['resolved', 'signed', 'invoiced', 'cancelled'].includes(form.status) && form.resolution && (
+                                        {!isClient && !['resolved', 'signed', 'invoiced', 'cancelled'].includes(form.status) && form.resolution && (
                                             <button onClick={() => f('status', 'resolved')}
                                                 className="mt-3 flex items-center gap-2 bg-teal-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-teal-500 transition-colors">
                                                 <CheckCircle size={14} /> Marcar como Resuelta
@@ -479,43 +480,52 @@ export const SATPartDetail: React.FC<Props> = ({
                         {/* Status */}
                         <div className="bg-white rounded-2xl border border-slate-100 p-5 space-y-1.5">
                             <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Estado</label>
-                            {(Object.keys(STATUS_CONFIG) as PartStatus[]).map(s => {
-                                const cfg = STATUS_CONFIG[s];
-                                const Icon = cfg.icon;
-                                const isActive = form.status === s;
-                                const isReachable = STATUS_CONFIG[form.status].next.includes(s) || isActive;
-                                return (
-                                    <button key={s}
-                                        disabled={!isReachable || isFinal}
-                                        onClick={() => form.status !== s && isReachable && f('status', s)}
-                                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-colors border ${isActive ? cfg.color
+                            {isClient ? (
+                                // Read-only status badge for clients
+                                <span className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold border ${st.color}`}>
+                                    <StatusIcon size={13} />{st.label}
+                                </span>
+                            ) : (
+                                (Object.keys(STATUS_CONFIG) as PartStatus[]).map(s => {
+                                    const cfg = STATUS_CONFIG[s];
+                                    const Icon = cfg.icon;
+                                    const isActive = form.status === s;
+                                    const isReachable = STATUS_CONFIG[form.status].next.includes(s) || isActive;
+                                    return (
+                                        <button key={s}
+                                            disabled={!isReachable || isFinal}
+                                            onClick={() => form.status !== s && isReachable && f('status', s)}
+                                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-colors border ${isActive ? cfg.color
                                                 : isReachable ? 'border-transparent text-slate-500 hover:bg-slate-50'
                                                     : 'border-transparent text-slate-300 cursor-not-allowed'
-                                            }`}>
-                                        <Icon size={13} />
-                                        {cfg.label}
-                                        {isActive && <span className="ml-auto text-[10px] font-bold uppercase opacity-60">Actual</span>}
-                                    </button>
-                                );
-                            })}
+                                                }`}>
+                                            <Icon size={13} />
+                                            {cfg.label}
+                                            {isActive && <span className="ml-auto text-[10px] font-bold uppercase opacity-60">Actual</span>}
+                                        </button>
+                                    );
+                                })
+                            )}
                         </div>
 
                         {/* Priority */}
-                        <div className="bg-white rounded-2xl border border-slate-100 p-5">
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Prioridad</label>
-                            <div className="grid grid-cols-2 gap-2">
-                                {Object.entries(PRIORITY_CFG).map(([k, v]) => (
-                                    <button key={k} onClick={() => f('priority', k)}
-                                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border-2 transition-colors ${form.priority === k ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 text-slate-600 hover:border-slate-300'
-                                            }`}>
-                                        <span className={`w-2 h-2 rounded-full ${form.priority === k ? 'bg-white' : v.dot}`} />
-                                        {v.label}
-                                    </button>
-                                ))}
+                        {!isClient && (
+                            <div className="bg-white rounded-2xl border border-slate-100 p-5">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Prioridad</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {Object.entries(PRIORITY_CFG).map(([k, v]) => (
+                                        <button key={k} onClick={() => f('priority', k)}
+                                            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border-2 transition-colors ${form.priority === k ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                                                }`}>
+                                            <span className={`w-2 h-2 rounded-full ${form.priority === k ? 'bg-white' : v.dot}`} />
+                                            {v.label}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
+                        )}
 
-                        {/* Technician assignment — chips */}
+                        {/* Technician assignment */}
                         <div className="bg-white rounded-2xl border border-slate-100 p-5">
                             <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-3">Asignado a</label>
 

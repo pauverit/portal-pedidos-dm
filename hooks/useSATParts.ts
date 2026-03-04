@@ -4,6 +4,7 @@ import { SATPartDoc, PartStatus } from '../components/SATPartDetail';
 
 interface Options {
     technicianId?: string;
+    clientId?: string; // When set, only fetch parts belonging to this client
 }
 
 export const useSATParts = (options: Options = {}) => {
@@ -18,7 +19,10 @@ export const useSATParts = (options: Options = {}) => {
                 .select('*')
                 .order('created_at', { ascending: false });
 
-            if (options.technicianId) {
+            // Filter by client (for client role — they only see their own parts)
+            if (options.clientId) {
+                q = q.eq('client_id', options.clientId);
+            } else if (options.technicianId) {
                 // Tech sees: their assigned parts AND unassigned parts
                 q = q.or(`assigned_to.eq.${options.technicianId},assigned_to.is.null`);
             }
@@ -78,7 +82,7 @@ export const useSATParts = (options: Options = {}) => {
         } finally {
             setLoading(false);
         }
-    }, [options.technicianId]);
+    }, [options.technicianId, options.clientId]);
 
     const createPart = async (d: {
         clientId: string;

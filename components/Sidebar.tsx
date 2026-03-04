@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, ShoppingCart, Settings, LogOut, Printer, Database, UserCircle, ChevronDown, ChevronRight, Layers, Box, Wrench, UserPlus, Upload, X, ShoppingBag, Scroll, Monitor, Eye, EyeOff, AlertTriangle, ClipboardList } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Settings, LogOut, Printer, Database, UserCircle, ChevronDown, ChevronRight, Layers, Box, Wrench, UserPlus, Upload, X, ShoppingBag, Scroll, Monitor, Eye, EyeOff, AlertTriangle, ClipboardList, ContactRound, Receipt } from 'lucide-react';
 import { User } from '../types';
 
 interface SidebarProps {
@@ -162,6 +162,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Mis Clientes',
       icon: UserCircle,
       roles: ['sales']
+    },
+    {
+      id: 'crm',
+      label: 'CRM',
+      icon: ContactRound,
+      roles: ['sales']
+    },
+    {
+      id: 'expenses',
+      label: 'Gastos',
+      icon: Receipt,
+      roles: ['sales', 'tech', 'tech_lead', 'admin']
     },
     {
       id: 'client_orders',

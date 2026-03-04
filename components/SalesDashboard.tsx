@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, ShoppingBag, TrendingUp, ChevronRight, ChevronLeft, Calendar, UserPlus } from 'lucide-react';
+import { Users, ShoppingBag, TrendingUp, ChevronRight, ChevronLeft, Calendar, UserPlus, ContactRound, Receipt } from 'lucide-react';
 import { User, Order } from '../types';
 
 interface SalesDashboardProps {
@@ -202,7 +202,7 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({
             {/* Quick Actions */}
             <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-lg">
                 <h2 className="text-xl font-bold mb-4">Acciones Rápidas</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <button
                         onClick={() => onNavigate('admin_new_client')}
                         className="bg-white/10 hover:bg-white/20 p-4 rounded-xl flex flex-col items-center gap-2 transition-colors border border-white/10"
@@ -216,6 +216,20 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({
                     >
                         <Users size={24} />
                         <span className="text-sm font-medium">Mis Clientes</span>
+                    </button>
+                    <button
+                        onClick={() => onNavigate('crm')}
+                        className="bg-white/10 hover:bg-white/20 p-4 rounded-xl flex flex-col items-center gap-2 transition-colors border border-white/10"
+                    >
+                        <ContactRound size={24} />
+                        <span className="text-sm font-medium">CRM</span>
+                    </button>
+                    <button
+                        onClick={() => onNavigate('expenses')}
+                        className="bg-white/10 hover:bg-white/20 p-4 rounded-xl flex flex-col items-center gap-2 transition-colors border border-white/10"
+                    >
+                        <Receipt size={24} />
+                        <span className="text-sm font-medium">Gastos</span>
                     </button>
                 </div>
             </div>

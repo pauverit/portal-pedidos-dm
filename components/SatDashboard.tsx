@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wrench, AlertTriangle, ClipboardList, CheckCircle, Clock, TrendingUp, Users } from 'lucide-react';
+import { Wrench, AlertTriangle, ClipboardList, CheckCircle, Clock, TrendingUp, Users, Receipt } from 'lucide-react';
 import { User } from '../types';
 
 interface SatDashboardProps {
@@ -20,6 +20,7 @@ export const SatDashboard: React.FC<SatDashboardProps> = ({ currentUser, onNavig
     const quickActions = [
         { label: 'Nuevo Parte / Incidencia', view: 'sat_parts', icon: ClipboardList },
         { label: 'Mis Máquinas', view: 'sat_machines', icon: Wrench },
+        { label: 'Gastos', view: 'expenses', icon: Receipt },
         ...(isTechLead ? [{ label: 'Gestión de Técnicos', view: 'admin_tech_management', icon: Users }] : []),
     ];
 

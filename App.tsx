@@ -35,7 +35,12 @@ import { useWorkOrders } from './hooks/useWorkOrders';
 import { useSATParts } from './hooks/useSATParts';
 import { ProfileEditModal } from './components/ProfileEditModal';
 import { AdminProductEditModal } from './components/AdminProductEditModal';
+import { CRMView } from './components/CRMView';
+import { NewVisitModal } from './components/NewVisitModal';
+import { NewCallModal } from './components/NewCallModal';
+import { ExpensesView } from './components/ExpensesView';
 import { useToast } from './components/Toast';
+import { useCRM } from './hooks/useCRM';
 
 import {
     SALES_REPS, SALES_REPS_PHONES, SALES_REPS_EMAILS, INITIAL_PRODUCTS
@@ -89,6 +94,19 @@ export default function App() {
     const [selectedPart, setSelectedPart] = useState<any>(null);
     const [showNewPartModal, setShowNewPartModal] = useState(false);
 
+    // CRM state
+    const [showNewVisitModal, setShowNewVisitModal] = useState(false);
+    const [showNewCallModal, setShowNewCallModal] = useState(false);
+    const [crmPreselectedClient, setCrmPreselectedClient] = useState<string | undefined>(undefined);
+
+    // CRM hook (only for sales reps)
+    const { visits, calls, loading: crmLoading, load: loadCRM, createVisit, createCall, deleteVisit, deleteCall } = useCRM({
+        salesRepId: currentUser?.role === 'sales' ? currentUser.id : undefined,
+    });
+
+    // Expenses hook (for sales, tech, tech_lead)
+    // (ExpensesView self-manages its load; hook is used only for CRM view's reload trigger)
+
     // SAT incidents
     const { incidents, loading: incidentsLoading, load: loadIncidents, createIncident } = useIncidents({
         technicianId: currentUser?.role === 'tech' ? currentUser.id : undefined,
@@ -101,6 +119,7 @@ export default function App() {
     // Unified SAT parts
     const { parts: satParts, loading: satPartsLoading, load: loadSatParts, createPart, updatePart } = useSATParts({
         technicianId: currentUser?.role === 'tech' ? currentUser.id : undefined,
+        clientId: currentUser?.role === 'client' ? currentUser.id : undefined,
     });
 
     // Sync cart prices when a sales rep selects a different client
@@ -171,6 +190,13 @@ export default function App() {
             setOrders([]);
         }
     }, [currentUser]);
+
+    // Load CRM data when entering the crm view
+    useEffect(() => {
+        if (currentView === 'crm' && currentUser?.role === 'sales') {
+            loadCRM();
+        }
+    }, [currentView]);
 
     // Load incidents when entering SAT incident views
     useEffect(() => {
@@ -573,6 +599,61 @@ export default function App() {
     };
 
     const renderContent = () => {
+        if (currentView === 'crm' && currentUser?.role === 'sales') {
+            return (
+                <>
+                    <CRMView
+                        currentUser={currentUser}
+                        clients={users}
+                        visits={visits}
+                        calls={calls}
+                        loading={crmLoading}
+                        onRefresh={loadCRM}
+                        onNewVisit={(clientId) => { setCrmPreselectedClient(clientId); setShowNewVisitModal(true); }}
+                        onNewCall={(clientId) => { setCrmPreselectedClient(clientId); setShowNewCallModal(true); }}
+                        onDeleteVisit={deleteVisit}
+                        onDeleteCall={deleteCall}
+                    />
+                    {showNewVisitModal && (
+                        <NewVisitModal
+                            clients={users}
+                            currentUser={currentUser}
+                            preselectedClientId={crmPreselectedClient}
+                            onClose={() => setShowNewVisitModal(false)}
+                            onSave={async (data) => {
+                                await createVisit(data);
+                                setShowNewVisitModal(false);
+                                toast('Visita registrada', 'success');
+                            }}
+                        />
+                    )}
+                    {showNewCallModal && (
+                        <NewCallModal
+                            clients={users}
+                            currentUser={currentUser}
+                            preselectedClientId={crmPreselectedClient}
+                            onClose={() => setShowNewCallModal(false)}
+                            onSave={async (data) => {
+                                await createCall(data);
+                                setShowNewCallModal(false);
+                                toast('Llamada registrada', 'success');
+                            }}
+                        />
+                    )}
+                </>
+            );
+        }
+        if (currentView === 'crm') return <div className="p-10 text-slate-400">Acceso restringido a comerciales.</div>;
+
+        if (currentView === 'expenses' && currentUser) {
+            return (
+                <ExpensesView
+                    currentUser={currentUser}
+                    formatCurrency={formatCurrency}
+                />
+            );
+        }
+
         if (currentView === 'dashboard' && currentUser) {
             if (currentUser.role === 'sales') {
                 return <SalesDashboard currentUser={currentUser} clients={users} orders={orders} onNavigate={setCurrentView} formatCurrency={formatCurrency} />;
