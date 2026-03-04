@@ -276,14 +276,15 @@ export const MachinesPanel: React.FC<MachinesPanelProps> = ({ currentUser, clien
     const [view, setView] = useState<'list' | 'detail'>('list');
     const [selected, setSelected] = useState<Machine | null>(null);
     const [search, setSearch] = useState('');
+    const [clientFilter, setClientFilter] = useState('');
     const { machines, loading, loadAll } = useMachines();
     const isAdmin = currentUser.role === 'admin' || currentUser.role === 'tech_lead';
     const clientMap: Record<string, string> = {};
     clients.forEach(c => { clientMap[c.id] = c.name; });
-
     useEffect(() => { loadAll(); }, []);
 
     const filtered = machines.filter(m => {
+        if (clientFilter && m.clientId !== clientFilter) return false;
         const q = search.toLowerCase();
         return !q || [m.brand, m.model, m.serialNumber, clientMap[m.clientId] || ''].some(v => v.toLowerCase().includes(q));
     });
@@ -315,14 +316,24 @@ export const MachinesPanel: React.FC<MachinesPanelProps> = ({ currentUser, clien
                 </button>
             </div>
 
-            {/* Search */}
-            <div className="relative">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                    className="w-full pl-8 pr-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-slate-900"
-                    placeholder="Buscar por marca, modelo, nº serie, cliente…"
-                    value={search} onChange={e => setSearch(e.target.value)}
-                />
+            {/* Search + Client filter */}
+            <div className="flex flex-wrap gap-2">
+                <div className="relative flex-1 min-w-[200px]">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                        className="w-full pl-8 pr-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-slate-900"
+                        placeholder="Buscar por marca, modelo, nº serie…"
+                        value={search} onChange={e => setSearch(e.target.value)}
+                    />
+                </div>
+                <div className="min-w-[220px] flex-1 md:flex-none">
+                    <ClientSearchInput
+                        clients={clients}
+                        value={clientFilter}
+                        onChange={setClientFilter}
+                        placeholder="Filtrar por cliente…"
+                    />
+                </div>
             </div>
 
             {/* Table */}
@@ -354,25 +365,49 @@ export const MachinesPanel: React.FC<MachinesPanelProps> = ({ currentUser, clien
                                 <button
                                     key={m.id}
                                     onClick={() => { setSelected(m); setView('detail'); }}
-                                    className="w-full grid grid-cols-1 md:grid-cols-[56px_80px_1fr_1fr_1fr_1fr_80px] gap-2 md:gap-3 px-5 py-3 text-left hover:bg-slate-50 transition-colors items-center group"
+                                    className="w-full text-left hover:bg-slate-50 transition-colors"
                                 >
-                                    <MachineThumbnail src={m.imageUrl} size={40} />
-                                    <span className="font-mono text-[11px] text-slate-400">ACT{String(idx + 1).padStart(5, '0')}</span>
-                                    <div>
-                                        <p className="font-bold text-slate-900 text-sm">{m.brand} {m.model}</p>
+                                    {/* Mobile: tarjeta compacta */}
+                                    <div className="md:hidden flex items-center gap-3 px-4 py-2.5">
+                                        <MachineThumbnail src={m.imageUrl} size={36} />
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <span className="font-bold text-slate-900 text-sm truncate">{m.brand} {m.model}</span>
+                                                {m.warrantyExpires ? (
+                                                    <span className={`inline-flex items-center gap-1 text-[11px] font-semibold shrink-0 ${wok ? 'text-blue-600' : 'text-slate-400'}`}>
+                                                        {wok ? <ShieldCheck size={11} /> : <ShieldOff size={11} />}
+                                                        {new Date(m.warrantyExpires).toLocaleDateString('es-ES')}
+                                                    </span>
+                                                ) : null}
+                                            </div>
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                <span className="font-mono text-xs text-slate-400">{m.serialNumber}</span>
+                                                <span className="text-slate-300">·</span>
+                                                <span className="text-xs text-slate-500 truncate">{clientMap[m.clientId] || '—'}</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <span className="font-mono text-xs text-slate-500">{m.serialNumber}</span>
-                                    <span className="text-sm text-slate-600 truncate">{clientMap[m.clientId] || '—'}</span>
-                                    <div>
-                                        {m.warrantyExpires ? (
-                                            <span className={`inline-flex items-center gap-1 text-[11px] font-semibold ${wok ? 'text-blue-600' : 'text-slate-400'}`}>
-                                                {wok ? <ShieldCheck size={12} /> : <ShieldOff size={12} />}
-                                                {new Date(m.warrantyExpires).toLocaleDateString('es-ES')}
-                                            </span>
-                                        ) : <span className="text-[11px] text-slate-300">—</span>}
-                                    </div>
-                                    <div className="hidden md:flex justify-end">
-                                        <Edit2 size={14} className="text-slate-200 group-hover:text-slate-500 transition-colors" />
+
+                                    {/* Desktop: fila en grid */}
+                                    <div className="hidden md:grid grid-cols-[56px_80px_1fr_1fr_1fr_1fr_80px] gap-3 px-5 py-3 items-center group">
+                                        <MachineThumbnail src={m.imageUrl} size={40} />
+                                        <span className="font-mono text-[11px] text-slate-400">ACT{String(idx + 1).padStart(5, '0')}</span>
+                                        <div>
+                                            <p className="font-bold text-slate-900 text-sm">{m.brand} {m.model}</p>
+                                        </div>
+                                        <span className="font-mono text-xs text-slate-500">{m.serialNumber}</span>
+                                        <span className="text-sm text-slate-600 truncate">{clientMap[m.clientId] || '—'}</span>
+                                        <div>
+                                            {m.warrantyExpires ? (
+                                                <span className={`inline-flex items-center gap-1 text-[11px] font-semibold ${wok ? 'text-blue-600' : 'text-slate-400'}`}>
+                                                    {wok ? <ShieldCheck size={12} /> : <ShieldOff size={12} />}
+                                                    {new Date(m.warrantyExpires).toLocaleDateString('es-ES')}
+                                                </span>
+                                            ) : <span className="text-[11px] text-slate-300">—</span>}
+                                        </div>
+                                        <div className="flex justify-end">
+                                            <Edit2 size={14} className="text-slate-200 group-hover:text-slate-500 transition-colors" />
+                                        </div>
                                     </div>
                                 </button>
                             );

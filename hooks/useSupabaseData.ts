@@ -55,15 +55,27 @@ export function useSupabaseData() {
                 setProducts(mappedProducts);
             }
 
-            // Load Clients
-            const { data: dbClients, error: clientError } = await supabase
-                .from('clients')
-                .select('*');
+            // Load Clients — paginated to bypass Supabase's 1000-row default limit
+            const PAGE = 1000;
+            const allDbClients: any[] = [];
+            let page = 0;
+            while (true) {
+                const { data: pageData, error: pageError } = await supabase
+                    .from('clients')
+                    .select('*')
+                    .range(page * PAGE, (page + 1) * PAGE - 1);
+                if (pageError) {
+                    console.warn('Could not load clients from Supabase:', pageError);
+                    break;
+                }
+                if (!pageData || pageData.length === 0) break;
+                allDbClients.push(...pageData);
+                if (pageData.length < PAGE) break;
+                page++;
+            }
 
-            if (clientError) {
-                console.warn('Could not load clients from Supabase:', clientError);
-            } else if (dbClients) {
-                const mappedClients: User[] = dbClients.map(c => ({
+            if (allDbClients.length > 0) {
+                const mappedClients: User[] = allDbClients.map(c => ({
                     id: c.id,
                     name: c.company_name,
                     email: c.email,

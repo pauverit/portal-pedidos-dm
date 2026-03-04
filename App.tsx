@@ -1,46 +1,52 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { supabase } from './lib/supabase';
 import { Sidebar } from './components/Sidebar';
-import { AdminBulkLoad } from './components/AdminBulkLoad';
-import { AdminBulkEdit } from './components/AdminBulkEdit';
 import { CrossSellModal, PromoVinylEntry, PromoSelection } from './components/CrossSellModal';
-import { AdminClientList } from './components/AdminClientList';
-import { AdminCoupons } from './components/AdminCoupons';
 import { LoginView } from './components/LoginView';
-import { AdminDashboard } from './components/AdminDashboard';
-import { AdminProductList } from './components/AdminProductList';
-import { ClientOrdersView } from './components/ClientOrdersView';
-import { AdminNewClient } from './components/AdminNewClient';
 import { ProductListView } from './components/ProductListView';
 import { CheckoutView } from './components/CheckoutView';
 import { OrderSuccessView } from './components/OrderSuccessView';
 import { DashboardView } from './components/DashboardView';
-import { SalesDashboard } from './components/SalesDashboard';
-import { SatDashboard } from './components/SatDashboard';
-import { AdminSalesManagement } from './components/AdminSalesManagement';
-import { AdminTechManagement } from './components/AdminTechManagement';
-import { IncidentList } from './components/IncidentList';
-import { IncidentDetail } from './components/IncidentDetail';
-import { NewIncidentModal } from './components/NewIncidentModal';
-import { AdminBulkImportSAT } from './components/AdminBulkImportSAT';
-import { MachinesPanel } from './components/MachinesPanel';
-import { WorkOrderList } from './components/WorkOrderList';
-import { WorkOrderDetail } from './components/WorkOrderDetail';
-import { NewWorkOrderModal } from './components/NewWorkOrderModal';
-import { SATPartsList } from './components/SATPartsList';
-import { SATPartDetail } from './components/SATPartDetail';
-import { NewSATPartModal } from './components/NewSATPartModal';
+import { ClientOrdersView } from './components/ClientOrdersView';
+import { ProfileEditModal } from './components/ProfileEditModal';
+import { useToast } from './components/Toast';
 import { useIncidents } from './hooks/useIncidents';
 import { useWorkOrders } from './hooks/useWorkOrders';
 import { useSATParts } from './hooks/useSATParts';
-import { ProfileEditModal } from './components/ProfileEditModal';
-import { AdminProductEditModal } from './components/AdminProductEditModal';
-import { CRMView } from './components/CRMView';
-import { NewVisitModal } from './components/NewVisitModal';
-import { NewCallModal } from './components/NewCallModal';
-import { ExpensesView } from './components/ExpensesView';
-import { useToast } from './components/Toast';
 import { useCRM } from './hooks/useCRM';
+
+// Lazy-loaded: Admin
+const AdminBulkLoad        = React.lazy(() => import('./components/AdminBulkLoad').then(m => ({ default: m.AdminBulkLoad })));
+const AdminBulkEdit        = React.lazy(() => import('./components/AdminBulkEdit').then(m => ({ default: m.AdminBulkEdit })));
+const AdminClientList      = React.lazy(() => import('./components/AdminClientList').then(m => ({ default: m.AdminClientList })));
+const AdminCoupons         = React.lazy(() => import('./components/AdminCoupons').then(m => ({ default: m.AdminCoupons })));
+const AdminDashboard       = React.lazy(() => import('./components/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
+const AdminProductList     = React.lazy(() => import('./components/AdminProductList').then(m => ({ default: m.AdminProductList })));
+const AdminNewClient       = React.lazy(() => import('./components/AdminNewClient').then(m => ({ default: m.AdminNewClient })));
+const AdminSalesManagement = React.lazy(() => import('./components/AdminSalesManagement').then(m => ({ default: m.AdminSalesManagement })));
+const AdminTechManagement  = React.lazy(() => import('./components/AdminTechManagement').then(m => ({ default: m.AdminTechManagement })));
+const AdminBulkImportSAT   = React.lazy(() => import('./components/AdminBulkImportSAT').then(m => ({ default: m.AdminBulkImportSAT })));
+const AdminProductEditModal = React.lazy(() => import('./components/AdminProductEditModal').then(m => ({ default: m.AdminProductEditModal })));
+
+// Lazy-loaded: SAT / Técnico
+const MachinesPanel    = React.lazy(() => import('./components/MachinesPanel').then(m => ({ default: m.MachinesPanel })));
+const WorkOrderList    = React.lazy(() => import('./components/WorkOrderList').then(m => ({ default: m.WorkOrderList })));
+const WorkOrderDetail  = React.lazy(() => import('./components/WorkOrderDetail').then(m => ({ default: m.WorkOrderDetail })));
+const NewWorkOrderModal = React.lazy(() => import('./components/NewWorkOrderModal').then(m => ({ default: m.NewWorkOrderModal })));
+const SATPartsList     = React.lazy(() => import('./components/SATPartsList').then(m => ({ default: m.SATPartsList })));
+const SATPartDetail    = React.lazy(() => import('./components/SATPartDetail').then(m => ({ default: m.SATPartDetail })));
+const NewSATPartModal  = React.lazy(() => import('./components/NewSATPartModal').then(m => ({ default: m.NewSATPartModal })));
+const IncidentList     = React.lazy(() => import('./components/IncidentList').then(m => ({ default: m.IncidentList })));
+const IncidentDetail   = React.lazy(() => import('./components/IncidentDetail').then(m => ({ default: m.IncidentDetail })));
+const NewIncidentModal = React.lazy(() => import('./components/NewIncidentModal').then(m => ({ default: m.NewIncidentModal })));
+const SalesDashboard   = React.lazy(() => import('./components/SalesDashboard').then(m => ({ default: m.SalesDashboard })));
+const SatDashboard     = React.lazy(() => import('./components/SatDashboard').then(m => ({ default: m.SatDashboard })));
+
+// Lazy-loaded: CRM / Gastos
+const CRMView      = React.lazy(() => import('./components/CRMView').then(m => ({ default: m.CRMView })));
+const ExpensesView = React.lazy(() => import('./components/ExpensesView').then(m => ({ default: m.ExpensesView })));
+const NewVisitModal = React.lazy(() => import('./components/NewVisitModal').then(m => ({ default: m.NewVisitModal })));
+const NewCallModal  = React.lazy(() => import('./components/NewCallModal').then(m => ({ default: m.NewCallModal })));
 
 import {
     SALES_REPS, SALES_REPS_PHONES, SALES_REPS_EMAILS, INITIAL_PRODUCTS
@@ -906,7 +912,11 @@ export default function App() {
                         )}
                     </button>
                 </header>
-                <main className="flex-1">{renderContent()}</main>
+                <main className="flex-1">
+                    <Suspense fallback={<div className="flex items-center justify-center h-64"><div className="w-5 h-5 border-2 border-slate-300 border-t-slate-700 rounded-full animate-spin" /></div>}>
+                        {renderContent()}
+                    </Suspense>
+                </main>
             </div>
             {showLogoutModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -930,11 +940,13 @@ export default function App() {
                 />
             )}
             {editingProduct && currentView.startsWith('cat_') && (
-                <AdminProductEditModal
-                    product={editingProduct}
-                    onSave={handleUpdateProduct}
-                    onClose={() => setEditingProduct(null)}
-                />
+                <Suspense fallback={null}>
+                    <AdminProductEditModal
+                        product={editingProduct}
+                        onSave={handleUpdateProduct}
+                        onClose={() => setEditingProduct(null)}
+                    />
+                </Suspense>
             )}
         </div>
     );

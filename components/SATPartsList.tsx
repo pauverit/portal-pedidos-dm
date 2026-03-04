@@ -153,24 +153,48 @@ export const SATPartsList: React.FC<SATPartsListProps> = ({
                             const StatusIcon = st.icon;
                             return (
                                 <button key={p.id} onClick={() => onViewPart(p)}
-                                    className="w-full grid md:grid-cols-[110px_1fr_1fr_110px_60px_90px_90px] gap-2 md:gap-3 px-5 py-3.5 text-left hover:bg-slate-50 transition-colors items-center group">
-                                    <div className="flex items-center gap-2">
-                                        <span className={`w-2 h-2 rounded-full shrink-0 ${PRIORITY_DOT[p.priority] || 'bg-slate-300'}`} />
-                                        <span className="font-mono text-xs font-bold text-slate-700">{p.reference}</span>
+                                    className="w-full text-left hover:bg-slate-50 transition-colors">
+
+                                    {/* Mobile: tarjeta compacta 2 líneas */}
+                                    <div className="md:hidden px-4 py-2.5">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-2 min-w-0">
+                                                <span className={`w-2 h-2 rounded-full shrink-0 ${PRIORITY_DOT[p.priority] || 'bg-slate-300'}`} />
+                                                <span className="font-mono text-xs font-bold text-slate-700">{p.reference}</span>
+                                                <span className="text-sm text-slate-700 font-semibold truncate">{p.clientName}</span>
+                                            </div>
+                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold shrink-0 ${st.color}`}>
+                                                <StatusIcon size={10} />{st.label}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between mt-0.5 pl-4">
+                                            <span className="text-xs text-slate-400 truncate">
+                                                {p.incidentType ? `${p.incidentType} · ${p.description}` : p.description}
+                                            </span>
+                                            <span className="text-xs text-slate-400 shrink-0 ml-2">{fmtDate(p.scheduledAt || p.createdAt)}</span>
+                                        </div>
                                     </div>
-                                    <span className="text-sm text-slate-700 font-medium truncate">{p.clientName}</span>
-                                    <div>
-                                        <p className="text-xs text-slate-600 truncate">{p.description}</p>
-                                        {p.incidentType && <p className="text-[10px] text-slate-400">{p.incidentType}</p>}
+
+                                    {/* Desktop: fila en grid */}
+                                    <div className="hidden md:grid grid-cols-[110px_1fr_1fr_110px_60px_90px_90px] gap-3 px-5 py-3.5 items-center">
+                                        <div className="flex items-center gap-2">
+                                            <span className={`w-2 h-2 rounded-full shrink-0 ${PRIORITY_DOT[p.priority] || 'bg-slate-300'}`} />
+                                            <span className="font-mono text-xs font-bold text-slate-700">{p.reference}</span>
+                                        </div>
+                                        <span className="text-sm text-slate-700 font-medium truncate">{p.clientName}</span>
+                                        <div>
+                                            <p className="text-xs text-slate-600 truncate">{p.description}</p>
+                                            {p.incidentType && <p className="text-[10px] text-slate-400">{p.incidentType}</p>}
+                                        </div>
+                                        <span className="text-xs text-slate-500 truncate">
+                                            {p.assignedToName || <span className="italic text-slate-300">Sin asignar</span>}
+                                        </span>
+                                        <span className="text-xs text-slate-400">{fmtDur(p.estimatedMinutes)}</span>
+                                        <span className="text-xs text-slate-400">{fmtDate(p.scheduledAt || p.createdAt)}</span>
+                                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-bold ${st.color}`}>
+                                            <StatusIcon size={10} />{st.label}
+                                        </span>
                                     </div>
-                                    <span className="text-xs text-slate-500 truncate">
-                                        {p.assignedToName || <span className="italic text-slate-300">Sin asignar</span>}
-                                    </span>
-                                    <span className="text-xs text-slate-400">{fmtDur(p.estimatedMinutes)}</span>
-                                    <span className="text-xs text-slate-400">{fmtDate(p.scheduledAt || p.createdAt)}</span>
-                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-bold ${st.color}`}>
-                                        <StatusIcon size={10} />{st.label}
-                                    </span>
                                 </button>
                             );
                         })}

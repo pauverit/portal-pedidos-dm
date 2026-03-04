@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\enehas\\\\Downloads\\\\portal-pedidos-dm\\\\import_warranty_machines.ps1\")",
+      "Bash(powershell.exe -NoProfile -Command \"Get-Content ''C:\\\\Users\\\\enehas\\\\Downloads\\\\Clientes.csv'' -Encoding Default | Select-Object -Last 5\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\enehas\\\\Downloads\\\\portal-pedidos-dm\\\\import_clients.ps1\")"
+    ]
+  }
+}

@@ -101,7 +101,7 @@ export const ClientSearchInput: React.FC<ClientSearchInputProps> = ({
             >
                 <User size={14} className="text-slate-400 shrink-0" />
                 <span className={`flex-1 truncate ${selected ? 'text-slate-900 font-medium' : 'text-slate-400'}`}>
-                    {selected ? selected.name : placeholder}
+                    {selected ? (selected.name && selected.name !== selected.email ? selected.name : selected.email) : placeholder}
                 </span>
                 {selected && !disabled ? (
                     <button type="button" onClick={handleClear} className="text-slate-300 hover:text-slate-600 transition-colors shrink-0">
@@ -140,21 +140,27 @@ export const ClientSearchInput: React.FC<ClientSearchInputProps> = ({
                         {filtered.length === 0 ? (
                             <li className="px-4 py-3 text-sm text-slate-400 text-center">Sin resultados</li>
                         ) : (
-                            filtered.map((c, i) => (
-                                <li
-                                    key={c.id}
-                                    role="option"
-                                    aria-selected={c.id === value}
-                                    onMouseDown={() => handleSelect(c.id)}
-                                    onMouseEnter={() => setHighlighted(i)}
-                                    className={`px-4 py-2.5 text-sm cursor-pointer flex items-center justify-between gap-2 transition-colors
-                                        ${c.id === value ? 'bg-slate-900 text-white font-semibold' : i === highlighted ? 'bg-slate-50' : 'hover:bg-slate-50'}
-                                    `}
-                                >
-                                    <span className="truncate">{c.name}</span>
-                                    {c.email && <span className={`text-xs shrink-0 ${c.id === value ? 'text-white/60' : 'text-slate-400'}`}>{c.email}</span>}
-                                </li>
-                            ))
+                            filtered.map((c, i) => {
+                                const displayName = c.name && c.name !== c.email ? c.name : null;
+                                const showEmail = c.email && c.email !== c.name;
+                                return (
+                                    <li
+                                        key={c.id}
+                                        role="option"
+                                        aria-selected={c.id === value}
+                                        onMouseDown={() => handleSelect(c.id)}
+                                        onMouseEnter={() => setHighlighted(i)}
+                                        className={`px-4 py-2.5 text-sm cursor-pointer flex items-center justify-between gap-2 transition-colors
+                                            ${c.id === value ? 'bg-slate-900 text-white font-semibold' : i === highlighted ? 'bg-slate-50' : 'hover:bg-slate-50'}
+                                        `}
+                                    >
+                                        <span className="truncate">{displayName || c.email}</span>
+                                        {displayName && showEmail && (
+                                            <span className={`text-xs shrink-0 ${c.id === value ? 'text-white/60' : 'text-slate-400'}`}>{c.email}</span>
+                                        )}
+                                    </li>
+                                );
+                            })
                         )}
                         {list.length > VISIBLE_MAX && !query && (
                             <li className="px-4 py-2 text-xs text-slate-400 text-center border-t border-slate-100">

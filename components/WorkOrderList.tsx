@@ -144,19 +144,41 @@ export const WorkOrderList: React.FC<WorkOrderListProps> = ({
                             const StatusIcon = stCfg.icon;
                             return (
                                 <button key={wo.id} onClick={() => onViewWorkOrder(wo)}
-                                    className="w-full grid grid-cols-1 md:grid-cols-[100px_1fr_1fr_120px_80px_90px_80px] gap-2 md:gap-3 px-5 py-3.5 text-left hover:bg-slate-50 transition-colors items-center group">
-                                    <div className="flex items-center gap-2">
-                                        <span className={`w-2 h-2 rounded-full shrink-0 ${PRIORITY_DOT[wo.priority]}`} />
-                                        <span className="font-mono text-xs font-bold text-slate-700">{wo.reference}</span>
+                                    className="w-full text-left hover:bg-slate-50 transition-colors">
+
+                                    {/* Mobile: tarjeta compacta 2 líneas */}
+                                    <div className="md:hidden px-4 py-2.5">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-2 min-w-0">
+                                                <span className={`w-2 h-2 rounded-full shrink-0 ${PRIORITY_DOT[wo.priority]}`} />
+                                                <span className="font-mono text-xs font-bold text-slate-700">{wo.reference}</span>
+                                                <span className="text-sm text-slate-700 font-semibold truncate">{wo.clientName}</span>
+                                            </div>
+                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold shrink-0 ${stCfg.color}`}>
+                                                <StatusIcon size={10} />{stCfg.label}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between mt-0.5 pl-4">
+                                            <span className="text-xs text-slate-400 truncate">{wo.description}</span>
+                                            <span className="text-xs text-slate-400 shrink-0 ml-2">{fmtDate(wo.scheduledAt || wo.createdAt)}</span>
+                                        </div>
                                     </div>
-                                    <span className="text-sm text-slate-700 font-medium truncate">{wo.clientName}</span>
-                                    <span className="text-xs text-slate-500 truncate">{wo.description}</span>
-                                    <span className="text-xs text-slate-500 truncate">{wo.assignedToName || <span className="italic text-slate-300">Sin asignar</span>}</span>
-                                    <span className="text-xs text-slate-500">{fmtDuration(wo.estimatedMinutes)}</span>
-                                    <span className="text-xs text-slate-400">{fmtDate(wo.scheduledAt || wo.createdAt)}</span>
-                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-bold ${stCfg.color}`}>
-                                        <StatusIcon size={10} />{stCfg.label}
-                                    </span>
+
+                                    {/* Desktop: fila en grid */}
+                                    <div className="hidden md:grid grid-cols-[100px_1fr_1fr_120px_80px_90px_80px] gap-3 px-5 py-3.5 items-center">
+                                        <div className="flex items-center gap-2">
+                                            <span className={`w-2 h-2 rounded-full shrink-0 ${PRIORITY_DOT[wo.priority]}`} />
+                                            <span className="font-mono text-xs font-bold text-slate-700">{wo.reference}</span>
+                                        </div>
+                                        <span className="text-sm text-slate-700 font-medium truncate">{wo.clientName}</span>
+                                        <span className="text-xs text-slate-500 truncate">{wo.description}</span>
+                                        <span className="text-xs text-slate-500 truncate">{wo.assignedToName || <span className="italic text-slate-300">Sin asignar</span>}</span>
+                                        <span className="text-xs text-slate-500">{fmtDuration(wo.estimatedMinutes)}</span>
+                                        <span className="text-xs text-slate-400">{fmtDate(wo.scheduledAt || wo.createdAt)}</span>
+                                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-bold ${stCfg.color}`}>
+                                            <StatusIcon size={10} />{stCfg.label}
+                                        </span>
+                                    </div>
                                 </button>
                             );
                         })}
