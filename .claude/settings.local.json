@@ -3,7 +3,18 @@
     "allow": [
       "Bash(powershell.exe -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\enehas\\\\Downloads\\\\portal-pedidos-dm\\\\import_warranty_machines.ps1\")",
       "Bash(powershell.exe -NoProfile -Command \"Get-Content ''C:\\\\Users\\\\enehas\\\\Downloads\\\\Clientes.csv'' -Encoding Default | Select-Object -Last 5\")",
-      "Bash(powershell.exe -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\enehas\\\\Downloads\\\\portal-pedidos-dm\\\\import_clients.ps1\")"
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\enehas\\\\Downloads\\\\portal-pedidos-dm\\\\import_clients.ps1\")",
+      "Bash(powershell.exe -NoProfile -Command \"Invoke-RestMethod -Uri ''https://nyxxzlhlvqusiirzrano.supabase.co/rest/v1/sales_reps?select=id,name,phone'' -Headers @{apikey=''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im55eHh6bGhsdnF1c2lpcnpyYW5vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyMzE4MTMsImV4cCI6MjA4NjgwNzgxM30.v8f5Xuxj1oyatCnvik6OQRs2nB3MssTK9i59XN-8mFE''; Authorization=''Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im55eHh6bGhsdnF1c2lpcnpyYW5vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyMzE4MTMsImV4cCI6MjA4NjgwNzgxM30.v8f5Xuxj1oyatCnvik6OQRs2nB3MssTK9i59XN-8mFE''} | ConvertTo-Json\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\enehas\\\\Downloads\\\\portal-pedidos-dm\\\\assign_salesreps.ps1\")",
+      "Bash(powershell.exe -NoProfile -Command \"Get-Content ''C:\\\\Users\\\\enehas\\\\.claude\\\\projects\\\\c--Users-enehas-Downloads-portal-pedidos-dm\\\\f5e7ef95-ad60-4c0f-9af8-8ce961c5d696\\\\tool-results\\\\b72132c.txt'' | Select-String ''===|Sin provincia|ERROR'' | Select-Object -Last 20\")",
+      "Bash(powershell.exe -NoProfile -Command \"Get-Content ''C:\\\\Users\\\\enehas\\\\.claude\\\\projects\\\\c--Users-enehas-Downloads-portal-pedidos-dm\\\\f5e7ef95-ad60-4c0f-9af8-8ce961c5d696\\\\tool-results\\\\b72132c.txt'' | Select-String ''Asignados|correctos|ERROR'' | Select-Object -Last 10\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\enehas\\\\Downloads\\\\portal-pedidos-dm\\\\normalize_salesreps.ps1\")",
+      "Bash(Select-String \"OK:|ERROR:|===\")",
+      "Bash(powershell.exe -NoProfile -Command \"$input | Select-String ''OK:|ERROR:|===''\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -Command \"& ''C:\\\\Users\\\\enehas\\\\Downloads\\\\portal-pedidos-dm\\\\assign_salesreps.ps1'' | Where-Object { $_-match ''OK:|ERROR:|==='' }\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\enehas\\\\Downloads\\\\portal-pedidos-dm\\\\check_unassigned.ps1\")",
+      "Bash(powershell.exe -NoProfile -Command \"Get-Content ''C:\\\\Users\\\\enehas\\\\.claude\\\\projects\\\\c--Users-enehas-Downloads-portal-pedidos-dm\\\\f5e7ef95-ad60-4c0f-9af8-8ce961c5d696\\\\tool-results\\\\b009e34.txt'' | Select-String ''===|Asignados|Sin datos|Sin provincia'' | Select-Object -Last 10\")",
+      "Bash(npm run build)"
     ]
   }
 }
