@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, MapPin, Phone, Calendar, ChevronRight, Clock, User, Plus, Trash2, Target, TrendingUp, ShoppingBag } from 'lucide-react';
+import { X, MapPin, Phone, Calendar, ChevronRight, Clock, User, Plus, Trash2, Target, TrendingUp, ShoppingBag, Search } from 'lucide-react';
 import { User as UserType, ClientVisit, ClientCall, Order } from '../types';
 
 interface CRMViewProps {
@@ -32,6 +32,7 @@ export const CRMView: React.FC<CRMViewProps> = ({
 }) => {
     const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
     const [tab, setTab] = useState<'all' | 'visits' | 'calls'>('all');
+    const [clientSearch, setClientSearch] = useState('');
 
     const myClients = clients.filter(c =>
         c.role === 'client' &&
@@ -83,10 +84,26 @@ export const CRMView: React.FC<CRMViewProps> = ({
                 <div className="lg:col-span-1">
                     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                         <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Mis Clientes ({myClients.length})</p>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Mis Clientes ({myClients.length})</p>
+                            <div className="relative">
+                                <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input
+                                    type="text"
+                                    value={clientSearch}
+                                    onChange={e => setClientSearch(e.target.value)}
+                                    placeholder="Buscar cliente…"
+                                    className="w-full pl-7 pr-3 py-1.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
+                                />
+                                {clientSearch && (
+                                    <button onClick={() => setClientSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">
+                                        <X size={12} />
+                                    </button>
+                                )}
+                            </div>
                         </div>
                         <div className="divide-y divide-slate-50 max-h-[60vh] overflow-y-auto">
-                            {/* "All" entry */}
+                            {/* "All" entry — solo visible sin búsqueda activa */}
+                            {!clientSearch && (
                             <button
                                 onClick={() => setSelectedClientId(null)}
                                 className={`w-full px-4 py-3 flex items-center justify-between text-sm transition-colors ${!selectedClientId ? 'bg-slate-900 text-white' : 'hover:bg-slate-50 text-slate-700'}`}
@@ -102,7 +119,10 @@ export const CRMView: React.FC<CRMViewProps> = ({
                                     <ChevronRight size={14} />
                                 </div>
                             </button>
-                            {myClients.map(client => {
+                            )}
+                            {myClients.filter(c =>
+                                !clientSearch || c.name.toLowerCase().includes(clientSearch.toLowerCase())
+                            ).map(client => {
                                 const clientActivity = activity.filter(a =>
                                     a.kind === 'visit' ? a.data.clientId === client.id : (a.data as ClientCall).clientId === client.id
                                 );
