@@ -839,7 +839,9 @@ export default function App() {
         if (currentView === 'admin_load') return <AdminBulkLoad onSave={handleSaveBulkProducts} currentProducts={products} />;
         if (currentView === 'admin_bulk_edit') return <AdminBulkEdit products={products} onSave={handleBulkEditProducts} onBack={() => setCurrentView('admin_dashboard')} />;
         if (currentView === 'admin_client_list') {
-            const displayClients = currentUser?.role === 'sales'
+            // Sales director (no salesRepCode) sees ALL clients; regular sales reps see only theirs
+            const isSalesDirector = currentUser?.role === 'sales' && !currentUser.salesRepCode;
+            const displayClients = (currentUser?.role === 'sales' && !isSalesDirector)
                 ? users.filter(u => u.salesRep === currentUser.name || u.salesRepCode === currentUser.salesRepCode)
                 : users;
             const salesReps = users.filter(u => u.role === 'sales');
