@@ -839,13 +839,13 @@ export default function App() {
         if (currentView === 'admin_load') return <AdminBulkLoad onSave={handleSaveBulkProducts} currentProducts={products} />;
         if (currentView === 'admin_bulk_edit') return <AdminBulkEdit products={products} onSave={handleBulkEditProducts} onBack={() => setCurrentView('admin_dashboard')} />;
         if (currentView === 'admin_client_list') {
-            // Sales director (no salesRepCode) sees ALL clients; regular sales reps see only theirs
-            const isSalesDirector = currentUser?.role === 'sales' && !currentUser.salesRepCode;
-            const displayClients = (currentUser?.role === 'sales' && !isSalesDirector)
-                ? users.filter(u => u.salesRep === currentUser.name || u.salesRepCode === currentUser.salesRepCode)
-                : users;
             const salesReps = users.filter(u => u.role === 'sales');
-            return <div className="p-6 md:p-10 max-w-7xl mx-auto"><AdminClientList clients={displayClients} orders={orders} products={products} onEditClient={() => { }} onSaveClient={handleSaveClient} onDeleteClient={currentUser?.role === 'admin' ? handleDeleteClient : undefined} formatCurrency={formatCurrency} isAdmin={currentUser?.role === 'admin'} salesRepsData={salesReps} /></div>;
+            // For sales reps with their own clients, pre-filter; directors/admins start unfiltered
+            const hasOwnClients = currentUser?.role === 'sales' && users.some(u =>
+                u.role === 'client' && (u.salesRep === currentUser.name || (currentUser.salesRepCode && u.salesRepCode === currentUser.salesRepCode))
+            );
+            const initialSalesRepFilter = hasOwnClients ? currentUser!.name : '';
+            return <div className="p-6 md:p-10 max-w-7xl mx-auto"><AdminClientList clients={users} orders={orders} products={products} onEditClient={() => { }} onSaveClient={handleSaveClient} onDeleteClient={currentUser?.role === 'admin' ? handleDeleteClient : undefined} formatCurrency={formatCurrency} isAdmin={currentUser?.role === 'admin'} salesRepsData={salesReps} initialSalesRepFilter={initialSalesRepFilter} /></div>;
         }
         if (currentView === 'admin_new_client') {
             const salesReps = users.filter(u => u.role === 'sales');

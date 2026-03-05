@@ -16,6 +16,7 @@ interface AdminClientListProps {
     formatCurrency: (value: number) => string;
     isAdmin?: boolean;
     salesRepsData: User[];
+    initialSalesRepFilter?: string;
 }
 
 export const AdminClientList: React.FC<AdminClientListProps> = ({
@@ -27,7 +28,8 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
     onDeleteClient,
     formatCurrency,
     isAdmin = true,
-    salesRepsData
+    salesRepsData,
+    initialSalesRepFilter = ''
 }) => {
     const CATALOG_FAMILIES = [
         { id: 'flexible', label: 'Materiales Flexibles' },
@@ -48,7 +50,7 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
     };
     const [searchQuery, setSearchQuery] = useState('');
     const [showPendingOnly, setShowPendingOnly] = useState(false);
-    const [filterSalesRep, setFilterSalesRep] = useState('');
+    const [filterSalesRep, setFilterSalesRep] = useState(initialSalesRepFilter);
     const [filterStatus, setFilterStatus] = useState(''); // '' | 'active' | 'pending'
     const [filterZone, setFilterZone] = useState('');
     const [editingClient, setEditingClient] = useState<User | null>(null);
