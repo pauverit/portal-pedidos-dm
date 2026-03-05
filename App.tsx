@@ -456,10 +456,35 @@ export default function App() {
 
     const handleDeleteClient = async (clientId: string) => {
         try {
-            const { error } = await supabase
-                .from('clients')
-                .delete()
-                .eq('id', clientId);
+            // 1. incident_comments — get this client's incident IDs first
+            const { data: clientIncidents } = await supabase.from('incidents').select('id').eq('client_id', clientId);
+            const incidentIds = (clientIncidents || []).map((i: any) => i.id);
+            if (incidentIds.length > 0) {
+                await supabase.from('incident_comments').delete().in('incident_id', incidentIds);
+            }
+
+            // 2. maintenance_contracts — get this client's machine IDs first
+            const { data: clientMachines } = await supabase.from('machines').select('id').eq('client_id', clientId);
+            const machineIds = (clientMachines || []).map((m: any) => m.id);
+            if (machineIds.length > 0) {
+                await supabase.from('maintenance_contracts').delete().in('machine_id', machineIds);
+            }
+
+            // 3. work_orders, incidents, machines
+            await supabase.from('work_orders').delete().eq('client_id', clientId);
+            await supabase.from('incidents').delete().eq('client_id', clientId);
+            await supabase.from('machines').delete().eq('client_id', clientId);
+
+            // 4. order_lines — get this client's order IDs first
+            const { data: clientOrders } = await supabase.from('orders').select('id').eq('client_id', clientId);
+            const orderIds = (clientOrders || []).map((o: any) => o.id);
+            if (orderIds.length > 0) {
+                await supabase.from('order_lines').delete().in('order_id', orderIds);
+            }
+            await supabase.from('orders').delete().eq('client_id', clientId);
+
+            // 5. Delete client (client_visits + client_calls have ON DELETE CASCADE)
+            const { error } = await supabase.from('clients').delete().eq('id', clientId);
             if (error) throw error;
             await refreshData();
         } catch (error: any) {
