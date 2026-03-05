@@ -48,6 +48,8 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
             return { ...prev, hiddenCategories: updated };
         });
     };
+    const PAGE_SIZE = 100;
+    const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState('');
     const [showPendingOnly, setShowPendingOnly] = useState(false);
     const [filterSalesRep, setFilterSalesRep] = useState(initialSalesRepFilter);
@@ -127,6 +129,12 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
 
     const pendingCount = allClients.filter(c => !(c.isActive ?? !c.mustChangePassword)).length;
     const activeFilterCount = [filterSalesRep, filterStatus, filterZone, showPendingOnly ? '1' : ''].filter(Boolean).length;
+
+    // Reset to page 1 whenever filters or search change
+    React.useEffect(() => { setCurrentPage(1); }, [searchQuery, showPendingOnly, filterSalesRep, filterStatus, filterZone]);
+
+    const totalPages = Math.max(1, Math.ceil(filteredClients.length / PAGE_SIZE));
+    const paginatedClients = filteredClients.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
     const clearAllFilters = () => {
         setSearchQuery('');
@@ -253,7 +261,9 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
 
                 {/* Results count */}
                 <p className="text-xs text-slate-400">
-                    Mostrando <strong className="text-slate-700">{filteredClients.length}</strong> de <strong className="text-slate-700">{allClients.length}</strong> clientes
+                    Mostrando <strong className="text-slate-700">{paginatedClients.length}</strong> de <strong className="text-slate-700">{filteredClients.length}</strong> clientes
+                    {filteredClients.length !== allClients.length && <> (total: {allClients.length})</>}
+                    {totalPages > 1 && <> · Página {currentPage} de {totalPages}</>}
                 </p>
             </div>
 
@@ -275,14 +285,14 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {filteredClients.length === 0 && (
+                            {paginatedClients.length === 0 && (
                                 <tr>
                                     <td colSpan={9} className="px-4 py-8 text-center text-slate-400 text-sm">
                                         No hay clientes registrados
                                     </td>
                                 </tr>
                             )}
-                            {filteredClients.map(client => {
+                            {paginatedClients.map(client => {
                                 const clientOrders = getClientOrders(client.id);
                                 const totalSpent = clientOrders.reduce((s, o) => s + o.total, 0);
                                 const isActive = client.isActive ?? !client.mustChangePassword;
@@ -394,6 +404,48 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                     </table>
                 </div>
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4">
+                    <button
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="px-4 py-2 text-sm font-semibold border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                        ← Anterior
+                    </button>
+                    <div className="flex items-center gap-1">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1)
+                            .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 2)
+                            .reduce<(number | '...')[]>((acc, p, i, arr) => {
+                                if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push('...');
+                                acc.push(p);
+                                return acc;
+                            }, [])
+                            .map((p, i) =>
+                                p === '...' ? (
+                                    <span key={`ellipsis-${i}`} className="px-2 text-slate-400 text-sm">…</span>
+                                ) : (
+                                    <button
+                                        key={p}
+                                        onClick={() => setCurrentPage(p as number)}
+                                        className={`w-8 h-8 text-sm font-semibold rounded-lg transition-colors ${currentPage === p ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
+                                    >
+                                        {p}
+                                    </button>
+                                )
+                            )}
+                    </div>
+                    <button
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-4 py-2 text-sm font-semibold border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                        Siguiente →
+                    </button>
+                </div>
+            )}
 
             {/* Edit Modal */}
             {editingClient && (
