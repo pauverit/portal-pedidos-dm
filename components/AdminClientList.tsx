@@ -97,8 +97,8 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
 
     const allClients = clients.filter(c => c.role === 'client');
 
-    // Derived filter options from actual data
-    const salesRepOptions = [...new Set(allClients.map(c => c.salesRep).filter(Boolean))] as string[];
+    // Filter options from official sales reps list
+    const salesRepOptions = salesRepsData.map(r => r.name);
     const zoneOptions = [...new Set(allClients.map(c => c.zone).filter(Boolean))] as string[];
 
     const filteredClients = allClients
@@ -146,6 +146,7 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
             salesRep: client.salesRep || '',
             zone: client.zone || '',
             username: client.username || '',
+            password: '',
             rappelThreshold: client.rappelThreshold || 800,
             hidePrices: client.hidePrices || false,
             isActive: client.isActive ?? true,
@@ -435,7 +436,7 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                             </button>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-6 relative">
+                        <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 relative">
                             {saving && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-white/20 z-10">
                                     <div className="w-8 h-8 border-4 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
@@ -485,6 +486,25 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                                                 onChange={e => setEditForm(p => ({ ...p, phone: e.target.value }))}
                                                 className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
                                             />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Nueva Contraseña</label>
+                                            <div className="relative">
+                                                <input
+                                                    type={showPassword ? 'text' : 'password'}
+                                                    value={editForm.password || ''}
+                                                    onChange={e => setEditForm(p => ({ ...p, password: e.target.value }))}
+                                                    placeholder="Dejar vacío para no cambiar"
+                                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 pr-9 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPassword(v => !v)}
+                                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                                                >
+                                                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -574,7 +594,7 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                                     <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
                                         <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Acceso al catálogo</p>
                                         <p className="text-xs text-slate-500 mb-3">Desactiva las familias que este cliente NO podrá ver en su portal.</p>
-                                        <div className="flex wrap gap-2">
+                                        <div className="flex flex-wrap gap-2">
                                             {CATALOG_FAMILIES.map(family => (
                                                 <label key={family.id} className="flex items-center gap-2 cursor-pointer select-none bg-white border border-slate-200 rounded-lg px-3 py-1.5 hover:bg-slate-50 transition-colors">
                                                     <input

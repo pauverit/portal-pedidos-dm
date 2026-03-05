@@ -183,10 +183,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     // ── SAT module ────────────────────────────────────────────────
     {
+      id: 'tech_lead_dashboard',
+      label: 'Dashboard Técnico',
+      icon: LayoutDashboard,
+      roles: ['tech_lead'],
+    },
+    {
       id: 'sat_dashboard',
       label: 'SAT — Panel',
       icon: Wrench,
-      roles: ['tech', 'tech_lead', 'admin'],
+      roles: ['tech', 'admin'],
     },
     {
       id: 'sat_parts',

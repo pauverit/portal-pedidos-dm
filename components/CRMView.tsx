@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { X, MapPin, Phone, Calendar, ChevronRight, Clock, User, Plus, Trash2, Target } from 'lucide-react';
-import { User as UserType, ClientVisit, ClientCall } from '../types';
+import { X, MapPin, Phone, Calendar, ChevronRight, Clock, User, Plus, Trash2, Target, TrendingUp, ShoppingBag } from 'lucide-react';
+import { User as UserType, ClientVisit, ClientCall, Order } from '../types';
 
 interface CRMViewProps {
     currentUser: UserType;
@@ -13,6 +13,8 @@ interface CRMViewProps {
     onNewCall: (clientId?: string) => void;
     onDeleteVisit: (id: string) => void;
     onDeleteCall: (id: string) => void;
+    orders?: Order[];
+    formatCurrency?: (value: number) => string;
 }
 
 type ActivityItem =
@@ -25,7 +27,8 @@ const formatDateTime = (iso: string) => {
 };
 
 export const CRMView: React.FC<CRMViewProps> = ({
-    currentUser, clients, visits, calls, loading, onRefresh, onNewVisit, onNewCall, onDeleteVisit, onDeleteCall
+    currentUser, clients, visits, calls, loading, onRefresh, onNewVisit, onNewCall, onDeleteVisit, onDeleteCall,
+    orders = [], formatCurrency
 }) => {
     const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
     const [tab, setTab] = useState<'all' | 'visits' | 'calls'>('all');
@@ -239,6 +242,41 @@ export const CRMView: React.FC<CRMViewProps> = ({
                     </div>
                 </div>
             </div>
+
+            {/* Sales stats — secondary, below CRM activity */}
+            {formatCurrency && orders.length >= 0 && (() => {
+                const now = new Date();
+                const myClientIds = new Set(myClients.map(c => c.id));
+                const myOrders = orders.filter(o => myClientIds.has(o.userId));
+                const monthOrders = myOrders.filter(o => {
+                    const d = new Date(o.date);
+                    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                });
+                const monthSales = monthOrders.reduce((s, o) => s + o.total, 0);
+                const ytdSales = myOrders
+                    .filter(o => new Date(o.date).getFullYear() === now.getFullYear())
+                    .reduce((s, o) => s + o.total, 0);
+                return (
+                    <div className="mt-2">
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Ventas</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            {[
+                                { label: 'Pedidos este mes', value: monthOrders.length, icon: ShoppingBag, color: 'bg-indigo-500' },
+                                { label: 'Ventas este mes', value: formatCurrency(monthSales), icon: TrendingUp, color: 'bg-emerald-500' },
+                                { label: `Ventas ${now.getFullYear()}`, value: formatCurrency(ytdSales), icon: TrendingUp, color: 'bg-orange-500' },
+                            ].map(s => (
+                                <div key={s.label} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex items-center gap-3">
+                                    <div className={`${s.color} p-2.5 rounded-xl text-white`}><s.icon size={18} /></div>
+                                    <div>
+                                        <p className="text-xl font-black text-slate-900">{s.value}</p>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{s.label}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            })()}
         </div>
     );
 };

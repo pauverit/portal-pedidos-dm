@@ -39,8 +39,10 @@ const NewSATPartModal  = React.lazy(() => import('./components/NewSATPartModal')
 const IncidentList     = React.lazy(() => import('./components/IncidentList').then(m => ({ default: m.IncidentList })));
 const IncidentDetail   = React.lazy(() => import('./components/IncidentDetail').then(m => ({ default: m.IncidentDetail })));
 const NewIncidentModal = React.lazy(() => import('./components/NewIncidentModal').then(m => ({ default: m.NewIncidentModal })));
-const SalesDashboard   = React.lazy(() => import('./components/SalesDashboard').then(m => ({ default: m.SalesDashboard })));
-const SatDashboard     = React.lazy(() => import('./components/SatDashboard').then(m => ({ default: m.SatDashboard })));
+const SalesDashboard        = React.lazy(() => import('./components/SalesDashboard').then(m => ({ default: m.SalesDashboard })));
+const SalesDirectorDashboard = React.lazy(() => import('./components/SalesDirectorDashboard').then(m => ({ default: m.SalesDirectorDashboard })));
+const SatDashboard          = React.lazy(() => import('./components/SatDashboard').then(m => ({ default: m.SatDashboard })));
+const TechLeadDashboard     = React.lazy(() => import('./components/TechLeadDashboard').then(m => ({ default: m.TechLeadDashboard })));
 
 // Lazy-loaded: CRM / Gastos
 const CRMView      = React.lazy(() => import('./components/CRMView').then(m => ({ default: m.CRMView })));
@@ -187,8 +189,11 @@ export default function App() {
             if (currentView === 'login') {
                 setCurrentView(
                     currentUser.role === 'admin' ? 'admin_dashboard'
-                        : (currentUser.role === 'tech' || currentUser.role === 'tech_lead') ? 'sat_dashboard'
-                            : 'dashboard'
+                        : currentUser.role === 'tech_lead' ? 'tech_lead_dashboard'
+                        : currentUser.role === 'tech' ? 'sat_dashboard'
+                        : currentUser.role === 'sales' && currentUser.username === 'corcoles' ? 'dashboard'
+                        : currentUser.role === 'sales' ? 'crm'
+                        : 'dashboard'
                 );
             }
             loadUserOrders(currentUser, users);
@@ -197,12 +202,12 @@ export default function App() {
         }
     }, [currentUser]);
 
-    // Load CRM data when entering the crm view
+    // Load CRM data when entering the crm view (or on login for sales)
     useEffect(() => {
-        if (currentView === 'crm' && currentUser?.role === 'sales') {
+        if (currentUser?.role === 'sales' && (currentView === 'crm' || currentView === 'login')) {
             loadCRM();
         }
-    }, [currentView]);
+    }, [currentView, currentUser?.id]);
 
     // Load incidents when entering SAT incident views
     useEffect(() => {
@@ -620,6 +625,8 @@ export default function App() {
                         onNewCall={(clientId) => { setCrmPreselectedClient(clientId); setShowNewCallModal(true); }}
                         onDeleteVisit={deleteVisit}
                         onDeleteCall={deleteCall}
+                        orders={orders}
+                        formatCurrency={formatCurrency}
                     />
                     {showNewVisitModal && (
                         <NewVisitModal
@@ -663,12 +670,20 @@ export default function App() {
 
         if (currentView === 'dashboard' && currentUser) {
             if (currentUser.role === 'sales') {
+                if (currentUser.username === 'corcoles') {
+                    const salesReps = users.filter(u => u.role === 'sales');
+                    return <SalesDirectorDashboard salesReps={salesReps} clients={users} orders={orders} formatCurrency={formatCurrency} />;
+                }
                 return <SalesDashboard currentUser={currentUser} clients={users} orders={orders} onNavigate={setCurrentView} formatCurrency={formatCurrency} />;
             }
             return <DashboardView currentUser={currentUser} onNewOrder={() => setCurrentView('cat_flexible_vinilos')} formatCurrency={formatCurrency} />;
         }
         if (currentView === 'sat_dashboard' && currentUser) {
             return <SatDashboard currentUser={currentUser} onNavigate={setCurrentView} />;
+        }
+        if (currentView === 'tech_lead_dashboard' && currentUser) {
+            const technicians = users.filter(u => u.role === 'tech' || u.role === 'tech_lead');
+            return <TechLeadDashboard currentUser={currentUser} technicians={technicians} onNavigate={setCurrentView} />;
         }
         if ((currentView === 'sat_incidents' || currentView === 'sat_new_incident') && currentUser) {
             const technicians = users.filter(u => u.role === 'tech' || u.role === 'tech_lead');
