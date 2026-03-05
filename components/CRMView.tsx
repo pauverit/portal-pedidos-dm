@@ -34,9 +34,15 @@ export const CRMView: React.FC<CRMViewProps> = ({
     const [tab, setTab] = useState<'all' | 'visits' | 'calls'>('all');
     const [clientSearch, setClientSearch] = useState('');
 
+    const hasOwnClients = clients.some(c =>
+        c.role === 'client' &&
+        (c.salesRep === currentUser.name || (currentUser.salesRepCode && c.salesRepCode === currentUser.salesRepCode))
+    );
     const myClients = clients.filter(c =>
         c.role === 'client' &&
-        (c.salesRep === currentUser.name || c.salesRepCode === currentUser.salesRepCode)
+        (hasOwnClients
+            ? (c.salesRep === currentUser.name || c.salesRepCode === currentUser.salesRepCode)
+            : true)
     );
 
     const selectedClient = selectedClientId ? myClients.find(c => c.id === selectedClientId) : null;

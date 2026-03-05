@@ -107,9 +107,12 @@ export default function App() {
     const [showNewCallModal, setShowNewCallModal] = useState(false);
     const [crmPreselectedClient, setCrmPreselectedClient] = useState<string | undefined>(undefined);
 
-    // CRM hook (only for sales reps)
+    // CRM hook (only for sales reps). Director (no own clients) loads all activity.
+    const crmIsDirector = currentUser?.role === 'sales' &&
+        !users.some(u => u.role === 'client' && (u.salesRep === currentUser.name || (currentUser.salesRepCode && u.salesRepCode === currentUser.salesRepCode)));
     const { visits, calls, loading: crmLoading, load: loadCRM, createVisit, createCall, deleteVisit, deleteCall } = useCRM({
         salesRepId: currentUser?.role === 'sales' ? currentUser.id : undefined,
+        loadAll: crmIsDirector,
     });
 
     // Expenses hook (for sales, tech, tech_lead)

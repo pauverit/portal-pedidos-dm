@@ -4,28 +4,23 @@ import { ClientVisit, ClientCall } from '../types';
 
 interface UseCRMOptions {
     salesRepId: string | undefined;
+    loadAll?: boolean; // true for directors: load all sales reps' activity
 }
 
-export function useCRM({ salesRepId }: UseCRMOptions) {
+export function useCRM({ salesRepId, loadAll = false }: UseCRMOptions) {
     const [visits, setVisits] = useState<ClientVisit[]>([]);
     const [calls, setCalls] = useState<ClientCall[]>([]);
     const [loading, setLoading] = useState(false);
 
     const load = useCallback(async () => {
-        if (!salesRepId) return;
+        if (!salesRepId && !loadAll) return;
         setLoading(true);
         try {
+            const visitsQuery = supabase.from('client_visits').select('*').order('visit_date', { ascending: false });
+            const callsQuery = supabase.from('client_calls').select('*').order('call_date', { ascending: false });
             const [visitsRes, callsRes] = await Promise.all([
-                supabase
-                    .from('client_visits')
-                    .select('*')
-                    .eq('sales_rep_id', salesRepId)
-                    .order('visit_date', { ascending: false }),
-                supabase
-                    .from('client_calls')
-                    .select('*')
-                    .eq('sales_rep_id', salesRepId)
-                    .order('call_date', { ascending: false }),
+                loadAll ? visitsQuery : visitsQuery.eq('sales_rep_id', salesRepId!),
+                loadAll ? callsQuery : callsQuery.eq('sales_rep_id', salesRepId!),
             ]);
 
             if (visitsRes.error) throw visitsRes.error;
