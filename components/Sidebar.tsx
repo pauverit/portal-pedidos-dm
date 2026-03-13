@@ -150,6 +150,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'ventas_pedidos',      label: 'Pedidos de Venta' },
         { id: 'ventas_albaranes',    label: 'Albaranes' },
         { id: 'ventas_facturas',     label: 'Facturas' },
+        { id: 'libro_facturas',      label: 'Libro & VeriFactu' },
       ],
     },
     {

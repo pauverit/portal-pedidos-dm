@@ -618,3 +618,66 @@ export interface Factura {
   createdAt?: string;
   lineas?: DocumentoLinea[];
 }
+
+// ─── Módulo VeriFactu / Facturación Legal ─────────────────────────────────────
+
+export type EstadoEnvioVerifactu = 'pendiente' | 'enviado' | 'aceptado' | 'rechazado' | 'anulado';
+
+export interface VerifactuRegistro {
+  id: string;
+  facturaId: string;
+  empresaId: string;
+  numRegistro: number;
+  nifEmisor: string;
+  numSerie: string;
+  fechaFactura: string;
+  tipoFactura: string;       // F1, F2, R1…R5
+  cuotaTotal: number;
+  importeTotal: number;
+  hashAnterior?: string;
+  hashActual: string;
+  qrUrl?: string;
+  fechaRegistro: string;
+  estadoEnvio: EstadoEnvioVerifactu;
+  respuestaAeat?: Record<string, unknown>;
+  // Joined
+  referencia?: string;
+  clienteNombre?: string;
+}
+
+export type MetodoCobro = 'transferencia' | 'tarjeta' | 'cheque' | 'efectivo' | 'sepa' | 'otro';
+
+export interface Cobro {
+  id: string;
+  facturaId: string;
+  empresaId: string;
+  fecha: string;
+  importe: number;
+  metodo: MetodoCobro;
+  referencia?: string;
+  notas?: string;
+  createdBy?: string;
+  createdAt?: string;
+  // Joined
+  facturaReferencia?: string;
+}
+
+export interface LibroFacturaEmitida {
+  id: string;
+  referencia: string;
+  fecha: string;
+  nifEmisor: string;
+  nombreEmisor: string;
+  clienteId?: string;
+  clienteNombre?: string;
+  baseImponible: number;
+  ivaPorcentaje: number;
+  iva: number;
+  total: number;
+  estado: EstadoFactura;
+  fechaCobro?: string;
+  metodoCobro?: string;
+  huellaVerifactu?: string;
+  estadoVerifactu?: EstadoEnvioVerifactu;
+  qrUrl?: string;
+}
