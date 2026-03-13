@@ -746,3 +746,50 @@ export interface SumaSaldo {
   total_haber: number;
   saldo: number;
 }
+
+// ============================================================
+// FACTURACIÓN RECURRENTE — PASO 6
+// ============================================================
+
+export type FrecuenciaRecurrente = 'mensual' | 'trimestral' | 'semestral' | 'anual';
+export type EstadoContrato       = 'activo' | 'pausado' | 'cancelado';
+export type SecuenciaSepa        = 'FRST' | 'RCUR' | 'FNAL' | 'OOFF';
+export type MetodoCobroContrato  = 'transferencia' | 'sepa' | 'tarjeta' | 'efectivo' | 'otro';
+
+export interface ContratoRecurrente {
+  id: string;
+  empresa_id: string;
+  cliente_id: string;
+  cliente_nombre?: string;
+  descripcion: string;
+  importe_base: number;
+  iva_porcentaje: number;
+  frecuencia: FrecuenciaRecurrente;
+  serie: string;
+  dia_cobro: number;
+  fecha_inicio: string;
+  proxima_facturacion: string;
+  estado: EstadoContrato;
+  metodo_cobro: MetodoCobroContrato;
+  iban_cliente?: string;
+  bic_cliente?: string;
+  mandato_id?: string;
+  mandato_fecha?: string;
+  secuencia_sepa: SecuenciaSepa;
+  notas?: string;
+  created_at: string;
+  updated_at: string;
+  // Joined from view contratos_pendientes
+  cliente_nombre_completo?: string;
+  cliente_email?: string;
+  mrr_mensual?: number;
+  vencido?: boolean;
+}
+
+export interface MrrEmpresa {
+  empresa_id: string;
+  contratos_activos: number;
+  contratos_pausados: number;
+  mrr: number;
+  arr: number;
+}

@@ -131,7 +131,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'ventas_albaranes',       label: 'Albaranes',              icon: Truck,        section: 'Ventas', roles: ROLES_VENTAS },
     { id: 'ventas_facturas',        label: 'Facturas',               icon: Receipt,      section: 'Ventas', roles: ROLES_VENTAS },
     { id: 'libro_facturas',         label: 'Libro & VeriFactu',      icon: BookOpen,     section: 'Ventas', roles: [...ROLES_ADMIN, 'sales_lead'] },
-    { id: 'facturacion_recurrente', label: 'Facturación Recurrente', icon: RefreshCcw,   section: 'Ventas', roles: ROLES_ADMIN, soon: true },
+    { id: 'facturacion_recurrente', label: 'Facturación Recurrente', icon: RefreshCcw,   section: 'Ventas', roles: ROLES_ADMIN },
 
     // ── CLIENTES — comerciales + administración ───────────────────────────────
     { id: 'crm',               label: 'CRM',           icon: ContactRound, section: 'Clientes', roles: ROLES_VENTAS },
