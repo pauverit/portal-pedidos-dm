@@ -681,3 +681,67 @@ export interface LibroFacturaEmitida {
   estadoVerifactu?: EstadoEnvioVerifactu;
   qrUrl?: string;
 }
+
+// ============================================================
+// CONTABILIDAD PGC — PASO 5
+// ============================================================
+
+export type NaturalezaCuenta = 'D' | 'H';
+export type TipoCuenta = 'activo' | 'pasivo' | 'neto' | 'ingreso' | 'gasto' | 'mixto';
+export type TipoAsiento = 'manual' | 'venta' | 'compra' | 'nomina' | 'amortizacion' | 'apertura' | 'cierre';
+export type EstadoAsiento = 'borrador' | 'confirmado' | 'cancelado';
+
+export interface CuentaContable {
+  id: string;
+  empresa_id: string;
+  codigo: string;
+  nombre: string;
+  grupo: number;
+  naturaleza: NaturalezaCuenta;
+  tipo: TipoCuenta;
+  nivel: number;
+  activa: boolean;
+  es_pgc: boolean;
+  created_at: string;
+}
+
+export interface AsientoLinea {
+  id: string;
+  asiento_id: string;
+  cuenta_id: string;
+  cuenta?: CuentaContable;
+  descripcion?: string;
+  debe: number;
+  haber: number;
+  orden: number;
+  created_at: string;
+}
+
+export interface Asiento {
+  id: string;
+  empresa_id: string;
+  num_asiento: number;
+  fecha: string;
+  referencia?: string;
+  descripcion: string;
+  tipo: TipoAsiento;
+  estado: EstadoAsiento;
+  origen_id?: string;
+  origen_tipo?: string;
+  notas?: string;
+  created_at: string;
+  updated_at: string;
+  lineas?: AsientoLinea[];
+}
+
+export interface SumaSaldo {
+  empresa_id: string;
+  codigo: string;
+  nombre: string;
+  grupo: number;
+  naturaleza: NaturalezaCuenta;
+  tipo: TipoCuenta;
+  total_debe: number;
+  total_haber: number;
+  saldo: number;
+}

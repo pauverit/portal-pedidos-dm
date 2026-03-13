@@ -126,8 +126,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'stock',    label: 'Almacén & Stocks', icon: BarChart3, section: 'Compras', roles: ['admin', 'compras', 'almacen', 'administracion', 'direccion'] },
     { id: 'expenses', label: 'Gastos',            icon: Receipt,   section: 'Compras', roles: ['admin', 'sales', 'tech', 'tech_lead', 'administracion', 'direccion'] },
 
-    // ── CONTABILIDAD (próximamente) ───────────────────────────────────────
-    { id: 'contabilidad',          label: 'Contabilidad',          icon: BookOpen,   section: 'Contabilidad', roles: ['admin', 'administracion', 'direccion'], soon: true },
+    // ── CONTABILIDAD ─────────────────────────────────────────────────────
+    { id: 'contabilidad',          label: 'Contabilidad',          icon: BookOpen,   section: 'Contabilidad', roles: ['admin', 'administracion', 'direccion'] },
     { id: 'analisis_rentabilidad', label: 'Análisis Rentabilidad', icon: TrendingUp, section: 'Contabilidad', roles: ['admin', 'administracion', 'direccion'], soon: true },
     { id: 'remesas_sepa',          label: 'Remesas SEPA',          icon: Building2,  section: 'Contabilidad', roles: ['admin', 'administracion', 'direccion'], soon: true },
 

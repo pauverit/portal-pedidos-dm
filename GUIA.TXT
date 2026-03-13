@@ -163,7 +163,7 @@ Tareas:
   3.8 UI: panel de stock por almacén, movimientos, traspasos
 
 --------------------------------------------------------------------------------
-PASO 4 — FACTURACIÓN Y VERIFACTU  [PENDIENTE]
+PASO 4 — FACTURACIÓN Y VERIFACTU  [X] COMPLETADO
 --------------------------------------------------------------------------------
 Objetivo: Facturación legal española con VeriFactu AEAT
 
@@ -184,7 +184,7 @@ Tareas:
   4.5 Integración con módulo contabilidad (asiento automático al cobrar)
 
 --------------------------------------------------------------------------------
-PASO 5 — CONTABILIDAD PGC  [PENDIENTE]
+PASO 5 — CONTABILIDAD PGC  [EN PROGRESO]
 --------------------------------------------------------------------------------
 Objetivo: Contabilidad compliant con Plan General Contable español
 

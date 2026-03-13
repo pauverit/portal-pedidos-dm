@@ -31,6 +31,7 @@ const VentasView           = React.lazy(() => import('./components/VentasView').
 const ComprasView          = React.lazy(() => import('./components/ComprasView').then(m => ({ default: m.ComprasView })));
 const StockView            = React.lazy(() => import('./components/StockView').then(m => ({ default: m.StockView })));
 const LibroFacturasView    = React.lazy(() => import('./components/LibroFacturasView').then(m => ({ default: m.LibroFacturasView })));
+const ContabilidadView     = React.lazy(() => import('./components/ContabilidadView').then(m => ({ default: m.ContabilidadView })));
 const AdminProductEditModal = React.lazy(() => import('./components/AdminProductEditModal').then(m => ({ default: m.AdminProductEditModal })));
 
 // Lazy-loaded: SAT / Técnico
@@ -908,6 +909,14 @@ export default function App() {
           return (
             <div className="flex-1 overflow-auto">
               <LibroFacturasView currentUser={currentUser} />
+            </div>
+          );
+        }
+        if (currentView === 'contabilidad'
+            && ['admin','administracion','direccion'].includes(currentUser?.role || '')) {
+          return (
+            <div className="flex-1 overflow-auto">
+              <ContabilidadView currentUser={currentUser} />
             </div>
           );
         }
