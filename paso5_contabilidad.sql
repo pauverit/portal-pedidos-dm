@@ -144,7 +144,7 @@ DECLARE
   c477            uuid;
 BEGIN
   -- Obtener datos de la factura
-  SELECT f.*, c.nombre AS cliente_nombre
+  SELECT f.*, c.company_name AS cliente_nombre
     INTO v_factura
     FROM facturas f
     JOIN clients c ON c.id = f.cliente_id
@@ -274,7 +274,7 @@ DECLARE
 
     {"codigo":"520","nombre":"Deudas a corto plazo con entidades de crédito","grupo":5,"naturaleza":"H","tipo":"pasivo","nivel":3},
     {"codigo":"521","nombre":"Deudas a corto plazo por préstamos recibidos","grupo":5,"naturaleza":"H","tipo":"pasivo","nivel":3},
-    {"codigo":"551","nombre":"Cuenta corriente con socios y administradores","grupo":5,"naturaleza":"mixto","tipo":"mixto","nivel":3},
+    {"codigo":"551","nombre":"Cuenta corriente con socios y administradores","grupo":5,"naturaleza":"D","tipo":"mixto","nivel":3},
     {"codigo":"570","nombre":"Caja, euros","grupo":5,"naturaleza":"D","tipo":"activo","nivel":3},
     {"codigo":"572","nombre":"Bancos e instituciones de crédito c/c vista, euros","grupo":5,"naturaleza":"D","tipo":"activo","nivel":3},
     {"codigo":"580","nombre":"Inversiones financieras a corto plazo en instr. patrim.","grupo":5,"naturaleza":"D","tipo":"activo","nivel":3},

@@ -120,7 +120,7 @@ DECLARE
   v_iva        numeric(12,2);
   v_total      numeric(12,2);
 BEGIN
-  SELECT cr.*, c.nombre AS _cliente_nombre
+  SELECT cr.*, c.company_name AS _cliente_nombre
     INTO v_contrato
     FROM contratos_recurrentes cr
     JOIN clients c ON c.id = cr.cliente_id
@@ -183,8 +183,8 @@ $$;
 CREATE OR REPLACE VIEW contratos_pendientes AS
 SELECT
   cr.*,
-  c.nombre   AS cliente_nombre_completo,
-  c.email    AS cliente_email,
+  c.company_name AS cliente_nombre_completo,
+  c.email        AS cliente_email,
   -- MRR equivalente mensual de este contrato
   CASE cr.frecuencia
     WHEN 'mensual'    THEN cr.importe_base
