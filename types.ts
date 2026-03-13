@@ -920,3 +920,72 @@ export interface MasaSalarialPeriodo {
   total_ss_empresa: number;
   coste_total: number;
 }
+
+// ─────────────────────────────────────────────────────────────
+// PASO 8 — Business Intelligence & Analytics
+// ─────────────────────────────────────────────────────────────
+
+export interface BiVentasMensual {
+  empresa_id: string;
+  periodo: string;             // 'YYYY-MM'
+  num_facturas: number;
+  base_total: number;
+  iva_total: number;
+  total_facturado: number;
+  total_cobrado: number;
+  total_pendiente: number;
+}
+
+export interface BiTopCliente {
+  empresa_id: string;
+  cliente_id: string;
+  cliente_nombre: string;
+  num_facturas: number;
+  total_facturado: number;
+  total_cobrado: number;
+  ultima_factura: string;
+}
+
+export type BiSituacionCartera = 'cobrada' | 'anulada' | 'vencida' | 'vence_pronto' | 'al_dia';
+
+export interface BiCarteraCobros {
+  empresa_id: string;
+  factura_id: string;
+  referencia: string;
+  cliente_nombre: string;
+  fecha_emision: string;
+  fecha_vencimiento: string;
+  total: number;
+  estado: string;
+  dias_retraso: number;
+  situacion: BiSituacionCartera;
+}
+
+export interface BiCuentaResultados {
+  empresa_id: string;
+  periodo: string;
+  ingresos: number;
+  gastos_compras: number;
+  gastos_nominas: number;
+  resultado: number;
+}
+
+export interface BiKpiEmpresa {
+  empresa_id: string;
+  ventas_mes: number;
+  facturas_mes: number;
+  ventas_año: number;
+  pendiente_cobro: number;
+  cobros_vencidos: number;
+  mrr: number;
+  num_empleados: number;
+}
+
+export interface BiPipelineComercial {
+  empresa_id: string;
+  estado: string;
+  num_presupuestos: number;
+  importe_total: number;
+  ticket_medio: number;
+  mas_antiguo: string;
+}
