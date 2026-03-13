@@ -41,8 +41,9 @@ export type UserRole =
   | 'admin'
   | 'client'
   | 'sales'
+  | 'sales_lead'       // Jefe de Comerciales
   | 'tech'
-  | 'tech_lead'
+  | 'tech_lead'        // Jefe de Técnicos
   | 'compras'
   | 'almacen'
   | 'administracion'
