@@ -119,8 +119,12 @@ export const VentasView: React.FC<VentasViewProps> = ({ currentUser, clientes, p
   useEffect(() => { ventas.loadAll(); }, []);
 
   // ── Productos adaptados para LineItemsEditor ──────────────
+  // Para flexibles (vinilos, lonas…) usar pricePerM2 si price es 0
   const productosEditor = productos.map(p => ({
-    id: p.id, name: p.name, reference: p.reference, price: p.price,
+    id: p.id,
+    name: p.name,
+    reference: p.reference,
+    price: p.price > 0 ? p.price : (p.pricePerM2 ?? 0),
   }));
 
   // ── Abrir para ver/editar ─────────────────────────────────
