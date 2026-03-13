@@ -170,6 +170,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'admin_tech_management', label: 'Gestión Técnicos',     icon: UserPlus,        section: 'SAT / Soporte', roles: ['tech_lead', 'admin'] },
     { id: 'admin_bulk_import_sat', label: 'Carga Masiva SAT',     icon: Upload,          section: 'SAT / Soporte', roles: ['admin'] },
 
+    // ── RRHH — administración ─────────────────────────────────────────────────
+    { id: 'rrhh', label: 'RRHH & Nóminas', icon: Users, section: 'RRHH', roles: ROLES_ADMIN },
+
     // ── CONFIGURACIÓN — solo admin ────────────────────────────────────────────
     { id: 'admin_empresa',          label: 'Empresa & Sedes',     icon: Building2,  section: 'Configuración', roles: ROLES_ADMIN },
     { id: 'admin_sales_management', label: 'Gestión Comerciales', icon: UserCircle, section: 'Configuración', roles: ['admin', 'sales_lead'] },

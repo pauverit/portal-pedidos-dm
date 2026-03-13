@@ -793,3 +793,130 @@ export interface MrrEmpresa {
   mrr: number;
   arr: number;
 }
+
+// ─────────────────────────────────────────────────────────────
+// PASO 7 — RRHH y Nóminas
+// ─────────────────────────────────────────────────────────────
+
+export interface Departamento {
+  id: string;
+  empresa_id: string;
+  nombre: string;
+  codigo?: string;
+  created_at: string;
+}
+
+export type TipoContrato =
+  | 'indefinido' | 'temporal' | 'formacion' | 'obra_servicio'
+  | 'interinidad' | 'practicas' | 'relevo' | 'otro';
+
+export type EstadoEmpleado = 'activo' | 'baja' | 'excedencia' | 'suspendido';
+export type JornadaEmpleado = 'completa' | 'parcial';
+
+export interface Empleado {
+  id: string;
+  empresa_id: string;
+  departamento_id?: string;
+  nombre: string;
+  apellidos: string;
+  dni_nie?: string;
+  fecha_nacimiento?: string;
+  email?: string;
+  telefono?: string;
+  direccion?: string;
+  num_ss?: string;
+  num_cuenta_iban?: string;
+  puesto: string;
+  grupo_cotizacion: number;        // 1-11
+  tipo_contrato: TipoContrato;
+  jornada: JornadaEmpleado;
+  porcentaje_jornada: number;
+  sueldo_bruto_anual: number;
+  num_pagas: 12 | 14;
+  irpf_porcentaje: number;
+  fecha_alta: string;
+  fecha_baja?: string;
+  estado: EstadoEmpleado;
+  notas?: string;
+  created_at: string;
+  updated_at: string;
+  // Vista extras
+  departamento?: string;
+  salario_mensual?: number;
+}
+
+export type EstadoNomina = 'borrador' | 'confirmada' | 'pagada' | 'anulada';
+
+export interface Nomina {
+  id: string;
+  empresa_id: string;
+  empleado_id: string;
+  periodo: string;               // 'YYYY-MM'
+  num_paga?: number;
+  fecha_pago?: string;
+  total_devengado: number;
+  total_deducciones: number;
+  liquido_percibir: number;
+  ss_empresa: number;
+  coste_total_empresa: number;
+  estado: EstadoNomina;
+  notas?: string;
+  created_at: string;
+  updated_at: string;
+  // Vista extras
+  empleado_nombre?: string;
+  dni_nie?: string;
+  puesto?: string;
+  departamento?: string;
+}
+
+export type TipoConcepto = 'devengado' | 'deduccion';
+
+export interface NominaConcepto {
+  id: string;
+  nomina_id: string;
+  orden: number;
+  tipo: TipoConcepto;
+  codigo: string;
+  descripcion: string;
+  importe: number;
+  base_calculo?: number;
+  porcentaje?: number;
+}
+
+export type TipoAusencia =
+  | 'vacaciones' | 'enfermedad' | 'accidente_laboral'
+  | 'permiso_retribuido' | 'maternidad' | 'paternidad'
+  | 'excedencia' | 'otro';
+
+export type EstadoAusencia = 'solicitada' | 'aprobada' | 'rechazada' | 'cancelada';
+
+export interface Ausencia {
+  id: string;
+  empresa_id: string;
+  empleado_id: string;
+  tipo: TipoAusencia;
+  fecha_inicio: string;
+  fecha_fin: string;
+  dias_habiles?: number;
+  dias_naturales?: number;
+  estado: EstadoAusencia;
+  aprobado_por?: string;
+  notas?: string;
+  created_at: string;
+  // Vista extras
+  empleado_nombre?: string;
+  puesto?: string;
+  departamento?: string;
+}
+
+export interface MasaSalarialPeriodo {
+  empresa_id: string;
+  periodo: string;
+  num_nominas: number;
+  total_bruto: number;
+  total_deducciones: number;
+  total_liquido: number;
+  total_ss_empresa: number;
+  coste_total: number;
+}
