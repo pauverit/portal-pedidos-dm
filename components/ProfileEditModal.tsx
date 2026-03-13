@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { X, Save, Eye, EyeOff, UserCircle } from 'lucide-react';
 import { User } from '../types';
 import { useToast } from './Toast';
@@ -45,13 +45,13 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200 overflow-hidden">
-                <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+                <div className="bg-slate-900 text-white px-3 py-2 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="bg-slate-800 p-2 rounded-lg">
                             <UserCircle size={24} className="text-slate-400" />
                         </div>
                         <div>
-                            <h2 className="font-bold text-lg leading-tight">Editar Perfil</h2>
+                            <h2 className="font-bold text-base leading-tight">Editar Perfil</h2>
                             <p className="text-slate-400 text-xs uppercase tracking-wider font-semibold">
                                 {currentUser.role === 'admin' ? 'Administrador' : currentUser.role === 'sales' ? 'Comercial' : 'Cliente B2B'}
                             </p>
@@ -146,7 +146,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
                     </div>
                 </div>
 
-                <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3 bg-slate-50/50">
+                <div className="px-3 py-2 border-t border-slate-100 flex justify-end gap-3 bg-slate-50/50">
                     <button
                         onClick={onClose}
                         className="px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors"

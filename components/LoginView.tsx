@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 
 interface LoginViewProps {
     onLogin: (username: string, password: string) => void;
@@ -19,7 +19,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, loginError }) => 
             <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 border border-slate-200">
                 <div className="text-center mb-8">
                     <img src="/logo.png" alt="DigitalMarket" className="h-16 w-auto mx-auto mb-4" />
-                    <h1 className="text-2xl font-bold text-slate-900">Portal B2B</h1>
+                    <h1 className="text-xl font-bold text-slate-900">Portal B2B</h1>
                     <p className="text-slate-500 text-sm mt-2">Introduce tus credenciales de acceso</p>
                 </div>
 
@@ -32,7 +32,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, loginError }) => 
                             onChange={e => setUsername(e.target.value)}
                             autoCapitalize="none"
                             autoCorrect="off"
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-transparent outline-none transition-all text-slate-900"
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-transparent outline-none transition-all text-slate-900"
                             placeholder="Introduce tu usuario"
                         />
                     </div>
@@ -42,7 +42,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, loginError }) => 
                             type="password"
                             value={password}
                             onChange={e => setPassword(e.target.value)}
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-transparent outline-none transition-all text-slate-900"
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-transparent outline-none transition-all text-slate-900"
                             placeholder="••••••"
                         />
                     </div>

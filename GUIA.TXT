@@ -1,0 +1,399 @@
+================================================================================
+GUIA DE IMPLEMENTACION — PORTAL PEDIDOS DM → ERP DIGITAL MARKET
+================================================================================
+Fecha inicio: Marzo 2026
+Proyecto: portal-pedidos-dm (c:\Users\enehas\Downloads\portal-pedidos-dm)
+Stack: React 18 + TypeScript + Vite + Supabase + Tailwind CSS
+Empresa destino: DIGITAL MARKET (single-tenant, sin multi-tenancy)
+
+================================================================================
+CONTEXTO Y DECISION CLAVE
+================================================================================
+Este proyecto implementa las funcionalidades del roadmap "Neutral SaaS" pero
+adaptadas EXCLUSIVAMENTE para Digital Market. NO hay tenants. NO hay tenant_id.
+Es un ERP privado para una sola empresa.
+
+Necesidades específicas de Digital Market:
+  - 2 CIFs (dos entidades fiscales / sociedades)
+  - 4 delegaciones (sucursales)
+  - 4 almacenes
+  - Usuarios ilimitados con los roles que haya
+
+Referencia de documentos consultados:
+  - C:\Users\enehas\Desktop\Neutral SaaS — Roadmap ERP vs SAP & Odoo.pdf
+  - C:\Users\enehas\Desktop\Neutral SaaS — Guía Completa de Funcionalidades.pdf
+
+================================================================================
+ESTADO ACTUAL DEL PROYECTO (lo que ya existe)
+================================================================================
+Módulos implementados y funcionando:
+  [X] Portal B2B con carrito, rappel por tramos, cupones de descuento
+  [X] SAT completo: máquinas, incidencias, partes de trabajo, contratos
+  [X] CRM: visitas comerciales, llamadas, actividad por cliente
+  [X] Gastos y dietas (comerciales y técnicos)
+  [X] Gestión de clientes con precios personalizados
+  [X] Roles actuales: admin, client, sales, tech, tech_lead
+
+Tablas Supabase existentes relevantes:
+  - users / profiles
+  - products
+  - orders / order_items
+  - machines
+  - maintenance_contracts
+  - incidents / incident_comments
+  - work_orders / work_order_parts
+  - sat_calls
+  - client_visits / client_calls (CRM)
+  - expenses
+  - coupons
+
+================================================================================
+PLAN DE IMPLEMENTACION — PASO A PASO
+================================================================================
+
+--------------------------------------------------------------------------------
+PASO 1 — ESTRUCTURA BASE DE DIGITAL MARKET  [PENDIENTE]
+--------------------------------------------------------------------------------
+Objetivo: Crear la base organizativa de la empresa sin tocar los datos existentes.
+
+Tareas:
+  1.1 Crear tabla `empresas` (2 CIFs)
+        - id, nombre, cif, razon_social, direccion, cp, ciudad, provincia,
+          telefono, email, iban, logo_url, created_at
+
+  1.2 Crear tabla `delegaciones` (4 delegaciones)
+        - id, empresa_id (FK), nombre, codigo, direccion, cp, ciudad,
+          provincia, telefono, email, activa, created_at
+
+  1.3 Crear tabla `almacenes` (4 almacenes)
+        - id, delegacion_id (FK), nombre, codigo, direccion, descripcion,
+          activo, created_at
+
+  1.4 Migrar campo `delegation` (texto) en users/clients a `delegation_id` (FK)
+        - Mantener `delegation` como texto legible también hasta migración completa
+
+  1.5 Nuevos roles en types.ts y Sidebar:
+        - `compras`       → Responsable de compras
+        - `almacen`       → Almacén / logística
+        - `administracion`→ Área administrativa / contabilidad
+        - `direccion`     → Dirección general
+
+  1.6 UI admin para gestionar empresas, delegaciones y almacenes (CRUD básico)
+
+  Resultado esperado: La estructura organizativa de DM está en BD y es
+  referenciable desde todos los módulos futuros.
+
+  DATOS REALES PENDIENTES DE CONFIRMAR CON EL USUARIO:
+    - Nombre y CIF de las 2 empresas
+    - Nombre y ubicación de las 4 delegaciones
+    - Nombre y asignación de los 4 almacenes
+
+--------------------------------------------------------------------------------
+PASO 2 — CICLO DE VENTAS COMPLETO  [PENDIENTE]
+--------------------------------------------------------------------------------
+Objetivo: Presupuesto → Pedido de venta → Albarán → Factura (order-to-cash)
+
+Tareas:
+  2.1 Tabla `presupuestos` + `presupuesto_lineas`
+        - Numeración: PRES-0001 (por empresa/serie)
+        - Estados: borrador → enviado → aceptado → rechazado → facturado
+        - Conversión directa a pedido
+        - Exportación PDF
+
+  2.2 Tabla `pedidos_venta` + `pedido_lineas`
+        - Numeración: PED-0001
+        - Vinculado a presupuesto (opcional)
+        - Fecha entrega prevista
+        - Generación de albarán
+
+  2.3 Tabla `albaranes` + `albaran_lineas`
+        - Numeración: ALB-0001
+        - Firma digital del cliente (canvas táctil)
+        - Estados: pendiente → entregado → firmado → facturado
+        - Conversión a factura con un clic
+
+  2.4 Tabla `facturas` + `factura_lineas`
+        - Numeración por serie (A-0001 para CIF1, B-0001 para CIF2...)
+        - Vinculada a pedido/albarán
+        - Registro de cobro con fecha y método
+        - VeriFactu: hash + encadenamiento (básico)
+        - PDF legal imprimible
+
+  2.5 Adaptar el flujo existente de pedidos B2B para que genere pedidos_venta
+        (los pedidos del carrito son un subconjunto del ciclo completo)
+
+--------------------------------------------------------------------------------
+PASO 3 — COMPRAS Y ALMACÉN MULTI-ALMACÉN  [X] COMPLETADO
+--------------------------------------------------------------------------------
+Objetivo: Gestión completa de stock por almacén, PMP, traspasos entre almacenes
+
+Tareas:
+  3.1 Tabla `proveedores`
+        - Ficha: nombre, CIF, email, teléfono, contacto, dirección
+        - Activar/desactivar
+
+  3.2 Tabla `pedidos_compra` + `pedido_compra_lineas`
+        - Numeración: OC-0001
+        - Estados: borrador → enviado → parcial → recibido
+        - Fecha entrega esperada
+
+  3.3 Tabla `recepciones` + `recepcion_lineas`
+        - Vinculada a OC
+        - Actualiza stock automáticamente al confirmar
+
+  3.4 Tabla `stock` (stock por almacén y producto)
+        - id, producto_id, almacen_id, cantidad, pmp (precio medio ponderado)
+        - Se actualiza en cada recepción
+
+  3.5 Tabla `movimientos_stock`
+        - Trazabilidad de todos los movimientos (entrada, salida, traspaso)
+        - Tipo: compra / venta / traspaso / ajuste / devolución
+
+  3.6 Tabla `traspasos` + `traspaso_lineas`
+        - Origen almacén, destino almacén
+        - Estado: en_transito → recibido
+        - Firma digital obligatoria para confirmar recepción
+        - Albarán de traslado imprimible
+
+  3.7 Landed Costs (costes de importación)
+        - Al recibir OC: añadir flete, aranceles, seguro
+        - Reparto por valor/peso/unidades
+        - Recalcula PMP sumando estos costes
+
+  3.8 UI: panel de stock por almacén, movimientos, traspasos
+
+--------------------------------------------------------------------------------
+PASO 4 — FACTURACIÓN Y VERIFACTU  [PENDIENTE]
+--------------------------------------------------------------------------------
+Objetivo: Facturación legal española con VeriFactu AEAT
+
+Tareas:
+  4.1 Tabla `verifactu_registros`
+        - Número de factura, hash anterior, hash actual, QR, timestamp AEAT
+        - Encadenamiento inalterable (una vez registrado, no editable)
+
+  4.2 Serie de facturación por CIF/empresa
+        - Contadores independientes por empresa + año fiscal
+
+  4.3 PDF de factura con QR VeriFactu, datos fiscales completos
+
+  4.4 Tabla `cobros` (registro de cobros de facturas)
+        - Método: transferencia, cheque, tarjeta, efectivo, domiciliación SEPA
+        - Vinculado a factura
+
+  4.5 Integración con módulo contabilidad (asiento automático al cobrar)
+
+--------------------------------------------------------------------------------
+PASO 5 — CONTABILIDAD PGC  [PENDIENTE]
+--------------------------------------------------------------------------------
+Objetivo: Contabilidad compliant con Plan General Contable español
+
+Tareas:
+  5.1 Tabla `plan_cuentas`
+        - Grupos 1–7 del PGC
+        - Código, nombre, naturaleza (D/H), tipo (activo/pasivo/ingreso/gasto)
+        - Cuentas base precargadas + personalizables por empresa
+
+  5.2 Tabla `asientos` + `asiento_lineas`
+        - Fecha, referencia, descripción
+        - Líneas: cuenta, debe, haber, descripción
+        - Validación cuadre (debe = haber)
+        - Estados: borrador → confirmado / cancelado
+
+  5.3 Generación automática de asientos desde:
+        - Facturas de venta (cobradas)
+        - Facturas de compra (recibidas)
+        - Nóminas (cuando se implemente)
+
+  5.4 Informes fiscales
+        - Modelo 303: IVA trimestral
+        - Modelo 200: Impuesto de Sociedades
+        - Exportación para AEAT
+
+  5.5 Conciliación bancaria
+        - Importar extractos CSV del banco
+        - Emparejar movimientos con facturas
+        - Estado de conciliación por movimiento
+
+  5.6 Contabilidad analítica (centros de coste por delegación)
+
+--------------------------------------------------------------------------------
+PASO 6 — FACTURACIÓN RECURRENTE + SEPA XML  [PENDIENTE]
+--------------------------------------------------------------------------------
+Objetivo: Automatizar cobros periódicos y generar fichero SEPA para el banco
+
+Tareas:
+  6.1 Tabla `contratos_recurrentes`
+        - Cliente, producto/servicio, importe, IVA
+        - Frecuencia: mensual / trimestral / semestral / anual
+        - Próxima fecha facturación
+        - Estado: activo / pausado / cancelado
+
+  6.2 Botón "Facturar ahora" → genera factura y avanza fecha siguiente
+
+  6.3 KPI: MRR (Monthly Recurring Revenue) en dashboard
+
+  6.4 Generación fichero SEPA PAIN.008.003.02 (XML)
+        - IBAN, BIC y mandato SEPA por cliente
+        - Configuración acreedor (CI, IBAN emisor) por CIF
+        - Secuencia: FRST / RCUR / FNAL / OOFF
+        - Descarga XML lista para subir al banco
+
+  6.5 Vincular contratos de mantenimiento SAT existentes con facturación recurrente
+
+--------------------------------------------------------------------------------
+PASO 7 — RRHH Y NÓMINAS  [PENDIENTE]
+--------------------------------------------------------------------------------
+Objetivo: Gestión de contratos laborales, nóminas y ausencias
+
+Tareas:
+  7.1 Tabla `empleados`
+        - Vinculado a users
+        - NSS, fecha alta, categoría profesional, IBAN
+
+  7.2 Tabla `contratos_laborales`
+        - Tipo: indefinido / temporal / parcial / prácticas
+        - Fechas inicio/fin, salario bruto, salario neto
+        - Estados: activo / expirado / rescindido
+
+  7.3 Tabla `nominas`
+        - Generación mensual por empleado
+        - Base salarial + bonificaciones + deducciones
+        - Cálculo neto mensual
+        - Estado: pendiente / pagada / cancelada
+        - Integración comisiones comerciales (ya existe lógica en CRM)
+        - PDF de nómina
+
+  7.4 Tabla `ausencias`
+        - Tipos: vacaciones, baja médica, maternidad/paternidad, no remunerada
+        - Flujo aprobación: solicitada → aprobada / rechazada
+
+--------------------------------------------------------------------------------
+PASO 8 — AGENDA, PROYECTOS Y TPV  [PENDIENTE]
+--------------------------------------------------------------------------------
+Objetivo: Herramientas de productividad adicionales
+
+Tareas:
+  8.1 Módulo Agenda
+        - Tabla `citas`: tipo, fecha, cliente, responsable, ubicación, notas
+        - Tipos: reunión, llamada, visita, tarea, servicio SAT
+        - Calendario mensual visual
+        - Colores por tipo
+
+  8.2 Módulo Proyectos / Kanban
+        - Tabla `proyectos`: nombre, cliente, presupuesto, fechas, estado
+        - Tabla `tareas`: columna kanban, prioridad, responsable, fecha límite
+        - Vista tablero Kanban (pendiente → en curso → revisión → hecho)
+        - Vista lista y grid
+
+  8.3 Módulo TPV
+        - Tabla `sesiones_caja`: apertura, cierre, efectivo inicial/final
+        - Tabla `ventas_tpv`: carrito rápido, método de pago
+        - Cierre de caja con arqueo
+        - Ticket/albarán automático al finalizar
+
+--------------------------------------------------------------------------------
+PASO 9 — TRAZABILIDAD LOTES/SERIES + MRP  [PENDIENTE]
+--------------------------------------------------------------------------------
+Objetivo: Control total de trazabilidad y planificación de compras
+
+Tareas:
+  9.1 Trazabilidad por Lotes
+        - Tabla `lotes`: número de lote, producto, proveedor, fecha caducidad
+        - Asignar lote en recepción de OC
+        - Rastrear lote en ventas/albaranes (upstream/downstream)
+        - Alertas de lotes próximos a caducar
+        - Bloqueo automático de lotes vencidos
+
+  9.2 Trazabilidad por Número de Serie
+        - Tabla `series`: número de serie, producto, lote, estado
+        - Seguimiento individual: garantía, historial de reparaciones SAT
+        - Vinculación automática con módulo SAT (máquinas)
+
+  9.3 Reglas de reaprovisionamiento
+        - Stock mínimo y máximo por producto/almacén
+        - Alerta automática cuando stock < mínimo
+        - Propuesta automática de OC
+
+  9.4 MRP básico
+        - Calcular necesidades netas: demanda vs stock vs pedidos en curso
+        - Generar propuesta de OC automática
+        - Vista de necesidades por período
+
+================================================================================
+NOTAS TÉCNICAS
+================================================================================
+
+Sin tenants:
+  - NO usar tenant_id en ninguna tabla nueva
+  - La empresa se identifica por empresa_id (tabla empresas)
+  - Las políticas RLS de Supabase son por rol de usuario, no por tenant
+
+Roles y permisos:
+  - superadmin / admin → acceso total
+  - direccion         → lectura de todo, reportes
+  - administracion    → facturas, contabilidad, RRHH, SEPA
+  - sales_lead        → CRM completo, presupuestos, pedidos
+  - sales             → CRM propio, portal B2B
+  - compras           → módulo compras, proveedores, OC
+  - almacen           → stock, traspasos, recepciones
+  - tech_lead         → SAT completo + agenda técnicos
+  - tech              → SAT propio, partes de trabajo
+  - client            → portal B2B, facturas propias, estado SAT
+
+Ficheros clave del proyecto:
+  - App.tsx           → router principal de vistas (~1700 líneas)
+  - types.ts          → tipos TypeScript de todo el dominio
+  - constants.ts      → constantes (comerciales, productos iniciales)
+  - lib/supabase.ts   → cliente Supabase
+  - components/       → todos los componentes React
+  - hooks/            → custom hooks de datos
+  - services/         → orderService.ts
+
+SQL migrations creadas:
+  - sat_schema.sql
+  - crm_expenses_schema.sql
+  - create_crm_tables.sql
+  - supabase_coupons_setup.sql
+  - supabase_hidden_categories.sql
+
+================================================================================
+REGISTRO DE AVANCE
+================================================================================
+[X] PASO 1 — Estructura base (empresas, delegaciones, almacenes, nuevos roles)
+      COMPLETADO Marzo 2026
+      Archivos creados/modificados:
+        + paso1_estructura_base.sql   → ejecutar en Supabase SQL Editor
+        + hooks/useEmpresaData.ts     → hook CRUD para empresa/delegacion/almacen
+        + components/AdminEmpresasView.tsx → vista con edición inline
+        ~ types.ts                    → UserRole, Empresa, Delegacion, Almacen
+        ~ components/Sidebar.tsx      → nuevos roles + menú "Empresa & Delegaciones"
+        ~ hooks/useSupabaseData.ts    → mapea delegation_id
+        ~ App.tsx                     → ruta admin_empresa conectada
+[X] PASO 2 — Ciclo de ventas (presupuesto → pedido → albarán → factura)
+      COMPLETADO Marzo 2026
+      Archivos creados/modificados:
+        + paso2_ciclo_ventas.sql         → ejecutar en Supabase SQL Editor
+        + hooks/useVentas.ts             → CRUD + conversiones para los 4 documentos
+        + components/LineItemsEditor.tsx → editor de líneas reutilizable con búsqueda de producto
+        + components/DocumentoModal.tsx  → modal unificado crear/editar presupuesto/pedido/albarán/factura
+        + components/VentasView.tsx      → vista principal 4 tabs + filtros + Nuevo
+        ~ types.ts                       → DocumentoLinea, Presupuesto, PedidoVenta, Albaran, Factura
+        ~ components/Sidebar.tsx         → sección Ventas con submenú
+        ~ App.tsx                        → rutas ventas_* conectadas
+      Notas:
+        - Serie A = DM Dpi'sur (B73486474) | Serie B = DM Andalucía (B73860538)
+        - Conversiones en un clic: presupuesto→pedido→albarán→factura
+        - Firma digital táctil en albaranes
+        - Registro de cobro en facturas (método + fecha)
+[X] PASO 3 — Compras y almacén multi-almacén con PMP
+[ ] PASO 4 — Facturación legal + VeriFactu AEAT
+[ ] PASO 5 — Contabilidad PGC española
+[ ] PASO 6 — Facturación recurrente + SEPA XML
+[ ] PASO 7 — RRHH y nóminas
+[ ] PASO 8 — Agenda, Proyectos/Kanban, TPV
+[ ] PASO 9 — Trazabilidad lotes/series + MRP básico
+
+================================================================================
+FIN DE GUIA
+================================================================================

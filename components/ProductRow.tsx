@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Check, ShoppingCart, AlertCircle, ChevronDown, ChevronUp, Package, Edit2 } from 'lucide-react';
 import { Product, CartItem } from '../types';
 import { isVinyl, isLaminate, isLona } from '../lib/utils';
@@ -83,7 +83,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
         (product.allowAdhesive !== false && product.materialType === 'monomeric' && isVinyl(product));
 
     const renderConfigurator = () => (
-        <div className="px-4 py-3 bg-slate-50 border-t border-slate-100">
+        <div className="px-3 py-2 bg-slate-50 border-t border-slate-100">
             <div className="flex flex-wrap items-end gap-x-5 gap-y-3">
 
                 {/* Width Selection */}
@@ -182,7 +182,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
         <>
             <tr className={`border-b border-slate-50 hover:bg-slate-50 transition-colors ${isExpanded ? 'bg-slate-50' : ''}`}>
                 {/* Name / Description */}
-                <td className="px-4 py-3">
+                <td className="px-3 py-2">
                     <div className="font-medium text-slate-900">{product.name}</div>
                     {product.description && <div className="text-xs text-slate-500 truncate max-w-xs">{product.description}</div>}
                     <div className="flex flex-wrap gap-1 mt-1">
@@ -200,7 +200,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
                 </td>
 
                 {/* Formato — Configurar button goes HERE for flexible materials */}
-                <td className="px-4 py-3 text-slate-600">
+                <td className="px-3 py-2 text-slate-600">
                     {isFlexible ? (
                         cartItem ? (
                             // Already in cart: show chosen format
@@ -231,7 +231,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
                 </td>
 
                 {/* Precio */}
-                <td className="px-4 py-3 text-right font-medium text-slate-900 w-28">
+                <td className="px-3 py-2 text-right font-medium text-slate-900 w-28">
                     {isFlexible && product.pricePerM2 ? (
                         <>
                             <div className="text-sm font-bold text-slate-900">
@@ -254,7 +254,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
                 </td>
 
                 {/* Cantidad */}
-                <td className="px-4 py-3">
+                <td className="px-3 py-2">
                     {cartItem ? (
                         <div className="flex items-center justify-center gap-2">
                             <button
@@ -304,7 +304,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
 
                 {/* Admin edit button */}
                 {isAdmin && (
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-3 py-2 text-center">
                         <button
                             onClick={() => onEdit?.(product)}
                             className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-colors"

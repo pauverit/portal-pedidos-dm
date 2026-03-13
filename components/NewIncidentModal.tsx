@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { X, AlertTriangle, Cpu, ShieldCheck, ShieldOff, Loader, Plus, Check } from 'lucide-react';
 import { IncidentSeverity, User as UserType } from '../types';
 import { useMachines } from '../hooks/useMachines';
@@ -115,7 +115,7 @@ export const NewIncidentModal: React.FC<NewIncidentModalProps> = ({
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white rounded-t-2xl z-10">
+                <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 sticky top-0 bg-white rounded-t-2xl z-10">
                     <div className="flex items-center gap-2">
                         <div className="p-2 bg-orange-100 rounded-lg"><AlertTriangle size={16} className="text-orange-600" /></div>
                         <h2 className="font-bold text-slate-900">Nueva Incidencia</h2>
@@ -125,7 +125,7 @@ export const NewIncidentModal: React.FC<NewIncidentModalProps> = ({
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                <form onSubmit={handleSubmit} className="p-4 space-y-4">
                     {/* Client selector — hidden for clients */}
                     {!isClient && (
                         <div>
@@ -216,7 +216,7 @@ export const NewIncidentModal: React.FC<NewIncidentModalProps> = ({
 
                             {/* Machine list */}
                             {machines.length === 0 && !loadingMachines ? (
-                                <div className="border border-dashed border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-400 text-center">
+                                <div className="border border-dashed border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-400 text-center">
                                     Sin activos registrados.
                                     {istech && <span className="ml-1">Pulsa <strong>Nuevo activo</strong> para añadir uno.</span>}
                                 </div>

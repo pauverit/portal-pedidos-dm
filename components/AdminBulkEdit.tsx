@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Save, Search, Calculator, AlertCircle, CheckCircle, Layers, Droplet, Box } from 'lucide-react';
 import { Product } from '../types';
 import { useToast } from './Toast';
@@ -135,13 +135,13 @@ export const AdminBulkEdit: React.FC<AdminBulkEditProps> = ({ products, onSave, 
     const inpBlue = 'border border-blue-300 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 outline-none w-20 text-right font-bold text-blue-900 bg-blue-50';
 
     return (
-        <div className="p-6 md:p-10 max-w-full mx-auto pb-32">
+        <div className="p-4 md:p-10 max-w-full mx-auto pb-32">
             <div className="mb-6 flex justify-between items-center">
                 <div>
                     <button onClick={onBack} className="text-slate-500 hover:text-slate-900 text-sm mb-2 flex items-center gap-1">
                         ← Volver al Panel
                     </button>
-                    <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+                    <h1 className="text-xl font-bold text-slate-900 flex items-center gap-3">
                         <Save className="text-slate-400" /> Edición Masiva de Productos
                     </h1>
                 </div>
@@ -156,7 +156,7 @@ export const AdminBulkEdit: React.FC<AdminBulkEditProps> = ({ products, onSave, 
                     <button
                         onClick={handleSave}
                         disabled={saving || modifiedCount === 0}
-                        className="bg-slate-900 text-white px-6 py-2 rounded-lg font-bold hover:bg-slate-800 transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center gap-2"
+                        className="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold hover:bg-slate-800 transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center gap-2"
                     >
                         <Save size={18} />
                         {saving ? 'Guardando...' : `Guardar Cambios${modifiedCount > 0 ? ` (${modifiedCount})` : ''}`}
@@ -165,7 +165,7 @@ export const AdminBulkEdit: React.FC<AdminBulkEditProps> = ({ products, onSave, 
             </div>
 
             {modifiedCount > 0 && (
-                <div className="mb-4 bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg flex items-center gap-2 text-sm">
+                <div className="mb-4 bg-yellow-50 border border-yellow-200 text-yellow-800 px-3 py-2 rounded-lg flex items-center gap-2 text-sm">
                     <AlertCircle size={18} />
                     <span>Tienes <strong>{modifiedCount}</strong> producto{modifiedCount !== 1 ? 's' : ''} modificado{modifiedCount !== 1 ? 's' : ''} sin guardar.</span>
                 </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { UserPlus, Save, Eye, EyeOff, Tag, X } from 'lucide-react';
 import { User, Product } from '../types';
 import { useToast } from './Toast';
@@ -67,8 +67,8 @@ export const AdminNewClient: React.FC<AdminNewClientProps> = ({ onSave, onBack, 
     };
 
     return (
-        <div className="p-6 md:p-10 max-w-4xl mx-auto">
-            <h2 className="text-2xl font-bold text-slate-900 mb-6">Alta de Nuevo Cliente</h2>
+        <div className="p-4 md:p-10 max-w-4xl mx-auto">
+            <h2 className="text-xl font-bold text-slate-900 mb-6">Alta de Nuevo Cliente</h2>
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 {/* Tabs */}
                 <div className="flex border-b border-slate-200">
@@ -94,10 +94,10 @@ export const AdminNewClient: React.FC<AdminNewClientProps> = ({ onSave, onBack, 
                     </button>
                 </div>
 
-                <div className="p-6 space-y-6">
+                <div className="p-4 space-y-4">
                     {activeTab === 'general' ? (
-                        <div className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-2">Nombre de Empresa *</label>
                                     <input

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Search, X } from 'lucide-react';
 import { Product, CartItem } from '../types';
 import { ProductRow } from './ProductRow';
@@ -100,7 +100,7 @@ export const ProductListView: React.FC<ProductListViewProps> = ({
     return (
         <div className="p-4 md:p-6 max-w-7xl mx-auto w-full pb-32">
             <div className="mb-6">
-                <h1 className="text-xl md:text-2xl font-bold text-slate-900">{title}</h1>
+                <h1 className="text-lg md:text-xl font-bold text-slate-900">{title}</h1>
                 <div className="mt-2 flex items-center gap-4">
                     <div className="relative flex-1 max-w-md">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -137,11 +137,11 @@ export const ProductListView: React.FC<ProductListViewProps> = ({
                     <table className="w-full text-left text-sm">
                         <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-medium">
                             <tr>
-                                <th className="px-4 py-3">Nombre / Descripción</th>
-                                <th className="px-4 py-3 w-32">Formato</th>
-                                <th className="px-4 py-3 w-28 text-right">Precio</th>
-                                <th className="px-4 py-3 w-32 text-center">Cantidad</th>
-                                {isAdmin && <th className="px-4 py-3 w-20 text-center">Admin</th>}
+                                <th className="px-3 py-2">Nombre / Descripción</th>
+                                <th className="px-3 py-2 w-32">Formato</th>
+                                <th className="px-3 py-2 w-28 text-right">Precio</th>
+                                <th className="px-3 py-2 w-32 text-center">Cantidad</th>
+                                {isAdmin && <th className="px-3 py-2 w-20 text-center">Admin</th>}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">

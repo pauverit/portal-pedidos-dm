@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, ShoppingCart, Settings, LogOut, Printer, Database, UserCircle, ChevronDown, ChevronRight, Layers, Box, Wrench, UserPlus, Upload, X, ShoppingBag, Scroll, Monitor, Eye, EyeOff, AlertTriangle, ClipboardList, ContactRound, Receipt } from 'lucide-react';
+﻿import React, { useState, useEffect } from 'react';
+import { LayoutDashboard, ShoppingCart, Settings, LogOut, Printer, Database, UserCircle, ChevronDown, ChevronRight, Layers, Box, Wrench, UserPlus, Upload, X, ShoppingBag, Scroll, Monitor, Eye, EyeOff, AlertTriangle, ClipboardList, ContactRound, Receipt, Building2, TrendingUp, FileText, Truck, BookOpen, PackageSearch, BarChart3 } from 'lucide-react';
 import { User } from '../types';
 
 interface SidebarProps {
@@ -139,6 +139,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'cat_ink_otros', label: 'Otros' },
       ]
     },
+    // ── Módulo Ventas ──────────────────────────────────────────
+    {
+      id: 'ventas',
+      label: 'Ventas',
+      icon: TrendingUp,
+      roles: ['admin', 'sales', 'administracion', 'direccion'],
+      subItems: [
+        { id: 'ventas_presupuestos', label: 'Presupuestos' },
+        { id: 'ventas_pedidos',      label: 'Pedidos de Venta' },
+        { id: 'ventas_albaranes',    label: 'Albaranes' },
+        { id: 'ventas_facturas',     label: 'Facturas' },
+      ],
+    },
     {
       id: 'admin_dashboard',
       label: 'Panel de Administración',
@@ -218,6 +231,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Upload,
       roles: ['admin'],
     },
+    // ── Módulo Compras ─────────────────────────────────────────
+    {
+      id: 'compras',
+      label: 'Compras',
+      icon: PackageSearch,
+      roles: ['admin', 'compras', 'almacen', 'administracion', 'direccion'],
+      subItems: [
+        { id: 'compras_proveedores', label: 'Proveedores' },
+        { id: 'compras_oc',          label: 'Órdenes de Compra' },
+        { id: 'compras_recepciones', label: 'Recepciones' },
+        { id: 'compras_traspasos',   label: 'Traspasos' },
+      ],
+    },
+    // ── Módulo Stock ───────────────────────────────────────────
+    {
+      id: 'stock',
+      label: 'Stock',
+      icon: BarChart3,
+      roles: ['admin', 'compras', 'almacen', 'administracion', 'direccion'],
+    },
+    // ── Módulo Empresa ─────────────────────────────────────────
+    {
+      id: 'admin_empresa',
+      label: 'Empresa & Delegaciones',
+      icon: Building2,
+      roles: ['admin', 'administracion', 'direccion'],
+    },
   ];
 
   // Items visible to current user role (admins also apply their hidden-items filter)
@@ -247,14 +287,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             fixed md:sticky top-0 h-[100dvh] md:h-screen bg-white border-r border-slate-200 z-50 w-64 transition-transform duration-300 ease-in-out flex flex-col
             ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}>
-        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
           <img src="/logo.png" alt="DigitalMarket" className="max-h-12 w-auto" />
           <button onClick={onClose} className="md:hidden text-slate-400 hover:text-slate-900">
             <X size={24} />
           </button>
         </div>
 
-        <div className="px-6 py-4">
+        <div className="px-3 py-2">
           <button
             onClick={onProfileClick}
             className="w-full flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-100 hover:bg-slate-100 hover:border-slate-200 transition-all group text-left"
@@ -266,11 +306,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="overflow-hidden flex-1">
               <p className="text-xs font-bold text-slate-900 truncate group-hover:text-black">{currentUser?.name}</p>
               <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
-                {currentUser?.role === 'admin' ? 'Administrador'
-                  : currentUser?.role === 'sales' ? 'Comercial'
-                    : currentUser?.role === 'tech_lead' ? 'Jefe de Técnicos'
-                      : currentUser?.role === 'tech' ? 'Técnico'
-                        : 'Cliente B2B'}
+                {currentUser?.role === 'admin'          ? 'Administrador'
+                  : currentUser?.role === 'sales'       ? 'Comercial'
+                  : currentUser?.role === 'tech_lead'   ? 'Jefe de Técnicos'
+                  : currentUser?.role === 'tech'        ? 'Técnico'
+                  : currentUser?.role === 'direccion'   ? 'Dirección'
+                  : currentUser?.role === 'administracion' ? 'Administración'
+                  : currentUser?.role === 'compras'     ? 'Compras'
+                  : currentUser?.role === 'almacen'     ? 'Almacén'
+                  : 'Cliente B2B'}
               </p>
             </div>
           </button>
@@ -292,7 +336,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       setCurrentView(item.id);
                     }
                   }}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition-colors mb-1 ${isActive && !hasSubItems
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1 ${isActive && !hasSubItems
                     ? 'bg-slate-900 text-white shadow-md'
                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                     }`}
@@ -378,14 +422,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
 
         <div className="p-4 border-t border-slate-100">
-          {(currentUser?.role === 'client' || currentUser?.role === 'admin' || currentUser?.role === 'sales') &&
+          {(['client', 'admin', 'sales', 'administracion', 'direccion'] as string[]).includes(currentUser?.role || '') &&
             !hiddenItems.has('cart_section') && (
               <button
                 onClick={() => {
                   setCurrentView('cart');
                   onClose();
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors mb-2 ${currentView === 'cart' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50'
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-2 ${currentView === 'cart' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50'
                   }`}
               >
                 <div className="relative">
@@ -401,7 +445,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             )}
           <button
             onClick={onLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors">
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors">
             <LogOut size={20} />
             Cerrar Sesión
           </button>

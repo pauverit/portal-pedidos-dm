@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Save, AlertCircle, CheckCircle, X, Trash2, Download, FileSpreadsheet } from 'lucide-react';
 import { Product, ProductCategory } from '../types';
 import { useToast } from './Toast';
@@ -194,9 +194,9 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave, currentPro
     };
 
     return (
-        <div className="p-6 md:p-10 max-w-7xl mx-auto">
+        <div className="p-4 md:p-10 max-w-7xl mx-auto">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+                <h1 className="text-xl font-bold text-slate-900 flex items-center gap-3">
                     <FileSpreadsheet className="text-slate-400" /> Carga Masiva (Excel)
                 </h1>
                 <div className="flex gap-3">
@@ -256,14 +256,14 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave, currentPro
                         <button
                             onClick={parseData}
                             disabled={!rawInput.trim()}
-                            className="bg-slate-900 text-white px-6 py-3 rounded-lg font-bold hover:bg-slate-800 transition-colors disabled:bg-slate-300"
+                            className="bg-slate-900 text-white px-3 py-2 rounded-lg font-bold hover:bg-slate-800 transition-colors disabled:bg-slate-300"
                         >
                             Previsualizar Datos
                         </button>
                     </div>
                 </div>
             ) : (
-                <div className="space-y-6">
+                <div className="space-y-4">
                     <div className="flex justify-between items-center">
                         <button onClick={() => setShowPreview(false)} className="text-slate-500 hover:text-slate-900 font-medium">
                             ← Volver a editar
@@ -283,17 +283,17 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave, currentPro
                             <table className="w-full text-sm text-left">
                                 <thead className="bg-slate-50 border-b border-slate-200 text-slate-500">
                                     <tr>
-                                        <th className="px-4 py-3">Estado</th>
-                                        <th className="px-4 py-3">Nombre</th>
-                                        <th className="px-4 py-3">Cat.</th>
-                                        <th className="px-4 py-3">Precio</th>
-                                        <th className="px-4 py-3">Opciones config.</th>
+                                        <th className="px-3 py-2">Estado</th>
+                                        <th className="px-3 py-2">Nombre</th>
+                                        <th className="px-3 py-2">Cat.</th>
+                                        <th className="px-3 py-2">Precio</th>
+                                        <th className="px-3 py-2">Opciones config.</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {parsedItems.map((item, idx) => (
                                         <tr key={idx} className={!item.isValid ? "bg-red-50" : "hover:bg-slate-50"}>
-                                            <td className="px-4 py-2">
+                                            <td className="px-3 py-1.5">
                                                 {item.isValid
                                                     ? <CheckCircle size={18} className="text-green-500" />
                                                     : <div className="flex flex-col gap-0.5">
@@ -302,7 +302,7 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave, currentPro
                                                     </div>
                                                 }
                                             </td>
-                                            <td className="px-4 py-2">
+                                            <td className="px-3 py-1.5">
                                                 <div className="font-bold">{item.name}</div>
                                                 <div className="text-[10px] text-slate-400">{item.reference}</div>
                                             </td>
@@ -344,7 +344,7 @@ export const AdminBulkLoad: React.FC<AdminBulkLoadProps> = ({ onSave, currentPro
             {showDeleteCatalogConfirm && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm border border-slate-200 p-6">
-                        <h3 className="text-lg font-bold text-red-600 mb-2">⚠️ ¿Eliminar catálogo completo?</h3>
+                        <h3 className="text-base font-bold text-red-600 mb-2">⚠️ ¿Eliminar catálogo completo?</h3>
                         <p className="text-sm text-slate-600 mb-6">
                             Esto eliminará <strong>TODOS los productos actuales</strong> de forma permanente. Esta acción no se puede deshacer.
                         </p>

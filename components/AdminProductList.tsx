@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Product } from '../types';
 import { ArrowLeft, ShoppingBag, Search, Check, X, Trash2 } from 'lucide-react';
 import { useToast } from './Toast';
@@ -51,12 +51,12 @@ export const AdminProductList: React.FC<AdminProductListProps> = ({
     );
 
     return (
-        <div className="p-6 md:p-10 max-w-7xl mx-auto pb-32">
+        <div className="p-4 md:p-10 max-w-7xl mx-auto pb-32">
             <button onClick={onBack} className="mb-6 text-slate-500 hover:text-slate-900 flex items-center gap-1 text-sm">
                 <ArrowLeft size={16} /> Volver al Panel
             </button>
 
-            <h1 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+            <h1 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
                 <ShoppingBag className="text-slate-400" /> Gestión de Productos
             </h1>
 
@@ -89,7 +89,7 @@ export const AdminProductList: React.FC<AdminProductListProps> = ({
                             return (
                                 <tr key={product.id} className={isEditing ? 'bg-slate-50' : 'hover:bg-slate-50'}>
                                     {/* Name */}
-                                    <td className="px-6 py-4">
+                                    <td className="px-3 py-2">
                                         {isEditing ? (
                                             <div className="space-y-1">
                                                 <input
@@ -119,7 +119,7 @@ export const AdminProductList: React.FC<AdminProductListProps> = ({
                                     </td>
 
                                     {/* Price */}
-                                    <td className="px-6 py-4 text-right">
+                                    <td className="px-3 py-2 text-right">
                                         {isEditing ? (
                                             <div className="flex flex-col items-end gap-1">
                                                 {ep!.isFlexible ? (
@@ -157,7 +157,7 @@ export const AdminProductList: React.FC<AdminProductListProps> = ({
                                     </td>
 
                                     {/* Config options — only for flexible */}
-                                    <td className="px-6 py-4">
+                                    <td className="px-3 py-2">
                                         {product.isFlexible ? (
                                             isEditing ? (
                                                 <div className="flex flex-col gap-1.5">
@@ -193,7 +193,7 @@ export const AdminProductList: React.FC<AdminProductListProps> = ({
                                     </td>
 
                                     {/* Actions */}
-                                    <td className="px-6 py-4 text-right">
+                                    <td className="px-3 py-2 text-right">
                                         {isEditing ? (
                                             <div className="flex justify-end gap-2">
                                                 <button
@@ -245,7 +245,7 @@ export const AdminProductList: React.FC<AdminProductListProps> = ({
                 return (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
                         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm border border-slate-200 p-6">
-                            <h3 className="text-lg font-bold text-slate-900 mb-2">¿Eliminar producto?</h3>
+                            <h3 className="text-base font-bold text-slate-900 mb-2">¿Eliminar producto?</h3>
                             <p className="text-sm text-slate-600 mb-6">
                                 Se eliminará <strong>{product?.name}</strong> permanentemente.
                             </p>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { UserPlus, Edit2, TrendingUp, Users, ShoppingBag, Save, X, Eye, EyeOff, Search, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { User, Order } from '../types';
 import { supabase } from '../lib/supabase';
@@ -134,10 +134,10 @@ export const AdminSalesManagement: React.FC<AdminSalesManagementProps> = ({
     };
 
     return (
-        <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-6">
+        <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Gestión de Comerciales</h1>
+                    <h1 className="text-xl font-bold text-slate-900">Gestión de Comerciales</h1>
                     <p className="text-slate-500 text-sm">Administra el equipo de ventas y supervisa su rendimiento.</p>
                 </div>
                 <button
@@ -171,13 +171,13 @@ export const AdminSalesManagement: React.FC<AdminSalesManagementProps> = ({
                     <table className="w-full text-sm text-left">
                         <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider font-bold">
                             <tr>
-                                <th className="px-6 py-4">Nombre / Código</th>
-                                <th className="px-6 py-4">Usuario</th>
+                                <th className="px-3 py-2">Nombre / Código</th>
+                                <th className="px-3 py-2">Usuario</th>
                                 <th className="px-4 py-4 text-center">Clientes</th>
                                 <th className="px-4 py-4 text-center">Pedidos</th>
-                                <th className="px-6 py-4 text-right">Ventas</th>
-                                <th className="px-6 py-4 text-right">Rappels</th>
-                                <th className="px-6 py-4 text-right">Acciones</th>
+                                <th className="px-3 py-2 text-right">Ventas</th>
+                                <th className="px-3 py-2 text-right">Rappels</th>
+                                <th className="px-3 py-2 text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -188,7 +188,7 @@ export const AdminSalesManagement: React.FC<AdminSalesManagementProps> = ({
                                 return (
                                     <React.Fragment key={rep.id}>
                                         <tr className="hover:bg-slate-50/80 transition-colors">
-                                            <td className="px-6 py-4">
+                                            <td className="px-3 py-2">
                                                 <div className="flex items-center gap-2">
                                                     <button
                                                         onClick={() => setExpandedRep(isExpanded ? null : rep.id)}
@@ -202,7 +202,7 @@ export const AdminSalesManagement: React.FC<AdminSalesManagementProps> = ({
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-slate-600">@{rep.username}</td>
+                                            <td className="px-3 py-2 text-slate-600">@{rep.username}</td>
                                             <td className="px-4 py-4 text-center">
                                                 <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-xs font-bold">
                                                     <Users size={12} /> {stats.clientsCount}
@@ -213,11 +213,11 @@ export const AdminSalesManagement: React.FC<AdminSalesManagementProps> = ({
                                                     <ShoppingBag size={12} /> {stats.ordersCount}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-right font-bold text-slate-900">{formatCurrency(stats.totalSales)}</td>
-                                            <td className="px-6 py-4 text-right">
+                                            <td className="px-3 py-2 text-right font-bold text-slate-900">{formatCurrency(stats.totalSales)}</td>
+                                            <td className="px-3 py-2 text-right">
                                                 <span className="text-purple-600 font-bold">{formatCurrency(stats.totalRappel)}</span>
                                             </td>
-                                            <td className="px-6 py-4 text-right">
+                                            <td className="px-3 py-2 text-right">
                                                 <div className="flex justify-end gap-1">
                                                     <button
                                                         onClick={() => startEdit(rep)}
@@ -281,14 +281,14 @@ export const AdminSalesManagement: React.FC<AdminSalesManagementProps> = ({
             {isAdding && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200 overflow-hidden">
-                        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
-                            <h2 className="font-bold text-lg">{editingRep ? 'Editar Comercial' : 'Nuevo Comercial'}</h2>
+                        <div className="bg-slate-900 text-white px-3 py-2 flex items-center justify-between">
+                            <h2 className="font-bold text-base">{editingRep ? 'Editar Comercial' : 'Nuevo Comercial'}</h2>
                             <button onClick={() => setIsAdding(false)} className="text-slate-400 hover:text-white">
                                 <X size={20} />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSave} className="p-6 space-y-4">
+                        <form onSubmit={handleSave} className="p-4 space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="col-span-2">
                                     <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Nombre Completo *</label>
@@ -361,7 +361,7 @@ export const AdminSalesManagement: React.FC<AdminSalesManagementProps> = ({
                                 <button
                                     type="submit"
                                     disabled={saving}
-                                    className="bg-green-600 text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-green-700 disabled:opacity-50 transition-colors shadow-lg shadow-green-600/20"
+                                    className="bg-green-600 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-green-700 disabled:opacity-50 transition-colors shadow-lg shadow-green-600/20"
                                 >
                                     <Save size={18} />
                                     {saving ? 'Guardando...' : 'Guardar Comercial'}
@@ -376,7 +376,7 @@ export const AdminSalesManagement: React.FC<AdminSalesManagementProps> = ({
             {pendingDeleteRep && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm border border-slate-200 p-6">
-                        <h3 className="text-lg font-bold text-slate-900 mb-2">¿Eliminar comercial?</h3>
+                        <h3 className="text-base font-bold text-slate-900 mb-2">¿Eliminar comercial?</h3>
                         <p className="text-sm text-slate-600 mb-6">
                             Esto eliminará a <strong>{pendingDeleteRep.name}</strong> permanentemente. Esta acción no se puede deshacer.
                         </p>

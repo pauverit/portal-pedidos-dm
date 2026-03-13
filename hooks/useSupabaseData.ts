@@ -85,6 +85,7 @@ export function useSupabaseData() {
                     phone: c.phone,
                     rappelAccumulated: Number(c.rappel_accumulated) || 0,
                     delegation: c.delegation,
+                    delegationId: c.delegation_id,
                     salesRep: c.sales_rep,
                     salesRepCode: c.sales_rep_code,
                     registrationDate: c.created_at,

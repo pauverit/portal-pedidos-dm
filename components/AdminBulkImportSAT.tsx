@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+﻿import React, { useState, useRef } from 'react';
 import { Upload, Download, CheckCircle, AlertTriangle, Loader, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -70,7 +70,7 @@ const ImportSection: React.FC<ImportSectionProps> = ({ title, templateContent, t
     return (
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <button
-                className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors"
+                className="w-full flex items-center justify-between px-3 py-2 hover:bg-slate-50 transition-colors"
                 onClick={() => setOpen(o => !o)}
             >
                 <h2 className="font-bold text-slate-900">{title}</h2>
@@ -141,7 +141,7 @@ const ImportSection: React.FC<ImportSectionProps> = ({ title, templateContent, t
                                 <CheckCircle size={16} /> {result.ok} filas importadas correctamente
                             </div>
                             {result.errors.length > 0 && (
-                                <div className="bg-red-50 rounded-xl px-4 py-3 space-y-1">
+                                <div className="bg-red-50 rounded-xl px-3 py-2 space-y-1">
                                     <p className="text-xs font-bold text-red-700 flex items-center gap-1"><AlertTriangle size={13} />{result.errors.length} errores:</p>
                                     {result.errors.map((e, i) => (
                                         <p key={i} className="text-xs text-red-600">Fila {e.row}: {e.msg}</p>
@@ -252,9 +252,9 @@ export const AdminBulkImportSAT: React.FC = () => {
     };
 
     return (
-        <div className="p-6 md:p-10 max-w-4xl mx-auto space-y-6">
+        <div className="p-4 md:p-10 max-w-4xl mx-auto space-y-4">
             <div>
-                <h1 className="text-2xl font-black text-slate-900">Carga masiva SAT</h1>
+                <h1 className="text-xl font-black text-slate-900">Carga masiva SAT</h1>
                 <p className="text-slate-500 text-sm mt-1">
                     Importa clientes y activos desde CSV. Usa punto y coma «;» como separador. Si el email ya existe, se actualiza.
                 </p>

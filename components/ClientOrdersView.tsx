@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { User, Order } from '../types';
 import { ShoppingBag, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -37,12 +37,12 @@ export const ClientOrdersView: React.FC<ClientOrdersViewProps> = ({
     const pagedOrders = userOrders.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
     return (
-        <div className="p-6 md:p-10 max-w-7xl mx-auto">
-            <h1 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+        <div className="p-4 md:p-10 max-w-7xl mx-auto">
+            <h1 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
                 <ShoppingBag className="text-slate-400" /> Mis Pedidos
             </h1>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                     <p className="text-slate-500 text-xs uppercase font-bold mb-1">Pedidos Totales</p>
                     <p className="text-3xl font-bold text-slate-900">{userOrders.length}</p>
@@ -94,23 +94,23 @@ export const ClientOrdersView: React.FC<ClientOrdersViewProps> = ({
                                 const statusInfo = STATUS_LABELS[order.status] || STATUS_LABELS['tramitado'];
                                 return (
                                     <tr key={order.id} className="hover:bg-slate-50 transition-colors">
-                                        <td className="px-6 py-4 font-mono font-bold text-slate-900">#{order.orderNumber || order.id.slice(-6)}</td>
+                                        <td className="px-3 py-2 font-mono font-bold text-slate-900">#{order.orderNumber || order.id.slice(-6)}</td>
                                         {isManagerView && (
-                                            <td className="px-6 py-4 font-medium text-slate-700">{getUserName(order.userId)}</td>
+                                            <td className="px-3 py-2 font-medium text-slate-700">{getUserName(order.userId)}</td>
                                         )}
-                                        <td className="px-6 py-4 text-slate-500">{new Date(order.date).toLocaleDateString('es-ES')}</td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-3 py-2 text-slate-500">{new Date(order.date).toLocaleDateString('es-ES')}</td>
+                                        <td className="px-3 py-2">
                                             <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${statusInfo.className}`}>
                                                 {statusInfo.label}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-slate-600">
+                                        <td className="px-3 py-2 text-slate-600">
                                             {order.items.length} artículos
                                             <div className="text-xs text-slate-400 mt-1 truncate max-w-[200px]">
                                                 {order.items.map(i => i.name).join(', ')}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-right font-bold text-slate-900">{formatCurrency(order.total)}</td>
+                                        <td className="px-3 py-2 text-right font-bold text-slate-900">{formatCurrency(order.total)}</td>
                                     </tr>
                                 );
                             })

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Users, ShoppingBag, TrendingUp, ChevronRight, ChevronLeft, Calendar, UserPlus, ContactRound, Receipt } from 'lucide-react';
 import { User, Order } from '../types';
 
@@ -95,16 +95,16 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({
     ];
 
     return (
-        <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8">
+        <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-8">
             <div>
                 <h1 className="text-3xl font-bold text-slate-900">Bienvenido, {currentUser.name}</h1>
                 <p className="text-slate-500 mt-1">Resumen de tu actividad comercial.</p>
             </div>
 
             {/* Global Stats - Simplified for maximum impact */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {stats.map((stat, idx) => (
-                    <div key={idx} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-5 hover:shadow-md transition-shadow">
+                    <div key={idx} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition-shadow">
                         <div className={`${stat.color} p-4 rounded-xl text-white shadow-lg shadow-${stat.color.split('-')[1]}-200`}>
                             <stat.icon size={28} />
                         </div>
@@ -119,7 +119,7 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({
             {/* Monthly Orders Panel */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 {/* Month Navigator */}
-                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <div className="px-3 py-2 border-b border-slate-100 flex items-center justify-between bg-slate-50">
                     <button
                         onClick={goToPrevMonth}
                         className="p-2 rounded-lg hover:bg-slate-200 transition-colors text-slate-600"
@@ -128,7 +128,7 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({
                     </button>
                     <div className="flex items-center gap-3">
                         <Calendar size={18} className="text-slate-400" />
-                        <h2 className="font-bold text-slate-900 text-lg">
+                        <h2 className="font-bold text-slate-900 text-base">
                             {MONTH_NAMES[selectedMonth]} {selectedYear}
                         </h2>
                         {isCurrentMonth && (
@@ -147,7 +147,7 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({
                 </div>
 
                 {/* Month Summary Bar */}
-                <div className="px-6 py-6 flex flex-wrap items-center gap-x-12 gap-y-6 border-b border-slate-100 bg-white">
+                <div className="px-4 py-4 flex flex-wrap items-center gap-x-12 gap-y-6 border-b border-slate-100 bg-white">
                     <div>
                         <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Pedidos del mes</p>
                         <p className="text-3xl font-black text-slate-900">{monthOrders.length}</p>
@@ -181,7 +181,7 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({
                             };
                             const statusInfo = statusLabels[order.status] || statusLabels['tramitado'];
                             return (
-                                <div key={order.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                                <div key={order.id} className="px-3 py-2 flex items-center justify-between hover:bg-slate-50 transition-colors">
                                     <div>
                                         <p className="font-bold text-slate-900">{client?.name || 'Cliente Desconocido'}</p>
                                         <p className="text-xs text-slate-500">{new Date(order.date).toLocaleDateString('es-ES')}</p>
@@ -201,7 +201,7 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({
 
             {/* Quick Actions */}
             <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-lg">
-                <h2 className="text-xl font-bold mb-4">Acciones Rápidas</h2>
+                <h2 className="text-lg font-bold mb-4">Acciones Rápidas</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <button
                         onClick={() => onNavigate('admin_new_client')}

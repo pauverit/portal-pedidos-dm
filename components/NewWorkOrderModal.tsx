@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { X, ClipboardList, Loader } from 'lucide-react';
 import { User as UserType, Machine } from '../types';
 import { useMachines } from '../hooks/useMachines';
@@ -85,7 +85,7 @@ export const NewWorkOrderModal: React.FC<NewWorkOrderModalProps> = ({
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white rounded-t-2xl z-10">
+                <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 sticky top-0 bg-white rounded-t-2xl z-10">
                     <div className="flex items-center gap-2">
                         <div className="p-2 bg-indigo-100 rounded-lg"><ClipboardList size={16} className="text-indigo-600" /></div>
                         <h2 className="font-bold text-slate-900">Nuevo Parte de Trabajo</h2>
@@ -95,7 +95,7 @@ export const NewWorkOrderModal: React.FC<NewWorkOrderModalProps> = ({
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                <form onSubmit={handleSubmit} className="p-4 space-y-4">
                     {/* Client */}
                     <div>
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Cliente *</label>

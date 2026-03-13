@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Plus, Receipt, Car, Hotel, Package, Trash2, FileText, Calendar, ChevronLeft, ChevronRight, Image, TrendingUp } from 'lucide-react';
 import { User, Expense, ExpenseType } from '../types';
 import { NewExpenseModal } from './NewExpenseModal';
@@ -53,7 +53,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({ currentUser, formatC
     const report = getMonthlyReport(selectedMonth, selectedYear, expenses);
 
     return (
-        <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8">
+        <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-8">
             {/* Header */}
             <div className="flex items-start justify-between flex-wrap gap-4">
                 <div>
@@ -63,14 +63,14 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({ currentUser, formatC
                 <div className="flex gap-3">
                     <button
                         onClick={() => setShowReport(true)}
-                        className="flex items-center gap-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-xl font-semibold text-sm transition-colors shadow-sm"
+                        className="flex items-center gap-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-xl font-semibold text-sm transition-colors shadow-sm"
                     >
                         <FileText size={16} />
                         <span>Informe</span>
                     </button>
                     <button
                         onClick={() => setShowNewExpense(true)}
-                        className="flex items-center gap-2 bg-slate-900 hover:bg-slate-700 text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-colors shadow-sm"
+                        className="flex items-center gap-2 bg-slate-900 hover:bg-slate-700 text-white px-3 py-2 rounded-xl font-semibold text-sm transition-colors shadow-sm"
                     >
                         <Plus size={16} />
                         <span>Nuevo Gasto</span>
@@ -80,13 +80,13 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({ currentUser, formatC
 
             {/* Month navigator */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <div className="px-3 py-2 border-b border-slate-100 flex items-center justify-between bg-slate-50">
                     <button onClick={goToPrevMonth} className="p-2 rounded-lg hover:bg-slate-200 transition-colors text-slate-600">
                         <ChevronLeft size={18} />
                     </button>
                     <div className="flex items-center gap-3">
                         <Calendar size={18} className="text-slate-400" />
-                        <h2 className="font-bold text-slate-900 text-lg">{MONTH_NAMES[selectedMonth]} {selectedYear}</h2>
+                        <h2 className="font-bold text-slate-900 text-base">{MONTH_NAMES[selectedMonth]} {selectedYear}</h2>
                         {isCurrentMonth && (
                             <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Mes actual</span>
                         )}
@@ -97,7 +97,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({ currentUser, formatC
                 </div>
 
                 {/* KPI bar */}
-                <div className="px-6 py-5 grid grid-cols-2 md:grid-cols-4 gap-6 border-b border-slate-100">
+                <div className="px-4 py-4 grid grid-cols-2 md:grid-cols-4 gap-4 border-b border-slate-100">
                     <div>
                         <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total mes</p>
                         <p className="text-3xl font-black text-slate-900">{formatCurrency(report.totalAmount)}</p>
@@ -134,7 +134,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({ currentUser, formatC
                         expenses.map(expense => {
                             const meta = TYPE_META[expense.type];
                             return (
-                                <div key={expense.id} className="px-6 py-4 flex items-center gap-4 hover:bg-slate-50 group transition-colors">
+                                <div key={expense.id} className="px-3 py-2 flex items-center gap-4 hover:bg-slate-50 group transition-colors">
                                     <div className={`${meta.bg} ${meta.text} p-2.5 rounded-xl flex-shrink-0`}>
                                         <meta.icon size={18} />
                                     </div>

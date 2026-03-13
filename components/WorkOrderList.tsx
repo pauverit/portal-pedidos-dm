@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import {
     Plus, Search, Filter, Loader, Wrench, Calendar,
     CheckCircle, FileText, ClipboardList, AlertTriangle
@@ -72,15 +72,15 @@ export const WorkOrderList: React.FC<WorkOrderListProps> = ({
     });
 
     return (
-        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-5">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-4">
             {/* Header */}
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h1 className="text-2xl font-black text-slate-900">Partes de Trabajo</h1>
+                    <h1 className="text-xl font-black text-slate-900">Partes de Trabajo</h1>
                     <p className="text-slate-400 text-sm mt-0.5">{workOrders.length} parte{workOrders.length !== 1 ? 's' : ''} en total</p>
                 </div>
                 <button onClick={onNewWorkOrder}
-                    className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-700 transition-colors">
+                    className="flex items-center gap-2 bg-slate-900 text-white px-3 py-2 rounded-xl text-sm font-bold hover:bg-slate-700 transition-colors">
                     <Plus size={16} /> Nuevo Parte
                 </button>
             </div>
@@ -147,7 +147,7 @@ export const WorkOrderList: React.FC<WorkOrderListProps> = ({
                                     className="w-full text-left hover:bg-slate-50 transition-colors">
 
                                     {/* Mobile: tarjeta compacta 2 líneas */}
-                                    <div className="md:hidden px-4 py-2.5">
+                                    <div className="md:hidden px-3 py-2">
                                         <div className="flex items-center justify-between gap-2">
                                             <div className="flex items-center gap-2 min-w-0">
                                                 <span className={`w-2 h-2 rounded-full shrink-0 ${PRIORITY_DOT[wo.priority]}`} />

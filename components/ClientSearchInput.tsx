@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+﻿import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Search, X, ChevronDown, User } from 'lucide-react';
 import { User as UserType } from '../types';
 
@@ -138,7 +138,7 @@ export const ClientSearchInput: React.FC<ClientSearchInputProps> = ({
                     {/* List */}
                     <ul ref={listRef} role="listbox" className="max-h-52 overflow-y-auto py-1">
                         {filtered.length === 0 ? (
-                            <li className="px-4 py-3 text-sm text-slate-400 text-center">Sin resultados</li>
+                            <li className="px-3 py-2 text-sm text-slate-400 text-center">Sin resultados</li>
                         ) : (
                             filtered.map((c, i) => {
                                 const displayName = c.name && c.name !== c.email ? c.name : null;
@@ -150,7 +150,7 @@ export const ClientSearchInput: React.FC<ClientSearchInputProps> = ({
                                         aria-selected={c.id === value}
                                         onMouseDown={() => handleSelect(c.id)}
                                         onMouseEnter={() => setHighlighted(i)}
-                                        className={`px-4 py-2.5 text-sm cursor-pointer flex items-center justify-between gap-2 transition-colors
+                                        className={`px-3 py-2 text-sm cursor-pointer flex items-center justify-between gap-2 transition-colors
                                             ${c.id === value ? 'bg-slate-900 text-white font-semibold' : i === highlighted ? 'bg-slate-50' : 'hover:bg-slate-50'}
                                         `}
                                     >

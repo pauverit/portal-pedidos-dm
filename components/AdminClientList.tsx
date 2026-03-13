@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Edit2, Trash2, CheckCircle, AlertCircle, Clock, ShoppingBag, TrendingUp, X, Save, Eye, EyeOff, Tag, UserCheck, Monitor, Info } from 'lucide-react';
 import { User, Order, Product } from '../types';
 import { SALES_REPS } from '../constants';
@@ -273,15 +273,15 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                     <table className="w-full text-sm text-left">
                         <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider">
                             <tr>
-                                <th className="px-4 py-3">Empresa / Usuario</th>
-                                <th className="px-4 py-3">Comercial</th>
-                                <th className="px-4 py-3 text-center">Estado</th>
-                                <th className="px-4 py-3 text-center">Contraseña</th>
-                                <th className="px-4 py-3 text-center">Pedidos</th>
-                                <th className="px-4 py-3 text-center">Cupones</th>
-                                <th className="px-4 py-3 text-right">Mín. Rappel</th>
-                                <th className="px-4 py-3 text-right">Rappel</th>
-                                <th className="px-4 py-3 text-right">Acciones</th>
+                                <th className="px-3 py-2">Empresa / Usuario</th>
+                                <th className="px-3 py-2">Comercial</th>
+                                <th className="px-3 py-2 text-center">Estado</th>
+                                <th className="px-3 py-2 text-center">Contraseña</th>
+                                <th className="px-3 py-2 text-center">Pedidos</th>
+                                <th className="px-3 py-2 text-center">Cupones</th>
+                                <th className="px-3 py-2 text-right">Mín. Rappel</th>
+                                <th className="px-3 py-2 text-right">Rappel</th>
+                                <th className="px-3 py-2 text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -300,21 +300,21 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
 
                                 return (
                                     <tr key={client.id} className="hover:bg-slate-50 transition-colors">
-                                        <td className="px-4 py-3">
+                                        <td className="px-3 py-2">
                                             <div className="font-semibold text-slate-900">{client.name}</div>
                                             <div className="text-xs text-slate-400">@{client.username}</div>
                                             {client.zone && (
                                                 <div className="text-xs text-slate-500 font-medium italic">{client.zone}</div>
                                             )}
                                         </td>
-                                        <td className="px-4 py-3">
+                                        <td className="px-3 py-2">
                                             {client.salesRep ? (
                                                 <span className="text-slate-700 font-medium">{client.salesRep}</span>
                                             ) : (
                                                 <span className="text-red-500 text-xs font-bold">Sin asignar ⚠️</span>
                                             )}
                                         </td>
-                                        <td className="px-4 py-3 text-center">
+                                        <td className="px-3 py-2 text-center">
                                             {isActive ? (
                                                 <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full">
                                                     <CheckCircle size={11} /> Activo
@@ -325,7 +325,7 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                                                 </span>
                                             )}
                                         </td>
-                                        <td className="px-4 py-3 text-center">
+                                        <td className="px-3 py-2 text-center">
                                             {passwordChanged ? (
                                                 <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-full">
                                                     <CheckCircle size={11} /> Cambiada
@@ -336,13 +336,13 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                                                 </span>
                                             )}
                                         </td>
-                                        <td className="px-4 py-3 text-center">
+                                        <td className="px-3 py-2 text-center">
                                             <div className="font-bold text-slate-900">{clientOrders.length}</div>
                                             {totalSpent > 0 && (
                                                 <div className="text-xs text-slate-400">{formatCurrency(totalSpent)}</div>
                                             )}
                                         </td>
-                                        <td className="px-4 py-3 text-center">
+                                        <td className="px-3 py-2 text-center">
                                             {client.usedCoupons && client.usedCoupons.length > 0 ? (
                                                 <div className="flex flex-col gap-0.5">
                                                     {client.usedCoupons.map(coupon => (
@@ -355,16 +355,16 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                                                 <span className="text-slate-300 text-xs">—</span>
                                             )}
                                         </td>
-                                        <td className="px-4 py-3 text-right">
+                                        <td className="px-3 py-2 text-right">
                                             <div className="font-semibold text-slate-700">{client.rappelThreshold || 300}€</div>
                                             <div className="text-[10px] text-slate-400 uppercase tracking-tight">mín. pedido</div>
                                         </td>
-                                        <td className="px-4 py-3 text-right">
+                                        <td className="px-3 py-2 text-right">
                                             <span className={`font-bold ${client.rappelAccumulated > 0 ? 'text-green-600' : 'text-slate-400'}`}>
                                                 {formatCurrency(client.rappelAccumulated)}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 text-right">
+                                        <td className="px-3 py-2 text-right">
                                             <div className="flex items-center justify-end gap-1">
                                                 {!isActive && (
                                                     <button
@@ -451,9 +451,9 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
             {editingClient && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
-                        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between shrink-0">
+                        <div className="bg-slate-900 text-white px-3 py-2 flex items-center justify-between shrink-0">
                             <div>
-                                <h2 className="font-bold text-lg">Editar Cliente</h2>
+                                <h2 className="font-bold text-base">Editar Cliente</h2>
                                 <p className="text-slate-400 text-sm">{editingClient.name}</p>
                             </div>
                             <button onClick={() => setEditingClient(null)} className="text-slate-400 hover:text-white">
@@ -729,7 +729,7 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                         </div>
 
                         {/* Modal footer */}
-                        <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3 shrink-0">
+                        <div className="px-3 py-2 border-t border-slate-100 flex justify-end gap-3 shrink-0">
                             <button
                                 onClick={() => setEditingClient(null)}
                                 className="px-4 py-2 text-sm text-slate-500 hover:text-slate-800"
@@ -755,7 +755,7 @@ export const AdminClientList: React.FC<AdminClientListProps> = ({
                 return (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
                         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm border border-slate-200 p-6">
-                            <h3 className="text-lg font-bold text-slate-900 mb-2">¿Eliminar cliente?</h3>
+                            <h3 className="text-base font-bold text-slate-900 mb-2">¿Eliminar cliente?</h3>
                             <p className="text-sm text-slate-600 mb-6">
                                 Esto eliminará a <strong>{target?.name}</strong> permanentemente. Esta acción no se puede deshacer.
                             </p>

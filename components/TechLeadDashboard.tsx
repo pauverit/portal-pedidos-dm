@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Wrench, AlertTriangle, ClipboardList, CheckCircle, Clock, Users, ChevronDown, ChevronUp, Calendar, AlertCircle, Plus, ShieldCheck } from 'lucide-react';
 import { User } from '../types';
 import { supabase } from '../lib/supabase';
@@ -93,7 +93,7 @@ export const TechLeadDashboard: React.FC<TechLeadDashboardProps> = ({
     const totalTechs = technicians.filter(t => t.role === 'tech').length;
 
     return (
-        <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8">
+        <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-8">
             {/* Header */}
             <div className="flex items-start justify-between flex-wrap gap-4">
                 <div>
@@ -103,14 +103,14 @@ export const TechLeadDashboard: React.FC<TechLeadDashboardProps> = ({
                 <div className="flex gap-3">
                     <button
                         onClick={() => onNavigate('sat_parts')}
-                        className="flex items-center gap-2 bg-slate-900 hover:bg-slate-700 text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-colors shadow-sm"
+                        className="flex items-center gap-2 bg-slate-900 hover:bg-slate-700 text-white px-3 py-2 rounded-xl font-semibold text-sm transition-colors shadow-sm"
                     >
                         <Plus size={16} />
                         <span>Nuevo Parte</span>
                     </button>
                     <button
                         onClick={() => onNavigate('sat_parts')}
-                        className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-colors shadow-sm"
+                        className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-xl font-semibold text-sm transition-colors shadow-sm"
                     >
                         <ClipboardList size={16} />
                         <span>Ver Todos</span>
@@ -125,7 +125,7 @@ export const TechLeadDashboard: React.FC<TechLeadDashboardProps> = ({
                 </button>
                 <div className="flex items-center gap-2">
                     <Calendar size={16} className="text-slate-400" />
-                    <span className="font-bold text-slate-900 text-lg">{MONTH_NAMES[selectedMonth]} {selectedYear}</span>
+                    <span className="font-bold text-slate-900 text-base">{MONTH_NAMES[selectedMonth]} {selectedYear}</span>
                     {isCurrentMonth && (
                         <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Actual</span>
                     )}
@@ -146,7 +146,7 @@ export const TechLeadDashboard: React.FC<TechLeadDashboardProps> = ({
                     <div key={s.label} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex items-center gap-3">
                         <div className={`${s.color} p-2.5 rounded-xl text-white`}><s.icon size={20} /></div>
                         <div>
-                            <p className="text-2xl font-black text-slate-900">{s.value}</p>
+                            <p className="text-xl font-black text-slate-900">{s.value}</p>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{s.label}</p>
                         </div>
                     </div>
@@ -214,7 +214,7 @@ export const TechLeadDashboard: React.FC<TechLeadDashboardProps> = ({
                                         ].map(m => (
                                             <div key={m.label} className="bg-white rounded-xl border border-slate-100 p-3 text-center">
                                                 <m.icon size={14} className={`${m.color} mx-auto mb-1`} />
-                                                <p className="font-black text-slate-900 text-lg leading-none">{m.val}</p>
+                                                <p className="font-black text-slate-900 text-base leading-none">{m.val}</p>
                                                 <p className="text-[10px] text-slate-400 uppercase font-bold mt-0.5">{m.label}</p>
                                             </div>
                                         ))}
@@ -236,7 +236,7 @@ export const TechLeadDashboard: React.FC<TechLeadDashboardProps> = ({
 
             {/* Quick access to own work */}
             <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-lg">
-                <h2 className="text-lg font-bold mb-4">Mis acciones rápidas</h2>
+                <h2 className="text-base font-bold mb-4">Mis acciones rápidas</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {[
                         { label: 'Mis Partes', view: 'sat_parts', icon: ClipboardList },

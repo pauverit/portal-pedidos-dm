@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Wrench, AlertTriangle, ClipboardList, CheckCircle, Clock, TrendingUp, Users, Receipt } from 'lucide-react';
 import { User } from '../types';
 
@@ -25,7 +25,7 @@ export const SatDashboard: React.FC<SatDashboardProps> = ({ currentUser, onNavig
     ];
 
     return (
-        <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8">
+        <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-8">
             {/* Header */}
             <div className="flex items-start justify-between">
                 <div>
@@ -43,10 +43,10 @@ export const SatDashboard: React.FC<SatDashboardProps> = ({ currentUser, onNavig
             </div>
 
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {stats.map((stat, idx) => (
                     <button key={idx} onClick={() => onNavigate(stat.view)}
-                        className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-5 hover:shadow-md transition-all text-left w-full">
+                        className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition-all text-left w-full">
                         <div className={`${stat.color} p-4 rounded-xl text-white shadow-lg`}>
                             <stat.icon size={26} />
                         </div>
@@ -60,7 +60,7 @@ export const SatDashboard: React.FC<SatDashboardProps> = ({ currentUser, onNavig
 
             {/* Quick Actions */}
             <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-lg">
-                <h2 className="text-xl font-bold mb-4">Acciones Rápidas</h2>
+                <h2 className="text-lg font-bold mb-4">Acciones Rápidas</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {quickActions.map((action, idx) => (
                         <button key={idx} onClick={() => onNavigate(action.view)}

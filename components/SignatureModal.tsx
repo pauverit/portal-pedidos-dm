@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+﻿import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { X, PenLine, RotateCcw, CheckCircle } from 'lucide-react';
 
 interface SignatureModalProps {
@@ -159,17 +159,17 @@ export const SignatureModal: React.FC<SignatureModalProps> = ({
                 <button
                     onClick={clearCanvas}
                     disabled={isEmpty || saving}
-                    className="flex items-center gap-2 px-4 py-3 rounded-xl border border-white/20 text-white/70 hover:text-white hover:border-white/40 disabled:opacity-30 transition-colors text-sm font-semibold"
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/20 text-white/70 hover:text-white hover:border-white/40 disabled:opacity-30 transition-colors text-sm font-semibold"
                 >
                     <RotateCcw size={15} /> Borrar
                 </button>
                 <button
                     onClick={handleSign}
                     disabled={isEmpty || saving}
-                    className="flex-1 flex items-center justify-center gap-2 bg-emerald-500 text-white px-4 py-3 rounded-xl font-bold text-sm hover:bg-emerald-400 disabled:opacity-30 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-2 bg-emerald-500 text-white px-3 py-2 rounded-xl font-bold text-sm hover:bg-emerald-400 disabled:opacity-30 transition-colors"
                 >
                     {saving
-                        ? <><span className="animate-spin text-lg">◌</span> Guardando…</>
+                        ? <><span className="animate-spin text-base">◌</span> Guardando…</>
                         : <><CheckCircle size={17} /> Confirmar y firmar</>}
                 </button>
             </div>

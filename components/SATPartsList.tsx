@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
     Plus, Search, Loader, FileText, User, Wrench,
     CheckCircle, PenLine, XCircle, ClipboardList, Clock
@@ -75,21 +75,21 @@ export const SATPartsList: React.FC<SATPartsListProps> = ({
     });
 
     return (
-        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-5">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-4">
             {/* Header */}
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h1 className="text-2xl font-black text-slate-900">Incidencias &amp; Partes</h1>
+                    <h1 className="text-xl font-black text-slate-900">Incidencias &amp; Partes</h1>
                     <p className="text-slate-400 text-sm mt-0.5">{parts.length} parte{parts.length !== 1 ? 's' : ''} en total</p>
                 </div>
                 {currentUser.role !== 'client' ? (
                     <button onClick={onNewPart}
-                        className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-700 transition-colors">
+                        className="flex items-center gap-2 bg-slate-900 text-white px-3 py-2 rounded-xl text-sm font-bold hover:bg-slate-700 transition-colors">
                         <Plus size={16} /> Nuevo Parte
                     </button>
                 ) : (
                     <button onClick={onNewPart}
-                        className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700 transition-colors">
+                        className="flex items-center gap-2 bg-indigo-600 text-white px-3 py-2 rounded-xl text-sm font-bold hover:bg-indigo-700 transition-colors">
                         <Plus size={16} /> Abrir Incidencia
                     </button>
                 )}
@@ -156,7 +156,7 @@ export const SATPartsList: React.FC<SATPartsListProps> = ({
                                     className="w-full text-left hover:bg-slate-50 transition-colors">
 
                                     {/* Mobile: tarjeta compacta 2 líneas */}
-                                    <div className="md:hidden px-4 py-2.5">
+                                    <div className="md:hidden px-3 py-2">
                                         <div className="flex items-center justify-between gap-2">
                                             <div className="flex items-center gap-2 min-w-0">
                                                 <span className={`w-2 h-2 rounded-full shrink-0 ${PRIORITY_DOT[p.priority] || 'bg-slate-300'}`} />

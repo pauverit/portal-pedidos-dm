@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { X, Printer, Receipt, Car, Hotel, Package, TrendingUp, FileText } from 'lucide-react';
 import { Expense, ExpenseMonthlyReport, ExpenseType } from '../types';
 
@@ -53,12 +53,12 @@ export const ExpenseReportModal: React.FC<ExpenseReportModalProps> = ({
                         <div className="bg-indigo-100 p-2 rounded-xl">
                             <FileText size={18} className="text-indigo-700" />
                         </div>
-                        <h2 className="text-lg font-bold text-slate-900">Informe de Gastos</h2>
+                        <h2 className="text-base font-bold text-slate-900">Informe de Gastos</h2>
                     </div>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-900 no-print"><X size={20} /></button>
                 </div>
 
-                <div id="expense-report-print" className="p-6 space-y-6">
+                <div id="expense-report-print" className="p-4 space-y-4">
                     {/* Month selector */}
                     <div className="flex gap-3 no-print">
                         <select
@@ -80,22 +80,22 @@ export const ExpenseReportModal: React.FC<ExpenseReportModalProps> = ({
                     {/* Report title (visible on print) */}
                     <div className="text-center border-b border-slate-200 pb-4">
                         <p className="text-xs text-slate-400 uppercase tracking-widest">Informe de Gastos</p>
-                        <h1 className="text-2xl font-black text-slate-900 mt-1">{MONTH_NAMES[month]} {year}</h1>
+                        <h1 className="text-xl font-black text-slate-900 mt-1">{MONTH_NAMES[month]} {year}</h1>
                         <p className="text-sm text-slate-500 mt-0.5">{userName}</p>
                     </div>
 
                     {/* KPI tiles */}
                     <div className="grid grid-cols-3 gap-4">
                         <div className="bg-slate-50 rounded-xl p-4 text-center">
-                            <p className="text-2xl font-black text-slate-900">{formatCurrency(report.totalAmount)}</p>
+                            <p className="text-xl font-black text-slate-900">{formatCurrency(report.totalAmount)}</p>
                             <p className="text-xs font-bold text-slate-400 uppercase mt-1">Total Mes</p>
                         </div>
                         <div className="bg-orange-50 rounded-xl p-4 text-center">
-                            <p className="text-2xl font-black text-orange-700">{report.byType.restaurant.count}</p>
+                            <p className="text-xl font-black text-orange-700">{report.byType.restaurant.count}</p>
                             <p className="text-xs font-bold text-orange-400 uppercase mt-1">Tickets</p>
                         </div>
                         <div className="bg-blue-50 rounded-xl p-4 text-center">
-                            <p className="text-2xl font-black text-blue-700">{report.totalKm.toFixed(0)} km</p>
+                            <p className="text-xl font-black text-blue-700">{report.totalKm.toFixed(0)} km</p>
                             <p className="text-xs font-bold text-blue-400 uppercase mt-1">Kilómetros</p>
                         </div>
                     </div>
@@ -109,7 +109,7 @@ export const ExpenseReportModal: React.FC<ExpenseReportModalProps> = ({
                                 const data = report.byType[t];
                                 if (data.count === 0) return null;
                                 return (
-                                    <div key={t} className="flex items-center justify-between bg-slate-50 rounded-xl px-4 py-3">
+                                    <div key={t} className="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2">
                                         <div className="flex items-center gap-3">
                                             <meta.icon size={16} className={meta.color} />
                                             <div>
@@ -146,25 +146,25 @@ export const ExpenseReportModal: React.FC<ExpenseReportModalProps> = ({
                                             const meta = TYPE_META[e.type];
                                             return (
                                                 <tr key={e.id} className="hover:bg-slate-50">
-                                                    <td className="px-4 py-2.5 text-slate-500">{new Date(e.expenseDate).toLocaleDateString('es-ES')}</td>
-                                                    <td className="px-4 py-2.5">
+                                                    <td className="px-3 py-2 text-slate-500">{new Date(e.expenseDate).toLocaleDateString('es-ES')}</td>
+                                                    <td className="px-3 py-2">
                                                         <div className="flex items-center gap-1.5">
                                                             <meta.icon size={12} className={meta.color} />
                                                             <span className="text-slate-700">{meta.label}</span>
                                                         </div>
                                                     </td>
-                                                    <td className="px-4 py-2.5 text-slate-500">
+                                                    <td className="px-3 py-2 text-slate-500">
                                                         {e.description || (e.type === 'km' ? `${e.km?.toFixed(1)} km` : '—')}
                                                     </td>
-                                                    <td className="px-4 py-2.5 text-right font-bold text-slate-900">{formatCurrency(e.amount)}</td>
+                                                    <td className="px-3 py-2 text-right font-bold text-slate-900">{formatCurrency(e.amount)}</td>
                                                 </tr>
                                             );
                                         })}
                                     </tbody>
                                     <tfoot className="bg-slate-900 text-white">
                                         <tr>
-                                            <td colSpan={3} className="px-4 py-3 font-bold text-sm">TOTAL</td>
-                                            <td className="px-4 py-3 text-right font-black text-lg">{formatCurrency(report.totalAmount)}</td>
+                                            <td colSpan={3} className="px-3 py-2 font-bold text-sm">TOTAL</td>
+                                            <td className="px-3 py-2 text-right font-black text-base">{formatCurrency(report.totalAmount)}</td>
                                         </tr>
                                     </tfoot>
                                 </table>

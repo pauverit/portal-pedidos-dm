@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { X, Phone, Loader, PhoneIncoming, PhoneOutgoing } from 'lucide-react';
 import { User } from '../types';
 import { ClientSearchInput } from './ClientSearchInput';
@@ -49,14 +49,14 @@ export const NewCallModal: React.FC<NewCallModalProps> = ({
                         <div className="bg-blue-100 p-2 rounded-xl">
                             <Phone size={18} className="text-blue-700" />
                         </div>
-                        <h2 className="text-lg font-bold text-slate-900">Registrar Llamada</h2>
+                        <h2 className="text-base font-bold text-slate-900">Registrar Llamada</h2>
                     </div>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-900 transition-colors">
                         <X size={20} />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                <form onSubmit={handleSubmit} className="p-4 space-y-4">
                     {/* Client selector */}
                     <div>
                         <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Cliente *</label>
@@ -76,7 +76,7 @@ export const NewCallModal: React.FC<NewCallModalProps> = ({
                             type="datetime-local"
                             value={callDate}
                             onChange={e => setCallDate(e.target.value)}
-                            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-slate-50"
+                            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-slate-50"
                             required
                         />
                     </div>
@@ -115,7 +115,7 @@ export const NewCallModal: React.FC<NewCallModalProps> = ({
                             onChange={e => setSummary(e.target.value)}
                             rows={3}
                             placeholder="¿Qué se habló?"
-                            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-slate-50 resize-none"
+                            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-slate-50 resize-none"
                         />
                     </div>
 

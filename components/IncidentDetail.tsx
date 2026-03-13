@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
     ArrowLeft, Clock, CheckCircle, AlertTriangle, User, Calendar,
     Wrench, MessageSquare, Send, ChevronDown, X
@@ -107,7 +107,7 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
     const sev = SEVERITY_LABELS[incident.severity];
 
     return (
-        <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6">
+        <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-4">
             {/* Back + Header */}
             <div className="flex items-start gap-3">
                 <button
@@ -118,7 +118,7 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
                 </button>
                 <div className="flex-1">
                     <div className="flex flex-wrap items-center gap-3">
-                        <h1 className="text-2xl font-black text-slate-900 font-mono">{incident.reference}</h1>
+                        <h1 className="text-xl font-black text-slate-900 font-mono">{incident.reference}</h1>
                         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold border ${st.color}`}>
                             <StatusIcon size={13} />
                             {st.label}
@@ -131,9 +131,9 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Main info */}
-                <div className="md:col-span-2 space-y-5">
+                <div className="md:col-span-2 space-y-4">
                     {/* Description card */}
                     <div className="bg-white rounded-2xl border border-slate-100 p-5">
                         <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Descripción</h2>
@@ -297,7 +297,7 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
                     {incident.status !== 'closed' && (
                         <button
                             onClick={() => onNewWorkOrder(incident.id)}
-                            className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-3 rounded-2xl font-bold text-sm hover:bg-indigo-700 transition-colors"
+                            className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-3 py-2 rounded-2xl font-bold text-sm hover:bg-indigo-700 transition-colors"
                         >
                             <Wrench size={16} />
                             Crear Parte de Trabajo

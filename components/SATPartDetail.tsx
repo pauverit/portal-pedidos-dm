@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
     ArrowLeft, Save, Loader, CheckCircle, XCircle,
     Wrench, FileText, ClipboardList, PenLine,
@@ -235,7 +235,7 @@ export const SATPartDetail: React.FC<Props> = ({
                 />
             )}
 
-            <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-5">
+            <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-4">
                 {/* Header */}
                 <div className="flex flex-wrap items-start gap-3">
                     <button onClick={onBack} className="mt-1 p-1.5 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 shrink-0">
@@ -243,7 +243,7 @@ export const SATPartDetail: React.FC<Props> = ({
                     </button>
                     <div className="flex-1">
                         <div className="flex flex-wrap items-center gap-2.5">
-                            <h1 className="text-xl font-black text-slate-900 font-mono">{part.reference}</h1>
+                            <h1 className="text-lg font-black text-slate-900 font-mono">{part.reference}</h1>
                             <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${st.color}`}>
                                 <StatusIcon size={12} />{st.label}
                             </span>
@@ -306,9 +306,9 @@ export const SATPartDetail: React.FC<Props> = ({
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* Main column */}
-                    <div className="md:col-span-2 space-y-5">
+                    <div className="md:col-span-2 space-y-4">
                         {/* Description */}
                         <div className="bg-white rounded-2xl border border-slate-100 p-5">
                             <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Descripción del problema</label>
@@ -467,7 +467,7 @@ export const SATPartDetail: React.FC<Props> = ({
                                 { label: 'Inicio', val: fmtDate(part.startedAt) },
                                 { label: 'Cierre', val: fmtDate(part.closedAt) },
                             ].map(x => (
-                                <div key={x.label} className="bg-white rounded-xl border border-slate-100 px-4 py-3">
+                                <div key={x.label} className="bg-white rounded-xl border border-slate-100 px-3 py-2">
                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{x.label}</p>
                                     <p className="text-xs font-semibold text-slate-700 mt-0.5">{x.val}</p>
                                 </div>

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import {
     Plus, Search, Cpu, ShieldCheck, ShieldOff, ArrowLeft,
     Camera, Loader, Save, X, Trash2, AlertTriangle, CheckCircle,
@@ -149,13 +149,13 @@ const MachineDetail: React.FC<MachineDetailProps> = ({
     const warrantyOk = isWarrantyValid(form.warrantyExpires);
 
     return (
-        <div className="p-4 md:p-8 max-w-3xl mx-auto space-y-6">
+        <div className="p-4 md:p-8 max-w-3xl mx-auto space-y-4">
             <div className="flex items-center gap-3">
                 <button onClick={onBack} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 shrink-0">
                     <ArrowLeft size={18} />
                 </button>
                 <div>
-                    <h1 className="text-xl font-black text-slate-900">{isNew ? 'Nuevo Activo' : `${machine.brand} ${machine.model}`}</h1>
+                    <h1 className="text-lg font-black text-slate-900">{isNew ? 'Nuevo Activo' : `${machine.brand} ${machine.model}`}</h1>
                     {!isNew && <p className="text-xs text-slate-400 font-mono mt-0.5">S/N {machine.serialNumber}</p>}
                 </div>
                 {!isNew && onNewIncident && (
@@ -169,7 +169,7 @@ const MachineDetail: React.FC<MachineDetailProps> = ({
                 )}
             </div>
 
-            <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Photo */}
                 <div className="md:col-span-1 flex flex-col items-center gap-3">
                     <div
@@ -302,10 +302,10 @@ export const MachinesPanel: React.FC<MachinesPanelProps> = ({ currentUser, clien
     }
 
     return (
-        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-5">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h1 className="text-2xl font-black text-slate-900">Activos</h1>
+                    <h1 className="text-xl font-black text-slate-900">Activos</h1>
                     <p className="text-slate-400 text-sm mt-0.5">{filtered.length} activo{filtered.length !== 1 ? 's' : ''} registrado{filtered.length !== 1 ? 's' : ''}</p>
                 </div>
                 <button
@@ -368,7 +368,7 @@ export const MachinesPanel: React.FC<MachinesPanelProps> = ({ currentUser, clien
                                     className="w-full text-left hover:bg-slate-50 transition-colors"
                                 >
                                     {/* Mobile: tarjeta compacta */}
-                                    <div className="md:hidden flex items-center gap-3 px-4 py-2.5">
+                                    <div className="md:hidden flex items-center gap-3 px-3 py-2">
                                         <MachineThumbnail src={m.imageUrl} size={36} />
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center justify-between gap-2">

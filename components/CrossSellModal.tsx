@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { X, Layers, Check, ChevronDown } from 'lucide-react';
 import { CartItem, Product } from '../types';
 

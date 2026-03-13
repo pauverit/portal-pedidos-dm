@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+﻿import React, { useState, useRef } from 'react';
 import { X, Receipt, Car, Hotel, Package, Upload, Loader, Calculator, Image } from 'lucide-react';
 import { User, ExpenseType } from '../types';
 
@@ -89,14 +89,14 @@ export const NewExpenseModal: React.FC<NewExpenseModalProps> = ({ currentUser, o
                         <div className="bg-orange-100 p-2 rounded-xl">
                             <Receipt size={18} className="text-orange-700" />
                         </div>
-                        <h2 className="text-lg font-bold text-slate-900">Nuevo Gasto</h2>
+                        <h2 className="text-base font-bold text-slate-900">Nuevo Gasto</h2>
                     </div>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-900 transition-colors">
                         <X size={20} />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                <form onSubmit={handleSubmit} className="p-4 space-y-4">
                     {/* Expense Type */}
                     <div>
                         <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Tipo de gasto</label>
@@ -131,7 +131,7 @@ export const NewExpenseModal: React.FC<NewExpenseModalProps> = ({ currentUser, o
                             type="date"
                             value={expenseDate}
                             onChange={e => setExpenseDate(e.target.value)}
-                            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-slate-50"
+                            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-slate-50"
                             required
                         />
                     </div>
@@ -148,7 +148,7 @@ export const NewExpenseModal: React.FC<NewExpenseModalProps> = ({ currentUser, o
                                     value={km}
                                     onChange={e => setKm(e.target.value)}
                                     placeholder="Ej: 150"
-                                    className="w-full border border-blue-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                                    className="w-full border border-blue-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                                     required
                                 />
                             </div>
@@ -174,7 +174,7 @@ export const NewExpenseModal: React.FC<NewExpenseModalProps> = ({ currentUser, o
                                 value={amount}
                                 onChange={e => setAmount(e.target.value)}
                                 placeholder="0.00"
-                                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-slate-50"
+                                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-slate-50"
                                 required
                             />
                         </div>
@@ -188,7 +188,7 @@ export const NewExpenseModal: React.FC<NewExpenseModalProps> = ({ currentUser, o
                             value={description}
                             onChange={e => setDescription(e.target.value)}
                             placeholder={type === 'km' ? 'Ej: Visita cliente en Almería' : type === 'restaurant' ? 'Ej: Comida con cliente' : 'Descripción opcional'}
-                            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-slate-50"
+                            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-slate-50"
                         />
                     </div>
 

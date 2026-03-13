@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { ShoppingCart, Plus, Minus, Check, CheckCircle, ArrowLeft, Truck, ShoppingBag, Users, AlertTriangle } from 'lucide-react';
 import { CartItem, User, Order } from '../types';
 
@@ -85,7 +85,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                 <ArrowLeft size={16} /> Seguir comprando
             </button>
 
-            <h1 className="text-2xl font-bold text-slate-900 mb-6">Finalizar Pedido</h1>
+            <h1 className="text-xl font-bold text-slate-900 mb-6">Finalizar Pedido</h1>
 
             {/* Sales Rep Client Selector */}
             {isSalesRep && (
@@ -111,7 +111,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                             const client = assignedClients.find(c => c.id === e.target.value) || null;
                             onSelectClient?.(client);
                         }}
-                        className={`w-full px-4 py-3 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-slate-900 border ${selectedClient
+                        className={`w-full px-3 py-2 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-slate-900 border ${selectedClient
                             ? 'border-green-300 bg-white text-slate-900'
                             : 'border-amber-400 bg-white text-slate-900'
                             }`}
@@ -189,14 +189,14 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                         value={couponCode}
                         onChange={(e) => onCouponCodeChange(e.target.value)}
                         disabled={!!appliedCoupon}
-                        className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none uppercase text-slate-900"
+                        className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none uppercase text-slate-900"
                     />
                     {!appliedCoupon ? (
-                        <button onClick={onApplyCoupon} className="bg-slate-900 text-white px-6 font-bold rounded-lg hover:bg-slate-800">
+                        <button onClick={onApplyCoupon} className="bg-slate-900 text-white px-4 font-bold rounded-lg hover:bg-slate-800">
                             Aplicar
                         </button>
                     ) : (
-                        <button onClick={onRemoveCoupon} className="bg-green-100 text-green-700 px-6 font-bold rounded-lg flex items-center gap-2">
+                        <button onClick={onRemoveCoupon} className="bg-green-100 text-green-700 px-4 font-bold rounded-lg flex items-center gap-2">
                             <Check size={18} /> {appliedCoupon.code}
                         </button>
                     )}
@@ -207,7 +207,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 flex items-center justify-between">
                 <div>
                     <p className="text-xs font-bold text-blue-800 uppercase">Comercial Asignado</p>
-                    <p className="text-blue-900 font-bold text-lg">{activeRep || 'Sin asignar'}</p>
+                    <p className="text-blue-900 font-bold text-base">{activeRep || 'Sin asignar'}</p>
                 </div>
                 {activeRep && <div className="bg-white px-3 py-1 rounded text-blue-900 font-mono text-sm">{activeRepPhone}</div>}
             </div>
@@ -273,7 +273,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                     value={observations}
                     onChange={(e) => onObservationsChange(e.target.value)}
                     placeholder="Indica aquí si necesitas algo extra..."
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none text-slate-900 h-24 resize-none"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none text-slate-900 h-24 resize-none"
                 />
             </div>
 
@@ -302,7 +302,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                                         <span className="text-sm font-bold text-emerald-700 flex items-center gap-1">
                                             <CheckCircle size={14} /> ¡Beneficio Activado!
                                         </span>
-                                        <span className="text-xl font-black text-emerald-600">+{formatCurrency(newRappelGenerated)}</span>
+                                        <span className="text-lg font-black text-emerald-600">+{formatCurrency(newRappelGenerated)}</span>
                                     </div>
                                     <div className="h-1.5 bg-emerald-100 rounded-full overflow-hidden">
                                         <div className="h-full bg-emerald-500 rounded-full w-full"></div>
@@ -350,7 +350,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                                                 </div>
                                             </div>
                                             {useAccumulatedRappel && (
-                                                <span className="text-xl font-black text-white">-{formatCurrency(rappelDiscount)}</span>
+                                                <span className="text-lg font-black text-white">-{formatCurrency(rappelDiscount)}</span>
                                             )}
                                         </label>
                                         <div className="mt-3 pt-3 border-t border-white/10">

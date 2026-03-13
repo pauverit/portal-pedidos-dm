@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Plus, MonitorSmartphone, FileText, Award, MessageCircle, ExternalLink } from 'lucide-react';
 import { User } from '../types';
 
@@ -61,7 +61,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ currentUser, onNew
     ];
 
     return (
-        <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-10">
+        <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-10">
             {/* Header */}
             <div>
                 <h1 className="text-3xl font-bold text-slate-900 mb-1">Hola, {currentUser.name}</h1>
@@ -69,7 +69,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ currentUser, onNew
             </div>
 
             {/* Main cards: rappel + new order */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
                     <div className="absolute right-0 top-0 w-32 h-32 bg-white/5 rounded-full -translate-y-8 translate-x-8" />
                     <div className="relative z-10">
@@ -98,14 +98,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ currentUser, onNew
                     <div className="bg-slate-100 group-hover:bg-slate-900 p-4 rounded-full mb-3 transition-colors">
                         <Plus className="text-slate-900 group-hover:text-white transition-colors" size={28} />
                     </div>
-                    <h3 className="font-bold text-slate-900 text-lg">Nuevo Pedido</h3>
+                    <h3 className="font-bold text-slate-900 text-base">Nuevo Pedido</h3>
                     <p className="text-slate-500 text-sm mt-1">Acceder al catálogo completo</p>
                 </div>
             </div>
 
             {/* Quick Access Section */}
             <div>
-                <h2 className="text-lg font-bold text-slate-900 mb-4">Accesos Rápidos</h2>
+                <h2 className="text-base font-bold text-slate-900 mb-4">Accesos Rápidos</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {quickAccess.map((item) => {
                         const isComingSoon = item.badge === 'Próximamente';

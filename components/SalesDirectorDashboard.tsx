@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Users, ShoppingBag, TrendingUp, MapPin, Phone, ChevronDown, ChevronUp, Calendar, AlertCircle } from 'lucide-react';
 import { User, Order } from '../types';
 import { supabase } from '../lib/supabase';
@@ -135,7 +135,7 @@ export const SalesDirectorDashboard: React.FC<SalesDirectorDashboardProps> = ({
     };
 
     return (
-        <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8">
+        <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-8">
             {/* Header */}
             <div>
                 <h1 className="text-3xl font-bold text-slate-900">Dashboard Comercial</h1>
@@ -149,7 +149,7 @@ export const SalesDirectorDashboard: React.FC<SalesDirectorDashboardProps> = ({
                 </button>
                 <div className="flex items-center gap-2">
                     <Calendar size={16} className="text-slate-400" />
-                    <span className="font-bold text-slate-900 text-lg">{MONTH_NAMES[selectedMonth]} {selectedYear}</span>
+                    <span className="font-bold text-slate-900 text-base">{MONTH_NAMES[selectedMonth]} {selectedYear}</span>
                     {isCurrentMonth && (
                         <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Actual</span>
                     )}
@@ -170,7 +170,7 @@ export const SalesDirectorDashboard: React.FC<SalesDirectorDashboardProps> = ({
                     <div key={s.label} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex items-center gap-3">
                         <div className={`${s.color} p-2.5 rounded-xl text-white`}><s.icon size={20} /></div>
                         <div>
-                            <p className="text-2xl font-black text-slate-900">{s.value}</p>
+                            <p className="text-xl font-black text-slate-900">{s.value}</p>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{s.label}</p>
                         </div>
                     </div>
@@ -240,7 +240,7 @@ export const SalesDirectorDashboard: React.FC<SalesDirectorDashboardProps> = ({
                                         ].map(m => (
                                             <div key={m.label} className="bg-white rounded-xl border border-slate-100 p-3 text-center">
                                                 <m.icon size={14} className={`${m.color} mx-auto mb-1`} />
-                                                <p className="font-black text-slate-900 text-lg leading-none">{m.val}</p>
+                                                <p className="font-black text-slate-900 text-base leading-none">{m.val}</p>
                                                 <p className="text-[10px] text-slate-400 uppercase font-bold mt-0.5">{m.label}</p>
                                             </div>
                                         ))}

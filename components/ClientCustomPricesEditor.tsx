@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { Product } from '../types';
 import { Search, X, Tag, ChevronDown, ChevronRight } from 'lucide-react';
 
@@ -139,14 +139,14 @@ export const ClientCustomPricesEditor: React.FC<ClientCustomPricesEditorProps> =
             {/* Product tree */}
             <div className="border border-slate-200 rounded-xl overflow-hidden max-h-80 overflow-y-auto">
                 {Object.keys(grouped).length === 0 ? (
-                    <div className="p-6 text-center text-slate-400 text-xs">No hay productos que coincidan</div>
+                    <div className="p-4 text-center text-slate-400 text-xs">No hay productos que coincidan</div>
                 ) : (
                     Object.entries(grouped).map(([cat, subcats]) => (
                         <div key={cat}>
                             {/* Category header */}
                             <button
                                 onClick={() => toggleGroup(cat)}
-                                className="w-full flex items-center justify-between px-4 py-2.5 bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-700 uppercase tracking-wider hover:bg-slate-100 transition-colors"
+                                className="w-full flex items-center justify-between px-3 py-2 bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-700 uppercase tracking-wider hover:bg-slate-100 transition-colors"
                             >
                                 <span>{CATEGORY_LABELS[cat] || cat}</span>
                                 {expanded.has(cat) ? <ChevronDown size={14} /> : <ChevronRight size={14} />}

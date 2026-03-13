@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Save, Ruler, ToggleLeft, ToggleRight } from 'lucide-react';
 import { Product, ProductCategory } from '../types';
 
@@ -105,9 +105,9 @@ export const AdminProductEditModal: React.FC<AdminProductEditModalProps> = ({
         >
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
+                <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 shrink-0">
                     <div>
-                        <h2 className="text-lg font-bold text-slate-900">Editar Producto</h2>
+                        <h2 className="text-base font-bold text-slate-900">Editar Producto</h2>
                         <p className="text-xs text-slate-400">{draft.reference}</p>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-700">
@@ -116,7 +116,7 @@ export const AdminProductEditModal: React.FC<AdminProductEditModalProps> = ({
                 </div>
 
                 {/* Scrollable body */}
-                <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
+                <div className="overflow-y-auto flex-1 px-4 py-4 space-y-4">
                     {/* Basic fields */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="col-span-2">
@@ -327,7 +327,7 @@ export const AdminProductEditModal: React.FC<AdminProductEditModalProps> = ({
                 {error && (
                     <div className="mx-6 mb-2 text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</div>
                 )}
-                <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-100 shrink-0">
+                <div className="flex justify-end gap-3 px-3 py-2 border-t border-slate-100 shrink-0">
                     <button
                         onClick={onClose}
                         className="px-5 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"

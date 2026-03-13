@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { X, MapPin, Phone, Calendar, ChevronRight, Clock, User, Plus, Trash2, Target, TrendingUp, ShoppingBag, Search } from 'lucide-react';
 import { User as UserType, ClientVisit, ClientCall, Order } from '../types';
 
@@ -60,7 +60,7 @@ export const CRMView: React.FC<CRMViewProps> = ({
     const getClientName = (id: string) => myClients.find(c => c.id === id)?.name || 'Cliente';
 
     return (
-        <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8">
+        <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-8">
             {/* Header */}
             <div className="flex items-center justify-between flex-wrap gap-4">
                 <div>
@@ -70,14 +70,14 @@ export const CRMView: React.FC<CRMViewProps> = ({
                 <div className="flex gap-3">
                     <button
                         onClick={() => onNewCall(selectedClientId || undefined)}
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-colors shadow-sm"
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl font-semibold text-sm transition-colors shadow-sm"
                     >
                         <Phone size={16} />
                         <span>Llamada</span>
                     </button>
                     <button
                         onClick={() => onNewVisit(selectedClientId || undefined)}
-                        className="flex items-center gap-2 bg-slate-900 hover:bg-slate-700 text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-colors shadow-sm"
+                        className="flex items-center gap-2 bg-slate-900 hover:bg-slate-700 text-white px-3 py-2 rounded-xl font-semibold text-sm transition-colors shadow-sm"
                     >
                         <MapPin size={16} />
                         <span>Visita</span>
@@ -85,11 +85,11 @@ export const CRMView: React.FC<CRMViewProps> = ({
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
                 {/* Client List Sidebar */}
                 <div className="lg:col-span-1">
                     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                        <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
+                        <div className="px-3 py-2 border-b border-slate-100 bg-slate-50">
                             <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Mis Clientes ({myClients.length})</p>
                             <div className="relative">
                                 <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -112,7 +112,7 @@ export const CRMView: React.FC<CRMViewProps> = ({
                             {!clientSearch && (
                             <button
                                 onClick={() => setSelectedClientId(null)}
-                                className={`w-full px-4 py-3 flex items-center justify-between text-sm transition-colors ${!selectedClientId ? 'bg-slate-900 text-white' : 'hover:bg-slate-50 text-slate-700'}`}
+                                className={`w-full px-3 py-2 flex items-center justify-between text-sm transition-colors ${!selectedClientId ? 'bg-slate-900 text-white' : 'hover:bg-slate-50 text-slate-700'}`}
                             >
                                 <div className="flex items-center gap-2">
                                     <User size={14} />
@@ -137,7 +137,7 @@ export const CRMView: React.FC<CRMViewProps> = ({
                                     <button
                                         key={client.id}
                                         onClick={() => setSelectedClientId(client.id)}
-                                        className={`w-full px-4 py-3 flex items-center justify-between text-sm transition-colors ${isActive ? 'bg-slate-900 text-white' : 'hover:bg-slate-50 text-slate-700'}`}
+                                        className={`w-full px-3 py-2 flex items-center justify-between text-sm transition-colors ${isActive ? 'bg-slate-900 text-white' : 'hover:bg-slate-50 text-slate-700'}`}
                                     >
                                         <div className="text-left">
                                             <div className="font-medium truncate max-w-[140px]">{client.name}</div>
@@ -174,7 +174,7 @@ export const CRMView: React.FC<CRMViewProps> = ({
                                     <stat.icon size={18} />
                                 </div>
                                 <div>
-                                    <p className="text-2xl font-black text-slate-900">{stat.count}</p>
+                                    <p className="text-xl font-black text-slate-900">{stat.count}</p>
                                     <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">{stat.label}</p>
                                 </div>
                             </div>
@@ -226,7 +226,7 @@ export const CRMView: React.FC<CRMViewProps> = ({
                                     const id = item.data.id;
                                     const clientName = isVisit ? getClientName(visit!.clientId) : getClientName(call!.clientId);
                                     return (
-                                        <div key={id} className="px-6 py-4 flex items-start gap-4 hover:bg-slate-50 group transition-colors">
+                                        <div key={id} className="px-3 py-2 flex items-start gap-4 hover:bg-slate-50 group transition-colors">
                                             <div className={`mt-0.5 p-2 rounded-xl flex-shrink-0 ${isVisit ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>
                                                 {isVisit ? <MapPin size={16} /> : <Phone size={16} />}
                                             </div>
@@ -294,7 +294,7 @@ export const CRMView: React.FC<CRMViewProps> = ({
                                 <div key={s.label} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex items-center gap-3">
                                     <div className={`${s.color} p-2.5 rounded-xl text-white`}><s.icon size={18} /></div>
                                     <div>
-                                        <p className="text-xl font-black text-slate-900">{s.value}</p>
+                                        <p className="text-lg font-black text-slate-900">{s.value}</p>
                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{s.label}</p>
                                     </div>
                                 </div>

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { CheckCircle, Phone } from 'lucide-react';
 import { Order, CartItem } from '../types';
 
@@ -20,7 +20,7 @@ export const OrderSuccessView: React.FC<OrderSuccessViewProps> = ({
     salesRepPhone
 }) => {
     return (
-        <div className="p-6 md:p-10 max-w-2xl mx-auto flex flex-col items-center justify-center min-h-[80vh] text-center">
+        <div className="p-4 md:p-10 max-w-2xl mx-auto flex flex-col items-center justify-center min-h-[80vh] text-center">
             <div className="h-24 w-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
                 <CheckCircle size={48} />
             </div>
@@ -59,7 +59,7 @@ export const OrderSuccessView: React.FC<OrderSuccessViewProps> = ({
                             <Phone size={24} />
                         </div>
                         <div className="text-left">
-                            <p className="font-bold text-lg">{order.salesRep}</p>
+                            <p className="font-bold text-base">{order.salesRep}</p>
                             <p className="text-slate-300">{salesRepPhone}</p>
                         </div>
                     </div>

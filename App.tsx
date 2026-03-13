@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, Suspense } from 'react';
+﻿import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { supabase } from './lib/supabase';
 import { Sidebar } from './components/Sidebar';
 import { CrossSellModal, PromoVinylEntry, PromoSelection } from './components/CrossSellModal';
@@ -26,6 +26,10 @@ const AdminNewClient       = React.lazy(() => import('./components/AdminNewClien
 const AdminSalesManagement = React.lazy(() => import('./components/AdminSalesManagement').then(m => ({ default: m.AdminSalesManagement })));
 const AdminTechManagement  = React.lazy(() => import('./components/AdminTechManagement').then(m => ({ default: m.AdminTechManagement })));
 const AdminBulkImportSAT   = React.lazy(() => import('./components/AdminBulkImportSAT').then(m => ({ default: m.AdminBulkImportSAT })));
+const AdminEmpresasView    = React.lazy(() => import('./components/AdminEmpresasView').then(m => ({ default: m.AdminEmpresasView })));
+const VentasView           = React.lazy(() => import('./components/VentasView').then(m => ({ default: m.VentasView })));
+const ComprasView          = React.lazy(() => import('./components/ComprasView').then(m => ({ default: m.ComprasView })));
+const StockView            = React.lazy(() => import('./components/StockView').then(m => ({ default: m.StockView })));
 const AdminProductEditModal = React.lazy(() => import('./components/AdminProductEditModal').then(m => ({ default: m.AdminProductEditModal })));
 
 // Lazy-loaded: SAT / Técnico
@@ -59,6 +63,7 @@ import { orderService } from './services/orderService';
 import { useSupabaseData } from './hooks/useSupabaseData';
 import { useCart } from './hooks/useCart';
 import { useAuth } from './hooks/useAuth';
+import { useEmpresaData } from './hooks/useEmpresaData';
 
 import {
     Menu, LogOut, X, ShoppingCart
@@ -73,6 +78,7 @@ export default function App() {
     } = useSupabaseData();
     const { currentUser, setCurrentUser, login, logout, updateCurrentUser } = useAuth();
     const { cart, setCart, addToCart, updateQuantity, clearCart, syncCartPrices } = useCart(currentUser);
+    const { almacenes } = useEmpresaData();
     const { toast } = useToast();
 
     const [currentView, setCurrentView] = useState('login');
@@ -873,16 +879,45 @@ export default function App() {
                 u.role === 'client' && (u.salesRep === currentUser.name || (currentUser.salesRepCode && u.salesRepCode === currentUser.salesRepCode))
             );
             const initialSalesRepFilter = hasOwnClients ? currentUser!.name : '';
-            return <div className="p-6 md:p-10 max-w-7xl mx-auto"><AdminClientList clients={users} orders={orders} products={products} onEditClient={() => { }} onSaveClient={handleSaveClient} onDeleteClient={currentUser?.role === 'admin' ? handleDeleteClient : undefined} formatCurrency={formatCurrency} isAdmin={currentUser?.role === 'admin'} salesRepsData={salesReps} initialSalesRepFilter={initialSalesRepFilter} /></div>;
+            return <div className="p-4 md:p-10 max-w-7xl mx-auto"><AdminClientList clients={users} orders={orders} products={products} onEditClient={() => { }} onSaveClient={handleSaveClient} onDeleteClient={currentUser?.role === 'admin' ? handleDeleteClient : undefined} formatCurrency={formatCurrency} isAdmin={currentUser?.role === 'admin'} salesRepsData={salesReps} initialSalesRepFilter={initialSalesRepFilter} /></div>;
         }
         if (currentView === 'admin_new_client') {
             const salesReps = users.filter(u => u.role === 'sales');
             return <AdminNewClient onSave={handleCreateClient} onBack={() => setCurrentView(currentUser?.role === 'sales' ? 'dashboard' : 'admin_dashboard')} isAdmin={currentUser?.role === 'admin'} salesReps={salesReps} products={products} />;
         }
-        if (currentView === 'admin_coupons') return <div className="p-6 md:p-10 max-w-7xl mx-auto"><AdminCoupons coupons={promoCoupons} onAddCoupon={handleAddCoupon} onUpdateCoupon={handleUpdateCoupon} onDeleteCoupon={handleDeleteCoupon} /></div>;
+        if (currentView === 'admin_coupons') return <div className="p-4 md:p-10 max-w-7xl mx-auto"><AdminCoupons coupons={promoCoupons} onAddCoupon={handleAddCoupon} onUpdateCoupon={handleUpdateCoupon} onDeleteCoupon={handleDeleteCoupon} /></div>;
         if (currentView === 'admin_sales_management') return <AdminSalesManagement salesReps={users.filter(u => u.role === 'sales')} clients={users} orders={orders} onRefresh={refreshData} formatCurrency={formatCurrency} />;
         if (currentView === 'admin_tech_management') return <AdminTechManagement technicians={users.filter(u => u.role === 'tech' || u.role === 'tech_lead')} onRefresh={refreshData} />;
         if (currentView === 'admin_bulk_import_sat' && currentUser?.role === 'admin') return <AdminBulkImportSAT />;
+        if (currentView === 'admin_empresa' && ['admin', 'administracion', 'direccion'].includes(currentUser?.role || '')) return <AdminEmpresasView />;
+        if (['ventas','ventas_presupuestos','ventas_pedidos','ventas_albaranes','ventas_facturas'].includes(currentView)
+            && ['admin','sales','administracion','direccion'].includes(currentUser?.role || '')) {
+          return (
+            <div className="flex-1 flex flex-col overflow-hidden p-4">
+              <VentasView
+                currentUser={currentUser}
+                clientes={users}
+                productos={products}
+              />
+            </div>
+          );
+        }
+        if (['compras','compras_proveedores','compras_oc','compras_recepciones','compras_traspasos'].includes(currentView)
+            && ['admin','compras','almacen','administracion','direccion'].includes(currentUser?.role || '')) {
+          return (
+            <div className="flex-1 overflow-auto">
+              <ComprasView currentUser={currentUser} almacenes={almacenes} />
+            </div>
+          );
+        }
+        if (currentView === 'stock'
+            && ['admin','compras','almacen','administracion','direccion'].includes(currentUser?.role || '')) {
+          return (
+            <div className="flex-1 overflow-auto">
+              <StockView currentUser={currentUser} almacenes={almacenes} />
+            </div>
+          );
+        }
         if (currentView === 'sat_machines' && currentUser) return (
             <MachinesPanel
                 currentUser={currentUser}
@@ -904,7 +939,7 @@ export default function App() {
             <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4 p-6">
                 <img src="/logo.png" alt="DigitalMarket" className="h-12 w-auto opacity-70" />
                 <div className="bg-white border border-red-200 rounded-2xl p-6 max-w-md w-full text-center shadow-sm">
-                    <p className="text-red-600 font-bold text-lg mb-2">Error de conexión</p>
+                    <p className="text-red-600 font-bold text-base mb-2">Error de conexión</p>
                     <p className="text-slate-500 text-sm">{loadError}</p>
                     <button
                         onClick={() => window.location.reload()}
@@ -943,7 +978,7 @@ export default function App() {
                 onProfileClick={() => setIsProfileModalOpen(true)}
             />
             <div className="flex-1 flex flex-col h-screen overflow-y-auto">
-                <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-slate-200 sticky top-0 z-30">
+                <header className="md:hidden flex items-center justify-between px-3 py-2 bg-white border-b border-slate-200 sticky top-0 z-30">
                     <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 text-slate-600">
                         <Menu size={24} />
                     </button>
@@ -966,7 +1001,7 @@ export default function App() {
             {showLogoutModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-xl p-6 max-w-md w-full">
-                        <h3 className="text-xl font-bold mb-4">Cerrar Sesión</h3>
+                        <h3 className="text-lg font-bold mb-4">Cerrar Sesión</h3>
                         <div className="flex flex-col gap-2">
                             <button onClick={() => confirmLogout(false)} className="bg-green-600 text-white p-3 rounded font-bold">Guardar Carrito</button>
                             <button onClick={() => confirmLogout(true)} className="bg-red-600 text-white p-3 rounded font-bold">Vaciar Carrito</button>

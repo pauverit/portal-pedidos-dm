@@ -1,4 +1,4 @@
-import React, { useState, useCallback, createContext, useContext } from 'react';
+﻿import React, { useState, useCallback, createContext, useContext } from 'react';
 import { CheckCircle, XCircle, AlertCircle, X } from 'lucide-react';
 
 type ToastType = 'success' | 'error' | 'info';
@@ -48,7 +48,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 {toasts.map(t => (
                     <div
                         key={t.id}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium max-w-xs pointer-events-auto animate-slide-in ${colors[t.type]}`}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-xl shadow-lg text-sm font-medium max-w-xs pointer-events-auto animate-slide-in ${colors[t.type]}`}
                         style={{ animation: 'slideIn 0.25s ease' }}
                     >
                         {icons[t.type]}

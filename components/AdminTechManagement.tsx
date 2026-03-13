@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { UserPlus, Edit2, Wrench, Users, Save, X, Eye, EyeOff, Search, Trash2, ClipboardList, MapPin, ShieldCheck } from 'lucide-react';
 import { User } from '../types';
 import { supabase } from '../lib/supabase';
@@ -131,7 +131,7 @@ export const AdminTechManagement: React.FC<AdminTechManagementProps> = ({
             : 'bg-slate-100 text-slate-700';
 
     return (
-        <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-6">
+        <div className="p-4 md:p-10 max-w-5xl mx-auto space-y-4">
             {/* Header */}
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
@@ -151,9 +151,9 @@ export const AdminTechManagement: React.FC<AdminTechManagementProps> = ({
 
             {/* Add / Edit Form */}
             {isAdding && (
-                <form onSubmit={handleSave} className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+                <form onSubmit={handleSave} className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-lg font-bold text-slate-900">
+                        <h2 className="text-base font-bold text-slate-900">
                             {editingTech ? `Editar — ${editingTech.name}` : 'Nuevo Técnico'}
                         </h2>
                         <button type="button" onClick={resetForm} className="text-slate-400 hover:text-slate-900">
@@ -325,7 +325,7 @@ export const AdminTechManagement: React.FC<AdminTechManagementProps> = ({
             {pendingDelete && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
-                        <h3 className="font-bold text-slate-900 text-lg mb-2">¿Eliminar técnico?</h3>
+                        <h3 className="font-bold text-slate-900 text-base mb-2">¿Eliminar técnico?</h3>
                         <p className="text-slate-500 text-sm mb-5">
                             <span className="font-bold text-slate-900">{pendingDelete.name}</span> se eliminará del sistema. Esta acción no se puede deshacer.
                         </p>

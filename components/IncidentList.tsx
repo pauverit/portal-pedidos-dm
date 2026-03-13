@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import {
     Plus, Search, Filter, AlertTriangle, Clock, CheckCircle,
     ChevronRight, Calendar, User, Wrench, RefreshCw
@@ -81,11 +81,11 @@ export const IncidentList: React.FC<IncidentListProps> = ({
     };
 
     return (
-        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-5">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-4">
             {/* Header */}
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h1 className="text-2xl font-black text-slate-900">Incidencias</h1>
+                    <h1 className="text-xl font-black text-slate-900">Incidencias</h1>
                     <p className="text-slate-400 text-sm mt-0.5">{filtered.length} de {incidents.length} incidencias</p>
                 </div>
                 <div className="flex items-center gap-2">

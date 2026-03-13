@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Ticket, Plus, Trash2, Copy, Check, AlertCircle } from 'lucide-react';
 import { useToast } from './Toast';
 import { Coupon } from '../types';
@@ -89,7 +89,7 @@ export const AdminCoupons: React.FC<AdminCouponsProps> = ({ coupons, onAddCoupon
         <div>
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h2 className="text-2xl font-bold text-slate-900">Códigos Promocionales</h2>
+                    <h2 className="text-xl font-bold text-slate-900">Códigos Promocionales</h2>
                     <p className="text-slate-500 text-sm mt-1">Genera y gestiona cupones de descuento de un solo uso</p>
                 </div>
                 <button
@@ -116,18 +116,18 @@ export const AdminCoupons: React.FC<AdminCouponsProps> = ({ coupons, onAddCoupon
                     <table className="w-full text-sm">
                         <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider">
                             <tr>
-                                <th className="px-4 py-3">Código</th>
-                                <th className="px-4 py-3">Descuento</th>
-                                <th className="px-4 py-3 text-center">Pedido Mínimo</th>
-                                <th className="px-4 py-3 text-center">Usos</th>
-                                <th className="px-4 py-3 text-center">Estado</th>
-                                <th className="px-4 py-3 text-right">Acciones</th>
+                                <th className="px-3 py-2">Código</th>
+                                <th className="px-3 py-2">Descuento</th>
+                                <th className="px-3 py-2 text-center">Pedido Mínimo</th>
+                                <th className="px-3 py-2 text-center">Usos</th>
+                                <th className="px-3 py-2 text-center">Estado</th>
+                                <th className="px-3 py-2 text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {coupons.map(coupon => (
                                 <tr key={coupon.code} className="hover:bg-slate-50">
-                                    <td className="px-4 py-3">
+                                    <td className="px-3 py-2">
                                         <div className="flex items-center gap-2">
                                             <code className="bg-slate-100 px-2 py-1 rounded font-mono font-bold text-slate-900">
                                                 {coupon.code}
@@ -148,24 +148,24 @@ export const AdminCoupons: React.FC<AdminCouponsProps> = ({ coupons, onAddCoupon
                                             <p className="text-xs text-slate-400 mt-0.5">{coupon.description}</p>
                                         )}
                                     </td>
-                                    <td className="px-4 py-3">
+                                    <td className="px-3 py-2">
                                         <span className="font-bold text-green-600">
                                             {coupon.discountType === 'percentage'
                                                 ? `${coupon.discountValue}%`
                                                 : `${coupon.discountValue}€`}
                                         </span>
                                     </td>
-                                    <td className="px-4 py-3 text-center text-slate-600">
+                                    <td className="px-3 py-2 text-center text-slate-600">
                                         {coupon.minOrderAmount > 0
                                             ? `${coupon.minOrderAmount}€`
                                             : 'Sin mínimo'}
                                     </td>
-                                    <td className="px-4 py-3 text-center">
+                                    <td className="px-3 py-2 text-center">
                                         <span className={coupon.usesCount >= coupon.maxUses ? 'text-red-500' : 'text-slate-600'}>
                                             {coupon.usesCount} / {coupon.maxUses}
                                         </span>
                                     </td>
-                                    <td className="px-4 py-3 text-center">
+                                    <td className="px-3 py-2 text-center">
                                         <button
                                             onClick={() => toggleCouponActive(coupon.code, coupon.isActive)}
                                             className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${coupon.isActive
@@ -176,7 +176,7 @@ export const AdminCoupons: React.FC<AdminCouponsProps> = ({ coupons, onAddCoupon
                                             {coupon.isActive ? 'Activo' : 'Inactivo'}
                                         </button>
                                     </td>
-                                    <td className="px-4 py-3 text-right">
+                                    <td className="px-3 py-2 text-right">
                                         <button
                                             onClick={() => deleteCoupon(coupon.code)}
                                             className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
@@ -195,14 +195,14 @@ export const AdminCoupons: React.FC<AdminCouponsProps> = ({ coupons, onAddCoupon
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-slate-200 overflow-hidden">
-                        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
-                            <h2 className="font-bold text-lg">Nuevo Código Promocional</h2>
+                        <div className="bg-slate-900 text-white px-3 py-2 flex items-center justify-between">
+                            <h2 className="font-bold text-base">Nuevo Código Promocional</h2>
                             <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-white">
                                 ✕
                             </button>
                         </div>
 
-                        <div className="p-6 space-y-4">
+                        <div className="p-4 space-y-4">
                             <div>
                                 <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Código</label>
                                 <div className="flex gap-2">
@@ -306,7 +306,7 @@ export const AdminCoupons: React.FC<AdminCouponsProps> = ({ coupons, onAddCoupon
                             )}
                         </div>
 
-                        <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
+                        <div className="px-3 py-2 border-t border-slate-100 flex justify-end gap-3">
                             <button
                                 onClick={() => setShowModal(false)}
                                 className="px-4 py-2 text-sm text-slate-500 hover:text-slate-800"
