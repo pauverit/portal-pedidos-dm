@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Save, Ruler, ToggleLeft, ToggleRight } from 'lucide-react';
+import { X, Plus, Save, Ruler, ToggleLeft, ToggleRight, TrendingUp, BookOpen } from 'lucide-react';
 import { Product, ProductCategory } from '../types';
 
 interface AdminProductEditModalProps {
@@ -48,6 +48,7 @@ export const AdminProductEditModal: React.FC<AdminProductEditModalProps> = ({
     onClose,
 }) => {
     const [draft, setDraft] = useState<Product>({ ...product });
+    const [activeTab, setActiveTab] = useState<'general' | 'costes'>('general');
     const [widthOptions, setWidthOptions] = useState<number[]>(
         (product as any).widthOptions ?? (product.width ? [product.width] : [1.05])
     );
@@ -115,8 +116,145 @@ export const AdminProductEditModal: React.FC<AdminProductEditModalProps> = ({
                     </button>
                 </div>
 
+                {/* Tabs */}
+                <div className="flex border-b border-slate-100 shrink-0 px-4">
+                    {([
+                        { id: 'general', label: 'General', icon: <Ruler size={13} /> },
+                        { id: 'costes',  label: 'Costes y Contabilidad', icon: <TrendingUp size={13} /> },
+                    ] as const).map(t => (
+                        <button
+                            key={t.id}
+                            onClick={() => setActiveTab(t.id)}
+                            className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                                activeTab === t.id
+                                    ? 'border-slate-900 text-slate-900'
+                                    : 'border-transparent text-slate-400 hover:text-slate-600'
+                            }`}
+                        >
+                            {t.icon} {t.label}
+                        </button>
+                    ))}
+                </div>
+
                 {/* Scrollable body */}
                 <div className="overflow-y-auto flex-1 px-4 py-4 space-y-4">
+
+                {/* ── TAB: COSTES Y CONTABILIDAD ───────────────────────────────────── */}
+                {activeTab === 'costes' && (() => {
+                    const pvpEfectivo = draft.pvp || draft.price || 0;
+                    const coste      = draft.precioCompra || 0;
+                    const margen     = pvpEfectivo > 0 && coste > 0
+                        ? ((pvpEfectivo - coste) / pvpEfectivo * 100).toFixed(2)
+                        : '—';
+                    return (
+                        <div className="space-y-5">
+                            {/* Costes */}
+                            <div>
+                                <h3 className="text-xs font-bold text-slate-500 uppercase mb-3 flex items-center gap-1.5">
+                                    <TrendingUp size={13}/> Precios y Margen
+                                </h3>
+                                <div className="grid grid-cols-3 gap-3">
+                                    <div>
+                                        <label className="block text-xs text-slate-500 mb-1">Precio Compra (€)</label>
+                                        <div className="relative">
+                                            <input type="number" step="0.0001" min="0"
+                                                value={draft.precioCompra ?? ''}
+                                                onChange={e => set('precioCompra', parseFloat(e.target.value) || 0)}
+                                                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none pr-8"
+                                            />
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">€</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-slate-500 mb-1">PVP recomendado (€)</label>
+                                        <div className="relative">
+                                            <input type="number" step="0.0001" min="0"
+                                                value={draft.pvp ?? ''}
+                                                onChange={e => set('pvp', parseFloat(e.target.value) || undefined)}
+                                                placeholder={String(draft.price || '')}
+                                                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none pr-8"
+                                            />
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">€</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-slate-500 mb-1">Margen bruto</label>
+                                        <div className={`w-full border rounded-lg px-3 py-2 text-sm font-bold text-center ${
+                                            margen !== '—' && parseFloat(margen) >= 0
+                                                ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                                : 'bg-red-50 border-red-200 text-red-600'
+                                        }`}>
+                                            {margen !== '—' ? `${margen}%` : '—'}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="mt-3">
+                                    <label className="block text-xs text-slate-500 mb-1">Familia / Agrupación comercial</label>
+                                    <input type="text"
+                                        value={draft.familia ?? ''}
+                                        onChange={e => set('familia', e.target.value || undefined)}
+                                        placeholder="Ej: Vinilos, Rígidos, Tintas..."
+                                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Contabilidad PGC */}
+                            <div>
+                                <h3 className="text-xs font-bold text-slate-500 uppercase mb-3 flex items-center gap-1.5">
+                                    <BookOpen size={13}/> Cuentas PGC
+                                </h3>
+                                <div className="grid grid-cols-3 gap-3">
+                                    <div>
+                                        <label className="block text-xs text-slate-500 mb-1">Cuenta Ventas</label>
+                                        <input type="text" maxLength={10}
+                                            value={draft.cuentaVentas ?? '700'}
+                                            onChange={e => set('cuentaVentas', e.target.value)}
+                                            placeholder="700"
+                                            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-slate-900 outline-none"
+                                        />
+                                        <p className="text-xs text-slate-400 mt-0.5">Ventas de mercaderías</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-slate-500 mb-1">Cuenta Compras</label>
+                                        <input type="text" maxLength={10}
+                                            value={draft.cuentaCompras ?? '600'}
+                                            onChange={e => set('cuentaCompras', e.target.value)}
+                                            placeholder="600"
+                                            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-slate-900 outline-none"
+                                        />
+                                        <p className="text-xs text-slate-400 mt-0.5">Compras de mercaderías</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-slate-500 mb-1">Cuenta Existencias</label>
+                                        <input type="text" maxLength={10}
+                                            value={draft.cuentaExistencias ?? '300'}
+                                            onChange={e => set('cuentaExistencias', e.target.value)}
+                                            placeholder="300"
+                                            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-slate-900 outline-none"
+                                        />
+                                        <p className="text-xs text-slate-400 mt-0.5">Mercaderías en stock</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Notas internas */}
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Notas internas</label>
+                                <textarea
+                                    value={draft.notasInternas ?? ''}
+                                    onChange={e => set('notasInternas', e.target.value || undefined)}
+                                    rows={3}
+                                    placeholder="Observaciones de uso interno (no visibles al cliente)"
+                                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 outline-none resize-none"
+                                />
+                            </div>
+                        </div>
+                    );
+                })()}
+
+                {/* ── TAB: GENERAL ─────────────────────────────────────────────────── */}
+                {activeTab === 'general' && <>
                     {/* Basic fields */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="col-span-2">
@@ -321,6 +459,7 @@ export const AdminProductEditModal: React.FC<AdminProductEditModalProps> = ({
                             </div>
                         </>
                     )}
+                </>}
                 </div>
 
                 {/* Footer */}

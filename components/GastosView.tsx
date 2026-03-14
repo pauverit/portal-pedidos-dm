@@ -399,6 +399,98 @@ const RecurrenteModal: React.FC<{
   );
 };
 
+// ── Modal Nuevo Acreedor ──────────────────────────────────────────────────────
+
+const AcreedorModal: React.FC<{
+  categorias: CategoriaGasto[];
+  empresaId: string;
+  onSave: (a: any) => Promise<void>;
+  onClose: () => void;
+}> = ({ categorias, empresaId, onSave, onClose }) => {
+  const [form, setForm] = useState({
+    nombre: '', nif: '', iban: '', email: '', telefono: '',
+    direccion: '', categoriaId: '', notas: '',
+  });
+  const [saving, setSaving] = useState(false);
+  const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault(); setSaving(true);
+    try {
+      await onSave({ ...form, empresaId, activo: true });
+      onClose();
+    } catch (err: any) { alert(err.message); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+          <h2 className="text-lg font-semibold text-slate-800">Nuevo acreedor</h2>
+          <button onClick={onClose}><X size={18} className="text-slate-400 hover:text-slate-600" /></button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 grid grid-cols-2 gap-4">
+          <div className="col-span-2">
+            <label className="text-sm font-medium text-slate-700">Nombre / Razón social *</label>
+            <input className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
+              value={form.nombre} onChange={e => set('nombre', e.target.value)} required
+              placeholder="Endesa Energía S.A." />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-700">NIF / CIF</label>
+            <input className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono"
+              value={form.nif} onChange={e => set('nif', e.target.value)} placeholder="A12345678" />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-700">Categoría habitual</label>
+            <select className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
+              value={form.categoriaId} onChange={e => set('categoriaId', e.target.value)}>
+              <option value="">— Sin categoría —</option>
+              {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+            </select>
+          </div>
+          <div className="col-span-2">
+            <label className="text-sm font-medium text-slate-700">IBAN (para domiciliación / transferencia)</label>
+            <input className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono"
+              value={form.iban} onChange={e => set('iban', e.target.value)}
+              placeholder="ES00 0000 0000 0000 0000 0000" />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-700">Email</label>
+            <input type="email" className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
+              value={form.email} onChange={e => set('email', e.target.value)} placeholder="facturacion@acreedor.com" />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-700">Teléfono</label>
+            <input className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
+              value={form.telefono} onChange={e => set('telefono', e.target.value)} placeholder="900 000 000" />
+          </div>
+          <div className="col-span-2">
+            <label className="text-sm font-medium text-slate-700">Dirección fiscal</label>
+            <input className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
+              value={form.direccion} onChange={e => set('direccion', e.target.value)}
+              placeholder="Calle Ejemplo 1, 28001 Madrid" />
+          </div>
+          <div className="col-span-2">
+            <label className="text-sm font-medium text-slate-700">Notas</label>
+            <textarea className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm resize-none" rows={2}
+              value={form.notas} onChange={e => set('notas', e.target.value)} />
+          </div>
+          <div className="col-span-2 flex justify-end gap-3 pt-1">
+            <button type="button" onClick={onClose}
+              className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
+            <button type="submit" disabled={saving}
+              className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              {saving ? 'Guardando…' : 'Crear acreedor'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // ── Vista principal ───────────────────────────────────────────────────────────
 
 export default function GastosView() {
@@ -407,6 +499,7 @@ export default function GastosView() {
   const [tab, setTab] = useState<'gastos' | 'recurrentes' | 'acreedores' | 'resumen'>('gastos');
   const [showGastoModal, setShowGastoModal] = useState(false);
   const [showRecurrenteModal, setShowRecurrenteModal] = useState(false);
+  const [showAcreedorModal, setShowAcreedorModal] = useState(false);
   const [editGasto, setEditGasto] = useState<Gasto | undefined>();
   const [filtroEstado, setFiltroEstado] = useState('todos');
   const [filtroCat, setFiltroCat] = useState('');
@@ -469,10 +562,16 @@ export default function GastosView() {
               </button>
             </>
           )}
-          {(tab === 'gastos') && (
+          {tab === 'gastos' && (
             <button onClick={() => { setEditGasto(undefined); setShowGastoModal(true); }}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700">
               <Plus size={15} /> Nuevo gasto
+            </button>
+          )}
+          {tab === 'acreedores' && (
+            <button onClick={() => setShowAcreedorModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700">
+              <Plus size={15} /> Nuevo acreedor
             </button>
           )}
         </div>
@@ -805,6 +904,14 @@ export default function GastosView() {
           empresaId={empresa.id}
           onSave={hooks.createRecurrente}
           onClose={() => setShowRecurrenteModal(false)}
+        />
+      )}
+      {showAcreedorModal && (
+        <AcreedorModal
+          categorias={hooks.categorias}
+          empresaId={empresa.id}
+          onSave={hooks.createAcreedor}
+          onClose={() => setShowAcreedorModal(false)}
         />
       )}
     </div>

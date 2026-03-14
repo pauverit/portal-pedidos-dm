@@ -28,6 +28,16 @@ export interface Product {
   backing?: 'white' | 'gray' | 'black'; // Blanca/Gris/Negra
   adhesive?: 'permanent' | 'removable'; // Permanente/Removible
   materialType?: 'monomeric' | 'polymeric' | 'cast' | 'frontlit' | 'backlit' | 'mesh' | 'blockout';
+  // PASO 11: Costes, márgenes y contabilidad
+  precioCompra?: number;      // Precio de coste / compra
+  pvp?: number;               // PVP recomendado (si difiere de price)
+  margenBrutoPct?: number;    // Margen bruto calculado (%)
+  familia?: string;           // Familia / agrupación comercial
+  cuentaVentas?: string;      // Cuenta PGC ventas (default 700)
+  cuentaCompras?: string;     // Cuenta PGC compras (default 600)
+  cuentaExistencias?: string; // Cuenta PGC existencias (default 300)
+  notasInternas?: string;
+  activo?: boolean;
 }
 
 export interface CartItem extends Product {
@@ -1140,4 +1150,35 @@ export interface GastoPorCategoria {
   totalGastos: number;
   totalPagado: number;
   totalPendiente: number;
+}
+
+// ── PASO 11: Márgenes y Rentabilidad ─────────────────────────────────────────
+
+export interface BiRentabilidadProducto {
+  productoId: string;
+  empresaId?: string;
+  productoNombre: string;
+  reference?: string;
+  categoria?: string;
+  familia?: string;
+  costeActual: number;
+  pvpActual: number;
+  margenActualPct: number;
+  numFacturas: number;
+  unidadesVendidas: number;
+  ingresoTotal: number;
+  margenBrutoTotal: number;
+  margenMedioPct: number;
+}
+
+export interface BiMargenNetoEmpresa {
+  empresaId: string;
+  periodo: string;
+  ventas: number;
+  margenBruto: number;
+  gastosOperativos: number;
+  gastosPersonal: number;
+  gastosTotales: number;
+  resultadoNeto: number;
+  margenNetoPct: number;
 }

@@ -86,7 +86,7 @@ const situacionBadge: Record<BiSituacionCartera, { label: string; cls: string }>
 export default function BIAnalyticsView() {
   const { empresa } = useEmpresa();
   const bi = useBIAnalytics(empresa?.id);
-  const [tab, setTab] = useState<'overview' | 'ventas' | 'cartera' | 'pyl'>('overview');
+  const [tab, setTab] = useState<'overview' | 'ventas' | 'cartera' | 'pyl' | 'margenes'>('overview');
 
   // Datos para gráficos
   const ventasChartData = bi.ventas.map(v => ({
@@ -147,6 +147,7 @@ export default function BIAnalyticsView() {
             { key: 'ventas',   label: 'Ventas',  icon: TrendingUp },
             { key: 'cartera',  label: 'Cartera de cobros', icon: Clock },
             { key: 'pyl',      label: 'Cuenta de Resultados', icon: DollarSign },
+          { key: 'margenes', label: 'Márgenes',             icon: PieChart },
           ] as const).map(t => (
             <button
               key={t.key}
@@ -549,6 +550,127 @@ export default function BIAnalyticsView() {
                     </tr>
                   </tfoot>
                 )}
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ── TAB MÁRGENES ──────────────────────────────────────── */}
+        {tab === 'margenes' && (
+          <div className="space-y-4">
+            {/* KPIs margen neto */}
+            {bi.margenNeto.length > 0 && (() => {
+              const ultimo = bi.margenNeto[bi.margenNeto.length - 1];
+              const totalVentas = bi.margenNeto.reduce((s, m) => s + m.ventas, 0);
+              const totalMgBruto = bi.margenNeto.reduce((s, m) => s + m.margenBruto, 0);
+              const totalNeto = bi.margenNeto.reduce((s, m) => s + m.resultadoNeto, 0);
+              const margenBrutoPctTotal = totalVentas > 0 ? ((totalMgBruto / totalVentas) * 100).toFixed(1) : '—';
+              const margenNetoPctTotal  = totalVentas > 0 ? ((totalNeto  / totalVentas) * 100).toFixed(1) : '—';
+              return (
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <KpiCard label="Ventas (12 m)"       value={fmt(totalVentas)}   icon={TrendingUp} color="blue"   />
+                  <KpiCard label="Margen bruto (12 m)" value={fmt(totalMgBruto)}  sub={`${margenBrutoPctTotal}% sobre ventas`} icon={BarChart2} color="emerald" />
+                  <KpiCard label="Gastos totales (12 m)" value={fmt(bi.margenNeto.reduce((s, m) => s + m.gastosTotales, 0))} icon={DollarSign} color="red" />
+                  <KpiCard label="Resultado neto (12 m)" value={fmt(totalNeto)} sub={`${margenNetoPctTotal}% margen neto`}
+                    icon={Activity} color={totalNeto >= 0 ? 'green' : 'red'} trend={totalNeto >= 0 ? 'up' : 'down'} />
+                </div>
+              );
+            })()}
+
+            {/* Tabla margen neto por mes */}
+            <div className="bg-white rounded-xl border overflow-hidden">
+              <div className="px-4 py-3 border-b bg-slate-50">
+                <h3 className="text-sm font-semibold text-gray-700">Margen Neto mensual (últimos 12 meses)</h3>
+              </div>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-xs text-slate-500 uppercase bg-slate-50">
+                    <th className="px-4 py-2 text-left">Periodo</th>
+                    <th className="px-4 py-2 text-right">Ventas</th>
+                    <th className="px-4 py-2 text-right">Mg. Bruto</th>
+                    <th className="px-4 py-2 text-right">Gastos Op.</th>
+                    <th className="px-4 py-2 text-right">Personal</th>
+                    <th className="px-4 py-2 text-right">Resultado</th>
+                    <th className="px-4 py-2 text-right">Mg. Neto %</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {[...bi.margenNeto].reverse().map(m => (
+                    <tr key={m.periodo} className="hover:bg-slate-50">
+                      <td className="px-4 py-2 font-medium">{mesLabel(m.periodo)}</td>
+                      <td className="px-4 py-2 text-right font-mono text-blue-700">{fmt(m.ventas)}</td>
+                      <td className="px-4 py-2 text-right font-mono text-emerald-700">{fmt(m.margenBruto)}</td>
+                      <td className="px-4 py-2 text-right font-mono text-slate-500">- {fmt(m.gastosOperativos)}</td>
+                      <td className="px-4 py-2 text-right font-mono text-orange-500">- {fmt(m.gastosPersonal)}</td>
+                      <td className={`px-4 py-2 text-right font-mono font-bold ${m.resultadoNeto >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                        {fmt(m.resultadoNeto)}
+                      </td>
+                      <td className={`px-4 py-2 text-right text-xs font-semibold ${m.margenNetoPct >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {m.margenNetoPct.toFixed(1)}%
+                      </td>
+                    </tr>
+                  ))}
+                  {bi.margenNeto.length === 0 && (
+                    <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                      Sin datos — ejecuta paso11_maestro_materiales.sql y registra gastos en el módulo de Gastos
+                    </td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Rentabilidad por producto */}
+            <div className="bg-white rounded-xl border overflow-hidden">
+              <div className="px-4 py-3 border-b bg-slate-50 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-gray-700">Rentabilidad por Producto</h3>
+                <span className="text-xs text-slate-400">{bi.rentabilidad.length} artículos con ventas</span>
+              </div>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-xs text-slate-500 uppercase bg-slate-50">
+                    <th className="px-4 py-2 text-left">Producto</th>
+                    <th className="px-4 py-2 text-left">Familia</th>
+                    <th className="px-4 py-2 text-right">Coste</th>
+                    <th className="px-4 py-2 text-right">PVP</th>
+                    <th className="px-4 py-2 text-right">Mg. Actual %</th>
+                    <th className="px-4 py-2 text-right">Uds.</th>
+                    <th className="px-4 py-2 text-right">Ingreso</th>
+                    <th className="px-4 py-2 text-right">Mg. Real %</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {bi.rentabilidad.map(r => (
+                    <tr key={r.productoId} className="hover:bg-slate-50">
+                      <td className="px-4 py-2">
+                        <div className="font-medium text-slate-800 truncate max-w-[180px]">{r.productoNombre}</div>
+                        {r.reference && <div className="text-[10px] text-slate-400">{r.reference}</div>}
+                      </td>
+                      <td className="px-4 py-2 text-xs text-slate-500">{r.familia || '—'}</td>
+                      <td className="px-4 py-2 text-right font-mono text-xs">{r.costeActual > 0 ? `${r.costeActual.toFixed(2)} €` : '—'}</td>
+                      <td className="px-4 py-2 text-right font-mono text-xs">{r.pvpActual > 0 ? `${r.pvpActual.toFixed(2)} €` : '—'}</td>
+                      <td className="px-4 py-2 text-right">
+                        <span className={`text-xs font-bold ${r.margenActualPct >= 30 ? 'text-green-600' : r.margenActualPct >= 10 ? 'text-amber-600' : 'text-red-600'}`}>
+                          {r.margenActualPct > 0 ? `${r.margenActualPct.toFixed(1)}%` : '—'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2 text-right text-xs text-slate-500">{r.unidadesVendidas > 0 ? r.unidadesVendidas : '—'}</td>
+                      <td className="px-4 py-2 text-right font-mono text-xs">{r.ingresoTotal > 0 ? fmt(r.ingresoTotal) : '—'}</td>
+                      <td className="px-4 py-2 text-right">
+                        {r.margenMedioPct > 0
+                          ? <span className={`text-xs font-bold ${r.margenMedioPct >= 30 ? 'text-green-600' : r.margenMedioPct >= 10 ? 'text-amber-600' : 'text-red-600'}`}>
+                              {r.margenMedioPct.toFixed(1)}%
+                            </span>
+                          : <span className="text-slate-300">—</span>
+                        }
+                      </td>
+                    </tr>
+                  ))}
+                  {bi.rentabilidad.length === 0 && (
+                    <tr><td colSpan={8} className="px-4 py-8 text-center text-slate-400">
+                      Sin datos — añade precio de compra a los productos en el Maestro de Materiales
+                    </td></tr>
+                  )}
+                </tbody>
               </table>
             </div>
           </div>
