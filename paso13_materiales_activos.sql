@@ -92,13 +92,13 @@ WHERE pcl.producto_id IS NOT NULL
 
 UNION ALL
 
--- Recepciones
+-- Recepciones (precio_coste en lugar de precio_unitario)
 SELECT
   'recepcion'       AS tipo_doc,
   r.id, r.referencia, r.empresa_id,
   r.proveedor_nombre AS cliente_nombre,
   r.fecha, r.estado, NULL::numeric AS total,
-  rl.producto_id, rl.cantidad, rl.precio_unitario, rl.subtotal
+  rl.producto_id, rl.cantidad, rl.precio_coste AS precio_unitario, rl.subtotal
 FROM recepcion_lineas rl
 JOIN recepciones r ON r.id = rl.recepcion_id
 WHERE rl.producto_id IS NOT NULL;
