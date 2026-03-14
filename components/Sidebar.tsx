@@ -160,7 +160,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     // ── CONTABILIDAD — administración ─────────────────────────────────────────
     { id: 'contabilidad',          label: 'Contabilidad',          icon: BookOpen,   section: 'Contabilidad', roles: ROLES_ADMIN },
     { id: 'analisis_rentabilidad', label: 'Business Intelligence', icon: TrendingUp, section: 'Contabilidad', roles: ROLES_ADMIN },
-    { id: 'remesas_sepa',          label: 'Remesas SEPA',          icon: Building2,  section: 'Contabilidad', roles: ROLES_ADMIN, soon: true },
+    { id: 'remesas_sepa',          label: 'Remesas SEPA',          icon: Building2,  section: 'Contabilidad', roles: ROLES_ADMIN },
 
     // ── SAT / SOPORTE ─────────────────────────────────────────────────────────
     { id: 'tech_lead_dashboard',   label: 'Dashboard Técnico',   icon: LayoutDashboard, section: 'SAT / Soporte', roles: ['tech_lead'] },

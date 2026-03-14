@@ -989,3 +989,63 @@ export interface BiPipelineComercial {
   ticket_medio: number;
   mas_antiguo: string;
 }
+
+// ── PASO 9: Remesas SEPA ──────────────────────────────────────────────────────
+
+export type TipoMandatoSEPA = 'CORE' | 'B2B';
+export type SecuenciaSEPA   = 'FRST' | 'RCUR' | 'OOFF' | 'FNAL';
+export type EstadoMandato   = 'activo' | 'cancelado' | 'suspendido';
+export type EstadoRemesa    = 'borrador' | 'enviada' | 'aceptada' | 'parcial' | 'rechazada';
+export type EstadoLineaSepa = 'pendiente' | 'aceptada' | 'devuelta' | 'cancelada';
+
+export interface MandatoSEPA {
+  id: string;
+  empresaId: string;
+  clienteId?: string;
+  clienteNombre: string;
+  referencia: string;
+  tipo: TipoMandatoSEPA;
+  ibanDeudor: string;
+  bicDeudor?: string;
+  secuencia: SecuenciaSEPA;
+  fechaFirma: string;
+  estado: EstadoMandato;
+  notas?: string;
+  createdAt: string;
+}
+
+export interface RemesaSEPA {
+  id: string;
+  empresaId: string;
+  nombre: string;
+  fechaCreacion: string;
+  fechaCobro: string;
+  estado: EstadoRemesa;
+  numOperaciones: number;
+  importeTotal: number;
+  mensajeId?: string;
+  xmlGenerado?: string;
+  notas?: string;
+  createdAt: string;
+  // From view
+  lineasAceptadas?: number;
+  lineasDevueltas?: number;
+  lineasPendientes?: number;
+}
+
+export interface RemesaLinea {
+  id: string;
+  remesaId: string;
+  mandatoId?: string;
+  facturaId?: string;
+  clienteNombre: string;
+  ibanDeudor: string;
+  bicDeudor?: string;
+  referenciaMandato: string;
+  fechaFirmaMandato: string;
+  secuencia: SecuenciaSEPA;
+  concepto: string;
+  importe: number;
+  estado: EstadoLineaSepa;
+  motivoDevolucion?: string;
+}
