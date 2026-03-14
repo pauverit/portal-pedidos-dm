@@ -132,7 +132,7 @@ SELECT
   mv.empresa_id,
   p.name                                   AS producto_nombre,
   p.reference,
-  p.categoria,
+  p.category                               AS categoria,
   p.familia,
   p.precio_compra                          AS coste_actual,
   COALESCE(p.pvp, p.price)                AS pvp_actual,
@@ -148,7 +148,7 @@ SELECT
   END AS margen_medio_pct
 FROM products p
 LEFT JOIN bi_margen_ventas mv ON mv.producto_id = p.id
-GROUP BY p.id, mv.empresa_id, p.name, p.reference, p.categoria, p.familia,
+GROUP BY p.id, mv.empresa_id, p.name, p.reference, p.category, p.familia,
          p.precio_compra, p.pvp, p.price, p.margen_bruto_pct;
 
 -- ============================================================
