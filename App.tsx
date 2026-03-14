@@ -36,6 +36,7 @@ const FacturacionRecurrenteView = React.lazy(() => import('./components/Facturac
 const RRHHView        = React.lazy(() => import('./components/RRHHView'));
 const BIAnalyticsView = React.lazy(() => import('./components/BIAnalyticsView'));
 const RemesasSEPAView = React.lazy(() => import('./components/RemesasSEPAView'));
+const GastosView      = React.lazy(() => import('./components/GastosView'));
 const AdminProductEditModal = React.lazy(() => import('./components/AdminProductEditModal').then(m => ({ default: m.AdminProductEditModal })));
 
 // Lazy-loaded: SAT / Técnico
@@ -953,6 +954,14 @@ export default function App() {
           return (
             <div className="flex-1 overflow-auto h-full">
               <RemesasSEPAView />
+            </div>
+          );
+        }
+        if (currentView === 'gastos_empresa'
+            && ['admin','administracion','direccion'].includes(currentUser?.role || '')) {
+          return (
+            <div className="flex-1 overflow-auto h-full">
+              <GastosView />
             </div>
           );
         }

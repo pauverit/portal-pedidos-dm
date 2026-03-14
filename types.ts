@@ -1049,3 +1049,95 @@ export interface RemesaLinea {
   estado: EstadoLineaSepa;
   motivoDevolucion?: string;
 }
+
+// ── PASO 10: Gastos de Empresa ────────────────────────────────────────────────
+
+export type FormaPagoGasto = 'transferencia' | 'domiciliacion' | 'tarjeta' | 'efectivo' | 'cheque';
+export type EstadoGasto    = 'pendiente' | 'pagado' | 'vencido' | 'anulado';
+export type FrecuenciaGasto = 'mensual' | 'trimestral' | 'semestral' | 'anual';
+
+export interface CategoriaGasto {
+  id: string;
+  empresaId: string;
+  nombre: string;
+  codigoPgc?: string;
+  descripcion?: string;
+  color: string;
+  icono: string;
+  activa: boolean;
+}
+
+export interface Acreedor {
+  id: string;
+  empresaId: string;
+  nombre: string;
+  nif?: string;
+  iban?: string;
+  email?: string;
+  telefono?: string;
+  direccion?: string;
+  categoriaId?: string;
+  notas?: string;
+  activo: boolean;
+  createdAt: string;
+}
+
+export interface Gasto {
+  id: string;
+  empresaId: string;
+  acreedorId?: string;
+  acreedorNombre: string;
+  categoriaId?: string;
+  categoriaNombre?: string;
+  numeroFactura?: string;
+  fecha: string;
+  fechaVencimiento?: string;
+  concepto: string;
+  baseImponible: number;
+  ivaPorcentaje: number;
+  iva: number;
+  irpfPorcentaje: number;
+  irpf: number;
+  total: number;
+  formaPago: FormaPagoGasto;
+  estado: EstadoGasto;
+  esRecurrente: boolean;
+  periodo?: string;
+  urlDocumento?: string;
+  notas?: string;
+  createdAt: string;
+  // From view
+  situacion?: string;
+  diasRetraso?: number;
+}
+
+export interface GastoRecurrente {
+  id: string;
+  empresaId: string;
+  acreedorId?: string;
+  acreedorNombre: string;
+  categoriaId?: string;
+  categoriaNombre?: string;
+  concepto: string;
+  baseImponible: number;
+  ivaPorcentaje: number;
+  irpfPorcentaje: number;
+  diaVencimiento: number;
+  frecuencia: FrecuenciaGasto;
+  formaPago: FormaPagoGasto;
+  activo: boolean;
+  ultimoPeriodo?: string;
+}
+
+export interface GastoPorCategoria {
+  empresaId: string;
+  periodo: string;
+  categoriaId?: string;
+  categoriaNombre?: string;
+  numGastos: number;
+  baseTotal: number;
+  ivaTotal: number;
+  totalGastos: number;
+  totalPagado: number;
+  totalPendiente: number;
+}
