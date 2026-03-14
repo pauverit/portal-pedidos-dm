@@ -111,7 +111,7 @@ SELECT
   s.producto_id,
   s.almacen_id,
   al.nombre        AS almacen_nombre,
-  al.tipo          AS almacen_tipo,
+  al.codigo        AS almacen_tipo,
   s.cantidad,
   s.pmp,
   s.updated_at
