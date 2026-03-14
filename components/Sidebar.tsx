@@ -5,7 +5,7 @@ import {
   Upload, X, ShoppingBag, Scroll, Monitor, ClipboardList,
   ContactRound, Receipt, Building2, TrendingUp, FileText, Truck, BookOpen,
   PackageSearch, BarChart3, Package, Users, Droplets, Download, RefreshCcw,
-  Boxes,
+  Boxes, ShieldAlert,
 } from 'lucide-react';
 import { User } from '../types';
 
@@ -135,9 +135,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'facturacion_recurrente', label: 'Facturación Recurrente', icon: RefreshCcw,   section: 'Ventas', roles: ROLES_ADMIN },
 
     // ── CLIENTES — comerciales + administración ───────────────────────────────
-    { id: 'crm',               label: 'CRM',           icon: ContactRound, section: 'Clientes', roles: ROLES_VENTAS },
-    { id: 'admin_client_list', label: 'Clientes',      icon: Users,        section: 'Clientes', roles: ROLES_VENTAS },
-    { id: 'admin_new_client',  label: 'Nuevo Cliente', icon: UserPlus,     section: 'Clientes', roles: [...ROLES_COMERCIAL, 'admin'] },
+    { id: 'crm',               label: 'CRM',              icon: ContactRound,  section: 'Clientes', roles: ROLES_VENTAS },
+    { id: 'admin_client_list', label: 'Clientes',         icon: Users,         section: 'Clientes', roles: ROLES_VENTAS },
+    { id: 'admin_new_client',  label: 'Nuevo Cliente',    icon: UserPlus,      section: 'Clientes', roles: [...ROLES_COMERCIAL, 'admin'] },
+    { id: 'riesgo_credito',    label: 'Riesgo de Crédito',icon: ShieldAlert,   section: 'Clientes', roles: ROLES_ADMIN },
 
     // ── COMPRAS — administración + compras/almacén ────────────────────────────
     { id: 'compras', label: 'Compras', icon: PackageSearch,

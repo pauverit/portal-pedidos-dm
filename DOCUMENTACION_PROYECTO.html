@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Portal Pedidos DM — Documentación Completa del Proyecto</title>
+<style>
+  :root {
+    --c-bg: #f8fafc;
+    --c-card: #ffffff;
+    --c-border: #e2e8f0;
+    --c-text: #1e293b;
+    --c-muted: #64748b;
+    --c-violet: #7c3aed;
+    --c-blue: #2563eb;
+    --c-emerald: #059669;
+    --c-amber: #d97706;
+    --c-rose: #e11d48;
+    --c-cyan: #0891b2;
+    --c-indigo: #4338ca;
+    --c-slate: #475569;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--c-bg); color: var(--c-text); line-height: 1.6; }
+
+  /* ── Layout ── */
+  .wrapper { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+  /* ── Header ── */
+  .header { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: #fff; border-radius: 1rem; padding: 2.5rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 2rem; }
+  .header-logo { width: 56px; height: 56px; background: linear-gradient(135deg, #6366f1, #a855f7); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; flex-shrink: 0; }
+  .header h1 { font-size: 1.7rem; font-weight: 800; margin-bottom: 0.3rem; }
+  .header p { color: #94a3b8; font-size: 0.9rem; }
+  .header-meta { display: flex; gap: 1.5rem; margin-top: 0.8rem; flex-wrap: wrap; }
+  .meta-pill { background: rgba(255,255,255,0.1); border-radius: 999px; padding: 0.25rem 0.8rem; font-size: 0.75rem; color: #cbd5e1; }
+
+  /* ── Progress bar ── */
+  .progress-section { background: var(--c-card); border: 1px solid var(--c-border); border-radius: 1rem; padding: 1.5rem; margin-bottom: 2rem; }
+  .progress-section h2 { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--c-muted); margin-bottom: 1rem; }
+  .steps-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.5rem; }
+  .step-pill { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.78rem; font-weight: 600; }
+  .step-pill.done   { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+  .step-pill.active { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .step-pill.pending{ background: #f8fafc; color: #94a3b8; border: 1px solid #e2e8f0; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot.done    { background: #22c55e; }
+  .dot.active  { background: #3b82f6; }
+  .dot.pending { background: #cbd5e1; }
+
+  /* ── Stack ── */
+  .stack-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 2rem; }
+  .tag { padding: 0.3rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
+
+  /* ── Section headings ── */
+  .section-title { font-size: 1.1rem; font-weight: 800; color: var(--c-text); margin: 2rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--c-border); display: flex; align-items: center; gap: 0.5rem; }
+
+  /* ── Step cards ── */
+  .step-card { background: var(--c-card); border: 1px solid var(--c-border); border-radius: 1rem; margin-bottom: 1.5rem; overflow: hidden; }
+  .step-header { padding: 1.2rem 1.5rem; display: flex; align-items: flex-start; gap: 1rem; }
+  .step-num { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; flex-shrink: 0; }
+  .step-title-wrap { flex: 1; }
+  .step-title { font-size: 1rem; font-weight: 800; margin-bottom: 0.2rem; }
+  .step-subtitle { font-size: 0.8rem; color: var(--c-muted); }
+  .step-status { font-size: 0.7rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 999px; flex-shrink: 0; }
+  .status-done    { background: #dcfce7; color: #166534; }
+  .status-active  { background: #dbeafe; color: #1e40af; }
+  .status-pending { background: #f1f5f9; color: #64748b; }
+
+  .step-body { padding: 0 1.5rem 1.5rem; }
+  .step-desc { color: var(--c-muted); font-size: 0.85rem; margin-bottom: 1rem; }
+
+  /* ── Tables ── */
+  table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-bottom: 1rem; }
+  th { background: #f1f5f9; color: var(--c-muted); text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.05em; padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid var(--c-border); }
+  td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafafa; }
+  code { font-family: 'Consolas', 'Monaco', monospace; font-size: 0.8em; background: #f1f5f9; padding: 0.1em 0.4em; border-radius: 4px; color: #6366f1; }
+
+  /* ── Feature lists ── */
+  .feat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
+  .feat-item { display: flex; align-items: flex-start; gap: 0.5rem; font-size: 0.82rem; padding: 0.6rem 0.75rem; border-radius: 0.5rem; background: #f8fafc; border: 1px solid var(--c-border); }
+  .feat-icon { flex-shrink: 0; margin-top: 1px; }
+
+  /* ── SQL block ── */
+  .sql-box { background: #1e293b; color: #94a3b8; border-radius: 0.5rem; padding: 1rem 1.25rem; font-family: 'Consolas', monospace; font-size: 0.77rem; line-height: 1.7; margin-bottom: 1rem; overflow-x: auto; }
+  .sql-comment { color: #64748b; }
+  .sql-keyword { color: #7dd3fc; }
+  .sql-table { color: #86efac; }
+  .sql-string { color: #fde68a; }
+
+  /* ── File list ── */
+  .file-list { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 1rem; }
+  .file-item { display: flex; align-items: center; gap: 0.6rem; font-size: 0.8rem; }
+  .file-badge { font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.5rem; border-radius: 999px; flex-shrink: 0; }
+  .badge-new { background: #dcfce7; color: #166534; }
+  .badge-mod { background: #dbeafe; color: #1e40af; }
+  .badge-sql { background: #fef3c7; color: #92400e; }
+
+  /* ── Color helpers ── */
+  .violet { --accent: var(--c-violet); }
+  .blue   { --accent: var(--c-blue); }
+  .emerald{ --accent: var(--c-emerald); }
+  .amber  { --accent: var(--c-amber); }
+  .rose   { --accent: var(--c-rose); }
+  .cyan   { --accent: var(--c-cyan); }
+  .indigo { --accent: var(--c-indigo); }
+  .slate  { --accent: var(--c-slate); }
+  .teal   { --accent: #0d9488; }
+  .orange { --accent: #ea580c; }
+  .fuchsia{ --accent: #a21caf; }
+  .lime   { --accent: #65a30d; }
+  .sky    { --accent: #0284c7; }
+  .purple { --accent: #9333ea; }
+
+  .step-num  { background: color-mix(in srgb, var(--accent) 12%, white); color: var(--accent); }
+  .step-header { border-left: 4px solid var(--accent); }
+
+  /* ── DB schema visual ── */
+  .schema-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
+  .schema-table { border: 1px solid var(--c-border); border-radius: 0.5rem; overflow: hidden; font-size: 0.75rem; }
+  .schema-table-header { padding: 0.4rem 0.75rem; font-weight: 700; font-size: 0.72rem; }
+  .schema-table-row { padding: 0.25rem 0.75rem; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; color: var(--c-muted); }
+  .schema-table-row.pk { color: #7c3aed; font-weight: 700; }
+  .schema-table-row.fk { color: #2563eb; }
+
+  /* ── Role table ── */
+  .role-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.5rem; margin-bottom: 1rem; }
+  .role-card { border: 1px solid var(--c-border); border-radius: 0.5rem; padding: 0.6rem 0.75rem; font-size: 0.78rem; }
+  .role-name { font-weight: 800; margin-bottom: 0.2rem; }
+  .role-desc { color: var(--c-muted); font-size: 0.72rem; }
+
+  /* ── Flow diagram ── */
+  .flow { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .flow-step { padding: 0.4rem 0.9rem; border-radius: 0.5rem; font-size: 0.78rem; font-weight: 700; }
+  .flow-arrow { color: #94a3b8; font-size: 1rem; }
+
+  /* ── Callout ── */
+  .callout { border-radius: 0.5rem; padding: 0.75rem 1rem; font-size: 0.82rem; margin-bottom: 1rem; display: flex; gap: 0.5rem; }
+  .callout.info    { background: #eff6ff; border-left: 3px solid #3b82f6; color: #1e40af; }
+  .callout.warning { background: #fffbeb; border-left: 3px solid #f59e0b; color: #92400e; }
+  .callout.success { background: #f0fdf4; border-left: 3px solid #22c55e; color: #166534; }
+
+  /* ── Footer ── */
+  .footer { text-align: center; color: var(--c-muted); font-size: 0.8rem; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--c-border); }
+
+  @media print {
+    .wrapper { max-width: 100%; padding: 1rem; }
+    .step-card { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- ══ HEADER ══ -->
+  <div class="header">
+    <div class="header-logo">⚙️</div>
+    <div style="flex:1">
+      <h1>Portal Pedidos DM → ERP Digital Market</h1>
+      <p>Documentación completa del proyecto · PASO 1 al PASO 13</p>
+      <div class="header-meta">
+        <span class="meta-pill">📅 Inicio Marzo 2026</span>
+        <span class="meta-pill">🏢 Digital Market (single-tenant)</span>
+        <span class="meta-pill">2 CIFs · 4 delegaciones · 4 almacenes</span>
+        <span class="meta-pill">Repo: portal-pedidos-dm</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STACK TECNOLÓGICO ══ -->
+  <div class="stack-row">
+    <span class="tag" style="background:#dbeafe;color:#1e40af">React 18</span>
+    <span class="tag" style="background:#ede9fe;color:#6d28d9">TypeScript</span>
+    <span class="tag" style="background:#f0fdf4;color:#166534">Vite</span>
+    <span class="tag" style="background:#fef9c3;color:#854d0e">Supabase (PostgreSQL)</span>
+    <span class="tag" style="background:#f0f9ff;color:#0369a1">Tailwind CSS</span>
+    <span class="tag" style="background:#fdf4ff;color:#86198f">Vercel (deploy)</span>
+    <span class="tag" style="background:#fff7ed;color:#c2410c">Lucide React (iconos)</span>
+  </div>
+
+  <!-- ══ PROGRESO GENERAL ══ -->
+  <div class="progress-section">
+    <h2>Estado de implementación</h2>
+    <div class="steps-grid">
+      <div class="step-pill done"><div class="dot done"></div>PASO 1 — Estructura base</div>
+      <div class="step-pill done"><div class="dot done"></div>PASO 2 — Ciclo de ventas</div>
+      <div class="step-pill done"><div class="dot done"></div>PASO 3 — Compras y almacén</div>
+      <div class="step-pill done"><div class="dot done"></div>PASO 4 — VeriFactu AEAT</div>
+      <div class="step-pill done"><div class="dot done"></div>PASO 5 — Contabilidad PGC</div>
+      <div class="step-pill done"><div class="dot done"></div>PASO 6 — Recurrente + SEPA</div>
+      <div class="step-pill done"><div class="dot done"></div>PASO 7 — RRHH y Nóminas</div>
+      <div class="step-pill done"><div class="dot done"></div>PASO 8 — Business Intelligence</div>
+      <div class="step-pill done"><div class="dot done"></div>PASO 9 — Remesas SEPA</div>
+      <div class="step-pill done"><div class="dot done"></div>PASO 10 — Gastos de empresa</div>
+      <div class="step-pill done"><div class="dot done"></div>PASO 11 — Maestro materiales</div>
+      <div class="step-pill done"><div class="dot done"></div>PASO 12 — Devoluciones venta</div>
+      <div class="step-pill done"><div class="dot done"></div>PASO 13 — Trazabilidad docs</div>
+    </div>
+  </div>
+
+  <!-- ══ CONTEXTO ══ -->
+  <div class="section-title">🏗️ Contexto y decisiones de arquitectura</div>
+  <div class="step-card slate">
+    <div class="step-header" style="border-left-color:#475569">
+      <div>
+        <div class="step-title">Digital Market — ERP single-tenant privado</div>
+        <div class="step-subtitle">No es SaaS multiempresa. No hay tenant_id. Solo Digital Market.</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="callout info">
+        <span>ℹ️</span>
+        <span>Aunque el código base proviene del roadmap "Neutral SaaS", toda la implementación es <strong>exclusiva para Digital Market</strong>. La empresa se identifica por <code>empresa_id</code> (tabla <code>empresas</code>), no por tenant.</span>
+      </div>
+      <div class="role-grid">
+        <div class="role-card"><div class="role-name">admin</div><div class="role-desc">Acceso total al sistema</div></div>
+        <div class="role-card"><div class="role-name">direccion</div><div class="role-desc">Lectura total, todos los reportes</div></div>
+        <div class="role-card"><div class="role-name">administracion</div><div class="role-desc">Facturas, contabilidad, RRHH, SEPA</div></div>
+        <div class="role-card"><div class="role-name">sales_lead</div><div class="role-desc">CRM completo, presupuestos, pedidos</div></div>
+        <div class="role-card"><div class="role-name">sales</div><div class="role-desc">CRM propio, portal B2B clientes</div></div>
+        <div class="role-card"><div class="role-name">compras</div><div class="role-desc">OC, proveedores, recepciones</div></div>
+        <div class="role-card"><div class="role-name">almacen</div><div class="role-desc">Stock, traspasos, recepciones</div></div>
+        <div class="role-card"><div class="role-name">tech_lead</div><div class="role-desc">SAT completo + agenda técnicos</div></div>
+        <div class="role-card"><div class="role-name">tech</div><div class="role-desc">SAT propio, partes de trabajo</div></div>
+        <div class="role-card"><div class="role-name">client</div><div class="role-desc">Portal B2B, facturas propias</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PASO 1 ══ -->
+  <div class="step-card violet">
+    <div class="step-header">
+      <div class="step-num">01</div>
+      <div class="step-title-wrap">
+        <div class="step-title">Estructura base de Digital Market</div>
+        <div class="step-subtitle">Empresas · Delegaciones · Almacenes · Nuevos roles</div>
+      </div>
+      <span class="step-status status-done">✓ Completado</span>
+    </div>
+    <div class="step-body">
+      <p class="step-desc">Crea la base organizativa de la empresa: 2 CIFs, 4 delegaciones, 4 almacenes. Migra el campo <code>delegation</code> de texto a FK. Añade los nuevos roles al sistema.</p>
+      <table>
+        <thead><tr><th>Tabla creada</th><th>Columnas clave</th><th>Notas</th></tr></thead>
+        <tbody>
+          <tr><td><code>empresas</code></td><td>id, nombre, cif, razon_social, iban, logo_url</td><td>2 registros: DM Dpi'sur (B73486474) y DM Andalucía (B73860538)</td></tr>
+          <tr><td><code>delegaciones</code></td><td>id, empresa_id, nombre, codigo, direccion, activa</td><td>4 delegaciones vinculadas a empresas</td></tr>
+          <tr><td><code>almacenes</code></td><td>id, delegacion_id, nombre, codigo, activo</td><td>4 almacenes. <strong>Sin columna tipo</strong>, usar <code>codigo</code></td></tr>
+        </tbody>
+      </table>
+      <div class="file-list">
+        <div class="file-item"><span class="file-badge badge-sql">SQL</span><code>paso1_estructura_base.sql</code></div>
+        <div class="file-item"><span class="file-badge badge-new">NEW</span><code>hooks/useEmpresaData.ts</code> — CRUD para empresa/delegacion/almacen</div>
+        <div class="file-item"><span class="file-badge badge-new">NEW</span><code>components/AdminEmpresasView.tsx</code> — Vista con edición inline</div>
+        <div class="file-item"><span class="file-badge badge-mod">MOD</span><code>types.ts</code> — Añadidos UserRole, Empresa, Delegacion, Almacen</div>
+        <div class="file-item"><span class="file-badge badge-mod">MOD</span><code>components/Sidebar.tsx</code> — Nuevos roles + menú "Empresa & Delegaciones"</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PASO 2 ══ -->
+  <div class="step-card blue">
+    <div class="step-header">
+      <div class="step-num">02</div>
+      <div class="step-title-wrap">
+        <div class="step-title">Ciclo de ventas completo</div>
+        <div class="step-subtitle">Presupuesto → Pedido → Albarán → Factura (order-to-cash)</div>
+      </div>
+      <span class="step-status status-done">✓ Completado</span>
+    </div>
+    <div class="step-body">
+      <p class="step-desc">Implementa el flujo completo de documentos de venta con conversiones automáticas, firma digital táctil en albaranes y registro de cobros en facturas.</p>
+      <div class="flow">
+        <div class="flow-step" style="background:#ede9fe;color:#6d28d9">Presupuesto (PRES)</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step" style="background:#dbeafe;color:#1e40af">Pedido Venta (PED)</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step" style="background:#fef3c7;color:#92400e">Albarán (ALB)</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step" style="background:#dcfce7;color:#166534">Factura (A/B-XXXX)</div>
+      </div>
+      <table>
+        <thead><tr><th>Tabla</th><th>Numeración</th><th>Estados</th><th>Funciones especiales</th></tr></thead>
+        <tbody>
+          <tr><td><code>presupuestos</code> + <code>presupuesto_lineas</code></td><td>PRES-0001</td><td>borrador → enviado → aceptado → rechazado → facturado</td><td>Conversión directa a pedido con 1 clic</td></tr>
+          <tr><td><code>pedidos_venta</code> + <code>pedido_venta_lineas</code></td><td>PED-0001</td><td>confirmado → en_proceso → entregado → cancelado</td><td>Fecha entrega, generación de albarán</td></tr>
+          <tr><td><code>albaranes</code> + <code>albaran_lineas</code></td><td>ALB-0001</td><td>pendiente → entregado → firmado → facturado</td><td>Firma digital canvas táctil (base64)</td></tr>
+          <tr><td><code>facturas</code> + <code>factura_lineas</code></td><td>A-0001 / B-0001</td><td>emitida → enviada → cobrada → anulada</td><td>Registro cobro, VeriFactu hash chain</td></tr>
+        </tbody>
+      </table>
+      <div class="callout info">
+        <span>ℹ️</span>
+        <span><strong>Series de factura:</strong> Serie A = DM Dpi'sur (CIF B73486474) | Serie B = DM Andalucía (CIF B73860538)</span>
+      </div>
+      <div class="file-list">
+        <div class="file-item"><span class="file-badge badge-sql">SQL</span><code>paso2_ciclo_ventas.sql</code></div>
+        <div class="file-item"><span class="file-badge badge-new">NEW</span><code>hooks/useVentas.ts</code> — CRUD + conversiones para los 4 documentos + devoluciones (PASO 12)</div>
+        <div class="file-item"><span class="file-badge badge-new">NEW</span><code>components/LineItemsEditor.tsx</code> — Editor de líneas reutilizable con búsqueda de producto</div>
+        <div class="file-item"><span class="file-badge badge-new">NEW</span><code>components/DocumentoModal.tsx</code> — Modal unificado crear/editar para todos los documentos</div>
+        <div class="file-item"><span class="file-badge badge-new">NEW</span><code>components/VentasView.tsx</code> — Vista principal rediseñada en PASO 12</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PASO 3 ══ -->
+  <div class="step-card emerald">
+    <div class="step-header">
+      <div class="step-num">03</div>
+      <div class="step-title-wrap">
+        <div class="step-title">Compras y almacén multi-almacén</div>
+        <div class="step-subtitle">PMP · Traspasos · Landed Costs · Movimientos de stock</div>
+      </div>
+      <span class="step-status status-done">✓ Completado</span>
+    </div>
+    <div class="step-body">
+      <p class="step-desc">Gestión completa del ciclo de compras: proveedores, órdenes de compra, recepciones con actualización automática de stock y cálculo de Precio Medio Ponderado.</p>
+      <div class="flow">
+        <div class="flow-step" style="background:#e0f2fe;color:#0369a1">Proveedor</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step" style="background:#e0f2fe;color:#0369a1">OC (OC-0001)</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step" style="background:#dcfce7;color:#166534">Recepción</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step" style="background:#fef9c3;color:#854d0e">Stock actualizado</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step" style="background:#f3e8ff;color:#7c3aed">Traspaso entre almacenes</div>
+      </div>
+      <table>
+        <thead><tr><th>Tabla</th><th>Descripción</th><th>Notas importantes</th></tr></thead>
+        <tbody>
+          <tr><td><code>proveedores</code></td><td>Ficha de proveedor con CIF, contacto, dirección</td><td>Activar/desactivar</td></tr>
+          <tr><td><code>pedidos_compra</code> + <code>pedido_compra_lineas</code></td><td>OC con numeración OC-0001</td><td>Columna precio: <code>precio_unitario</code></td></tr>
+          <tr><td><code>recepciones</code> + <code>recepcion_lineas</code></td><td>Vinculada a OC, actualiza stock al confirmar</td><td>Columna precio: <strong><code>precio_coste</code></strong> (≠ precio_unitario)</td></tr>
+          <tr><td><code>stock</code></td><td>Stock por (producto_id, almacen_id)</td><td><strong>Nombre real: <code>stock</code></strong>, NO <code>stock_almacen</code></td></tr>
+          <tr><td><code>movimientos_stock</code></td><td>Audit trail inalterable de todos los movimientos</td><td>Tipos: compra, venta, traspaso, ajuste, devolucion, entrada_devolucion</td></tr>
+          <tr><td><code>traspasos</code> + <code>traspaso_lineas</code></td><td>Entre almacenes con firma digital</td><td>Estado: en_transito → recibido</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ PASO 4 ══ -->
+  <div class="step-card amber">
+    <div class="step-header">
+      <div class="step-num">04</div>
+      <div class="step-title-wrap">
+        <div class="step-title">Facturación legal + VeriFactu AEAT</div>
+        <div class="step-subtitle">Cumplimiento fiscal español · Hash chain inalterable</div>
+      </div>
+      <span class="step-status status-done">✓ Completado</span>
+    </div>
+    <div class="step-body">
+      <p class="step-desc">Implementa el registro de facturación con encadenamiento de hashes según la normativa VeriFactu de la AEAT. Cada factura queda ligada a la anterior por hash SHA-256 mediante pgcrypto.</p>
+      <table>
+        <thead><tr><th>Tabla</th><th>Columnas clave</th></tr></thead>
+        <tbody>
+          <tr><td><code>verifactu_registros</code></td><td>factura_id, hash_previo, hash_actual, qr_code, timestamp_aeat, estado</td></tr>
+          <tr><td><code>series_facturacion</code></td><td>empresa_id, serie, año, ultimo_numero — contador por CIF y serie</td></tr>
+          <tr><td><code>cobros</code></td><td>factura_id, importe, metodo (transferencia/tarjeta/efectivo/SEPA), fecha</td></tr>
+        </tbody>
+      </table>
+      <div class="callout warning">
+        <span>⚠️</span>
+        <span>Una vez emitida y encadenada una factura, <strong>no puede modificarse</strong>. El hash encadena cada factura con la anterior, cumpliendo la especificación técnica VeriFactu.</span>
+      </div>
+      <div class="file-list">
+        <div class="file-item"><span class="file-badge badge-sql">SQL</span><code>paso4_verifactu.sql</code> — requiere extensión <code>pgcrypto</code></div>
+        <div class="file-item"><span class="file-badge badge-new">NEW</span><code>components/LibroFacturasView.tsx</code> — libro de facturas con hashes</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PASO 5 ══ -->
+  <div class="step-card indigo">
+    <div class="step-header">
+      <div class="step-num">05</div>
+      <div class="step-title-wrap">
+        <div class="step-title">Contabilidad PGC española</div>
+        <div class="step-subtitle">Plan General Contable · Asientos automáticos · Informes fiscales</div>
+      </div>
+      <span class="step-status status-done">✓ Completado</span>
+    </div>
+    <div class="step-body">
+      <p class="step-desc">Módulo de contabilidad conforme al Plan General Contable español con generación automática de asientos desde facturas, informes fiscales y conciliación bancaria.</p>
+      <table>
+        <thead><tr><th>Tabla</th><th>Descripción</th></tr></thead>
+        <tbody>
+          <tr><td><code>plan_cuentas</code></td><td>Grupos 1–7 del PGC. Código, nombre, naturaleza (D/H), tipo. Cuentas base precargadas.</td></tr>
+          <tr><td><code>asientos</code> + <code>asiento_lineas</code></td><td>Fecha, referencia, debe, haber. Validación cuadre. Estados: borrador → confirmado</td></tr>
+          <tr><td><code>conciliacion_bancaria</code></td><td>Importación extractos CSV, emparejamiento con facturas</td></tr>
+        </tbody>
+      </table>
+      <div class="feat-grid">
+        <div class="feat-item"><span class="feat-icon">📊</span>Modelo 303 IVA trimestral</div>
+        <div class="feat-item"><span class="feat-icon">🏛️</span>Modelo 200 IS anual</div>
+        <div class="feat-item"><span class="feat-icon">⚡</span>Asientos automáticos desde facturas</div>
+        <div class="feat-item"><span class="feat-icon">🏦</span>Conciliación bancaria CSV</div>
+        <div class="feat-item"><span class="feat-icon">📈</span>Contabilidad analítica por delegación</div>
+      </div>
+      <div class="file-list">
+        <div class="file-item"><span class="file-badge badge-sql">SQL</span><code>paso5_contabilidad.sql</code></div>
+        <div class="file-item"><span class="file-badge badge-new">NEW</span><code>components/ContabilidadView.tsx</code></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PASO 6 ══ -->
+  <div class="step-card teal">
+    <div class="step-header">
+      <div class="step-num">06</div>
+      <div class="step-title-wrap">
+        <div class="step-title">Facturación recurrente + SEPA XML</div>
+        <div class="step-subtitle">Contratos recurrentes · MRR · Fichero PAIN.008 para banco</div>
+      </div>
+      <span class="step-status status-done">✓ Completado</span>
+    </div>
+    <div class="step-body">
+      <p class="step-desc">Automatización de cobros periódicos (contratos de mantenimiento SAT, servicios SaaS) y generación del fichero SEPA XML para presentar al banco.</p>
+      <table>
+        <thead><tr><th>Tabla</th><th>Descripción</th></tr></thead>
+        <tbody>
+          <tr><td><code>contratos_recurrentes</code></td><td>cliente_id, importe, frecuencia, próxima facturación, estado: activo/pausado/cancelado</td></tr>
+          <tr><td><code>mandatos_sepa</code></td><td>IBAN cliente, BIC, referencia mandato, fecha firma, secuencia (FRST/RCUR/FNAL/OOFF)</td></tr>
+        </tbody>
+      </table>
+      <div class="callout success">
+        <span>✅</span>
+        <span>Genera fichero <strong>SEPA PAIN.008.003.02 (XML)</strong> con IBAN, BIC y mandato por cliente. Listo para subir directamente al banco.</span>
+      </div>
+      <div class="file-list">
+        <div class="file-item"><span class="file-badge badge-sql">SQL</span><code>paso6_recurrente.sql</code></div>
+        <div class="file-item"><span class="file-badge badge-new">NEW</span><code>components/FacturacionRecurrenteView.tsx</code></div>
+        <div class="file-item"><span class="file-badge badge-new">NEW</span><code>components/RemesasSEPAView.tsx</code></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PASO 7 ══ -->
+  <div class="step-card fuchsia">
+    <div class="step-header">
+      <div class="step-num">07</div>
+      <div class="step-title-wrap">
+        <div class="step-title">RRHH y Nóminas</div>
+        <div class="step-subtitle">Empleados · Contratos · Nóminas · Ausencias</div>
+      </div>
+      <span class="step-status status-done">✓ Completado</span>
+    </div>
+    <div class="step-body">
+      <p class="step-desc">Gestión completa del capital humano: contratos laborales, generación de nóminas mensuales con cálculo de SS e IRPF, y gestión de ausencias con flujo de aprobación.</p>
+      <table>
+        <thead><tr><th>Tabla</th><th>Campos clave</th></tr></thead>
+        <tbody>
+          <tr><td><code>empleados</code></td><td>user_id, empresa_id, nss, fecha_alta, categoria_profesional, iban</td></tr>
+          <tr><td><code>contratos_laborales</code></td><td>empleado_id, tipo (indefinido/temporal/parcial/prácticas), salario_bruto, salario_neto, estado</td></tr>
+          <tr><td><code>nominas</code></td><td>empleado_id, mes/año, base_salarial, ss_empresa, ss_empleado, irpf, neto, estado (pendiente/pagada)</td></tr>
+          <tr><td><code>ausencias</code></td><td>empleado_id, tipo (vacaciones/baja/maternidad), fechas, estado (solicitada/aprobada/rechazada)</td></tr>
+        </tbody>
+      </table>
+      <div class="file-list">
+        <div class="file-item"><span class="file-badge badge-sql">SQL</span><code>paso7_rrhh.sql</code></div>
+        <div class="file-item"><span class="file-badge badge-new">NEW</span><code>components/RRHHView.tsx</code></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PASO 8 ══ -->
+  <div class="step-card sky">
+    <div class="step-header">
+      <div class="step-num">08</div>
+      <div class="step-title-wrap">
+        <div class="step-title">Business Intelligence & Analytics</div>
+        <div class="step-subtitle">KPIs · Rentabilidad · Márgenes · Dashboards por rol</div>
+      </div>
+      <span class="step-status status-done">✓ Completado</span>
+    </div>
+    <div class="step-body">
+      <p class="step-desc">Módulo de análisis de negocio con vistas materializadas de rentabilidad, márgenes por producto y empresa, y dashboards diferenciados por rol.</p>
+      <table>
+        <thead><tr><th>Vista SQL</th><th>Descripción</th></tr></thead>
+        <tbody>
+          <tr><td><code>bi_margen_ventas</code></td><td>Margen por línea de venta (precio - coste) × cantidad</td></tr>
+          <tr><td><code>bi_rentabilidad_producto</code></td><td>Por producto: coste actual, PVP, margen%, uds vendidas, ingreso total. Usa <code>mv.empresa_id</code> (no <code>p.empresa_id</code>) y <code>p.category AS categoria</code></td></tr>
+          <tr><td><code>bi_margen_neto_empresa</code></td><td>Ventas, margen bruto, gastos operativos, gastos personal, resultado neto, margen neto %</td></tr>
+        </tbody>
+      </table>
+      <div class="callout warning">
+        <span>⚠️</span>
+        <span><strong>Truco importante:</strong> la tabla <code>products</code> usa nombres en inglés (<code>category</code>, no <code>categoria</code>) y <strong>no tiene <code>empresa_id</code></strong>. El empresa_id para BI viene del JOIN con facturas/movimientos.</span>
+      </div>
+      <div class="file-list">
+        <div class="file-item"><span class="file-badge badge-sql">SQL</span><code>paso8_bi_analytics.sql</code> + <code>paso11_maestro_materiales.sql</code></div>
+        <div class="file-item"><span class="file-badge badge-new">NEW</span><code>components/BIAnalyticsView.tsx</code> — Tabs: Ventas | Compras | Gastos | Márgenes</div>
+        <div class="file-item"><span class="file-badge badge-new">NEW</span><code>hooks/useBIAnalytics.ts</code></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PASO 9 ══ -->
+  <div class="step-card cyan">
+    <div class="step-header">
+      <div class="step-num">09</div>
+      <div class="step-title-wrap">
+        <div class="step-title">Remesas SEPA</div>
+        <div class="step-subtitle">Adeudos directos · Fichero XML PAIN.008 · Gestión mandatos</div>
+      </div>
+      <span class="step-status status-done">✓ Completado</span>
+    </div>
+    <div class="step-body">
+      <p class="step-desc">Gestión completa de remesas SEPA para domiciliación bancaria. Generación del fichero XML estándar PAIN.008.003.02 para presentar en entidades bancarias.</p>
+      <div class="feat-grid">
+        <div class="feat-item"><span class="feat-icon">🏦</span>IBAN + BIC por cliente</div>
+        <div class="feat-item"><span class="feat-icon">📄</span>Mandato SEPA con fecha firma</div>
+        <div class="feat-item"><span class="feat-icon">🔄</span>Secuencias FRST/RCUR/FNAL/OOFF</div>
+        <div class="feat-item"><span class="feat-icon">⬇️</span>Descarga XML inmediata</div>
+        <div class="feat-item"><span class="feat-icon">🏢</span>CI acreedor por CIF empresa</div>
+      </div>
+      <div class="file-list">
+        <div class="file-item"><span class="file-badge badge-sql">SQL</span><code>paso9_sepa.sql</code></div>
+        <div class="file-item"><span class="file-badge badge-new">NEW</span><code>components/RemesasSEPAView.tsx</code></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PASO 10 ══ -->
+  <div class="step-card orange">
+    <div class="step-header">
+      <div class="step-num">10</div>
+      <div class="step-title-wrap">
+        <div class="step-title">Gastos de empresa</div>
+        <div class="step-subtitle">Alquiler · Suministros · Servicios · Seguros · Gastos recurrentes</div>
+      </div>
+      <span class="step-status status-done">✓ Completado</span>
+    </div>
+    <div class="step-body">
+      <p class="step-desc">Registro y categorización de todos los gastos operativos de la empresa (no de empleados — esos van en RRHH). Integrado con el módulo BI para el cálculo del margen neto.</p>
+      <table>
+        <thead><tr><th>Categoría de gasto</th><th>Ejemplos</th></tr></thead>
+        <tbody>
+          <tr><td>Inmuebles</td><td>Alquiler oficinas, almacenes, delegaciones</td></tr>
+          <tr><td>Suministros</td><td>Luz, agua, gas, internet, teléfono</td></tr>
+          <tr><td>Servicios externos</td><td>Asesoría, gestoría, limpieza, seguridad</td></tr>
+          <tr><td>Seguros</td><td>Seguro empresa, flota, responsabilidad civil</td></tr>
+          <tr><td>Otros</td><td>Material oficina, publicidad, software</td></tr>
+        </tbody>
+      </table>
+      <div class="file-list">
+        <div class="file-item"><span class="file-badge badge-sql">SQL</span><code>paso10_gastos.sql</code></div>
+        <div class="file-item"><span class="file-badge badge-new">NEW</span><code>components/GastosView.tsx</code></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PASO 11 ══ -->
+  <div class="step-card lime">
+    <div class="step-header">
+      <div class="step-num">11</div>
+      <div class="step-title-wrap">
+        <div class="step-title">Maestro de Materiales</div>
+        <div class="step-subtitle">Costes · Márgenes · PGC · Familias · BI de rentabilidad</div>
+      </div>
+      <span class="step-status status-done">✓ Completado</span>
+    </div>
+    <div class="step-body">
+      <p class="step-desc">Enriquece la tabla <code>products</code> con datos de coste, márgenes automáticos y cuentas contables PGC. Añade el tab "Márgenes" al módulo BI y la edición de costes en AdminProductEditModal.</p>
+      <div class="callout warning">
+        <span>⚠️</span>
+        <span><strong>Correcciones importantes en este paso:</strong> (1) <code>bi_rentabilidad_producto</code>: usar <code>mv.empresa_id</code> no <code>p.empresa_id</code>. (2) Usar <code>p.category AS categoria</code> no <code>p.categoria</code> (la tabla products usa nombres en inglés).</span>
+      </div>
+      <table>
+        <thead><tr><th>Campo añadido a products</th><th>Tipo</th><th>Descripción</th></tr></thead>
+        <tbody>
+          <tr><td><code>precio_compra</code></td><td>NUMERIC</td><td>Precio de coste / compra</td></tr>
+          <tr><td><code>pvp</code></td><td>NUMERIC</td><td>PVP recomendado (puede diferir de price)</td></tr>
+          <tr><td><code>margen_bruto_pct</code></td><td>NUMERIC</td><td>Calculado automáticamente por trigger</td></tr>
+          <tr><td><code>familia</code></td><td>TEXT</td><td>Familia / agrupación comercial</td></tr>
+          <tr><td><code>cuenta_ventas</code></td><td>TEXT</td><td>Cuenta PGC ventas (default 700)</td></tr>
+          <tr><td><code>cuenta_compras</code></td><td>TEXT</td><td>Cuenta PGC compras (default 600)</td></tr>
+          <tr><td><code>cuenta_existencias</code></td><td>TEXT</td><td>Cuenta PGC existencias (default 300)</td></tr>
+          <tr><td><code>activo</code></td><td>BOOLEAN</td><td>Producto activo/inactivo</td></tr>
+        </tbody>
+      </table>
+      <div class="file-list">
+        <div class="file-item"><span class="file-badge badge-sql">SQL</span><code>paso11_maestro_materiales.sql</code></div>
+        <div class="file-item"><span class="file-badge badge-mod">MOD</span><code>components/AdminProductEditModal.tsx</code> — Tab "Costes y Contabilidad"</div>
+        <div class="file-item"><span class="file-badge badge-mod">MOD</span><code>components/BIAnalyticsView.tsx</code> — Tab "Márgenes"</div>
+        <div class="file-item"><span class="file-badge badge-mod">MOD</span><code>hooks/useBIAnalytics.ts</code> — loadRentabilidad, loadMargenNeto</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PASO 12 ══ -->
+  <div class="step-card rose">
+    <div class="step-header">
+      <div class="step-num">12</div>
+      <div class="step-title-wrap">
+        <div class="step-title">Devoluciones de venta + Rediseño VentasView</div>
+        <div class="step-subtitle">DEV-XXXX · Vuelta a stock · Notas de crédito · Identidad visual por tab</div>
+      </div>
+      <span class="step-status status-done">✓ Completado</span>
+    </div>
+    <div class="step-body">
+      <p class="step-desc">Implementa el módulo de devoluciones de clientes con reposición automática de stock al almacén. Rediseño completo de VentasView con identidad visual por tipo de documento y pipeline de flujo.</p>
+      <table>
+        <thead><tr><th>Tabla</th><th>Descripción</th></tr></thead>
+        <tbody>
+          <tr><td><code>devoluciones_venta</code></td><td>Referencia DEV-0001 (auto), motivo, estado, tipo_abono, factura/albarán origen, almacén destino</td></tr>
+          <tr><td><code>devolucion_lineas</code></td><td>producto_id, cantidad, precio_unitario, descuento, iva, subtotal</td></tr>
+        </tbody>
+      </table>
+      <div style="margin-bottom:1rem;">
+        <strong style="font-size:0.82rem">Triggers automáticos:</strong>
+        <ul style="margin-top:0.4rem;padding-left:1.2rem;font-size:0.8rem;color:var(--c-muted)">
+          <li><code>trg_ref_devolucion</code> — Numeración automática DEV-0001</li>
+          <li><code>trg_totales_devolucion</code> — Recalcula totales cabecera al modificar líneas</li>
+          <li><code>trg_stock_devolucion</code> — Al marcar estado → <code>recibida</code>: actualiza <code>stock</code> + inserta en <code>movimientos_stock</code> tipo <code>entrada_devolucion</code></li>
+        </ul>
+      </div>
+      <strong style="font-size:0.82rem">VentasView — identidad visual por tipo de documento:</strong>
+      <div class="flow" style="margin-top:0.5rem">
+        <div class="flow-step" style="background:#ede9fe;color:#6d28d9">🟣 Presupuestos</div>
+        <div class="flow-step" style="background:#dbeafe;color:#1e40af">🔵 Pedidos</div>
+        <div class="flow-step" style="background:#fef3c7;color:#92400e">🟡 Albaranes</div>
+        <div class="flow-step" style="background:#dcfce7;color:#166534">🟢 Facturas</div>
+        <div class="flow-step" style="background:#ffe4e6;color:#be123c">🔴 Devoluciones</div>
+      </div>
+      <div class="file-list">
+        <div class="file-item"><span class="file-badge badge-sql">SQL</span><code>paso12_devoluciones.sql</code></div>
+        <div class="file-item"><span class="file-badge badge-mod">MOD</span><code>hooks/useVentas.ts</code> — createDevolucion, updateDevolucionEstado, getDevolucionConLineas, loadDevoluciones</div>
+        <div class="file-item"><span class="file-badge badge-mod">MOD</span><code>types.ts</code> — DevolucionVenta, DevolucionLinea, MotivoDevolucion, EstadoDevolucion, TipoAbono</div>
+        <div class="file-item"><span class="file-badge badge-mod">MOD</span><code>components/VentasView.tsx</code> — Rediseño completo con pipeline de flujo + KPI cards + modal devolución</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PASO 13 ══ -->
+  <div class="step-card indigo">
+    <div class="step-header">
+      <div class="step-num">13</div>
+      <div class="step-title-wrap">
+        <div class="step-title">Maestro de Materiales — Trazabilidad completa</div>
+        <div class="step-subtitle">v_traza_producto · v_stock_producto · Sección Materiales en menú</div>
+      </div>
+      <span class="step-status status-done">✓ Completado</span>
+    </div>
+    <div class="step-body">
+      <p class="step-desc">Vista SQL que consolida todos los documentos donde aparece cada producto. Nueva sección "Materiales" en el menú con ficha detallada: atributos, costes PGC, stock por almacén e historial completo de documentos.</p>
+
+      <strong style="font-size:0.82rem">Vistas creadas:</strong>
+      <div class="sql-box" style="margin-top:0.5rem">
+        <span class="sql-comment">-- v_traza_producto: UNION ALL de todos los documentos por producto_id</span><br>
+        presupuesto_lineas → <span class="sql-table">presupuestos</span> &nbsp;|&nbsp;
+        pedido_venta_lineas → <span class="sql-table">pedidos_venta</span><br>
+        albaran_lineas → <span class="sql-table">albaranes</span> (total NULL) &nbsp;|&nbsp;
+        factura_lineas → <span class="sql-table">facturas</span><br>
+        devolucion_lineas → <span class="sql-table">devoluciones_venta</span> &nbsp;|&nbsp;
+        pedido_compra_lineas → <span class="sql-table">pedidos_compra</span><br>
+        recepcion_lineas → <span class="sql-table">recepciones</span> (<span class="sql-keyword">precio_coste</span> AS precio_unitario)<br><br>
+        <span class="sql-comment">-- v_stock_producto: stock + nombre de almacén</span><br>
+        <span class="sql-table">stock</span> JOIN <span class="sql-table">almacenes</span> ON almacen_id (sin campo tipo, usar <span class="sql-keyword">codigo</span>)
+      </div>
+
+      <div class="callout warning">
+        <span>⚠️</span>
+        <span><strong>Errores encontrados al ejecutar el SQL (ya corregidos):</strong><br>
+        1. <code>recepcion_lineas</code> tiene <code>precio_coste</code>, no <code>precio_unitario</code><br>
+        2. La tabla de stock se llama <code>stock</code>, no <code>stock_almacen</code><br>
+        3. La tabla <code>almacenes</code> no tiene columna <code>tipo</code>, usar <code>codigo</code>
+        </span>
+      </div>
+
+      <strong style="font-size:0.82rem">MaterialesView — panel izquierdo + panel derecho:</strong>
+      <table style="margin-top:0.5rem">
+        <thead><tr><th>Tab del panel de detalle</th><th>Contenido</th></tr></thead>
+        <tbody>
+          <tr><td>General</td><td>Nombre, referencia, categoría, subcategoría, unidad, marca, descripción, notas internas, estado activo</td></tr>
+          <tr><td>Costes</td><td>Precio compra, PVP, margen bruto con semáforo (verde/ámbar/rojo), familia, cuentas PGC 700/600/300</td></tr>
+          <tr><td>Stock</td><td>Stock total consolidado + tabla por almacén (nombre, cantidad, PMP)</td></tr>
+          <tr><td>Historial</td><td>Todos los documentos por tipo (icono coloreado) con referencia, cliente, fecha, estado, cantidad y subtotal. Resumen: nº documentos, uds vendidas, importe total.</td></tr>
+        </tbody>
+      </table>
+      <div class="file-list">
+        <div class="file-item"><span class="file-badge badge-sql">SQL</span><code>paso13_materiales_activos.sql</code></div>
+        <div class="file-item"><span class="file-badge badge-new">NEW</span><code>components/MaterialesView.tsx</code></div>
+        <div class="file-item"><span class="file-badge badge-new">NEW</span><code>hooks/useMateriales.ts</code> — loadTraza, loadStock, loadDetalleProducto</div>
+        <div class="file-item"><span class="file-badge badge-mod">MOD</span><code>types.ts</code> — TrazaProducto, StockAlmacenDetalle</div>
+        <div class="file-item"><span class="file-badge badge-mod">MOD</span><code>components/Sidebar.tsx</code> — "Materiales" en sección Compras (icono Boxes)</div>
+        <div class="file-item"><span class="file-badge badge-mod">MOD</span><code>App.tsx</code> — ruta <code>materiales</code></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ REFERENCIA BD ══ -->
+  <div class="section-title">🗄️ Referencia rápida de la base de datos</div>
+  <div class="step-card slate">
+    <div class="step-header" style="border-left-color:#475569">
+      <div>
+        <div class="step-title">Esquema y nombres exactos de tablas</div>
+        <div class="step-subtitle">Columnas críticas donde se han producido errores — guardar para referencia</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <table>
+        <thead><tr><th>Tabla</th><th>Campo importante</th><th>Nombre correcto</th><th>Error habitual</th></tr></thead>
+        <tbody>
+          <tr><td><code>products</code></td><td>Categoría</td><td><code>category</code> (inglés)</td><td>No usar <code>categoria</code></td></tr>
+          <tr><td><code>products</code></td><td>Empresa</td><td>No existe <code>empresa_id</code></td><td>El empresa_id viene del JOIN con facturas</td></tr>
+          <tr><td><code>almacenes</code></td><td>Tipo</td><td><code>codigo</code> (ALM-MU, ALM-VA…)</td><td>No existe columna <code>tipo</code></td></tr>
+          <tr><td><code>stock</code></td><td>Nombre tabla</td><td><code>stock</code></td><td>No usar <code>stock_almacen</code></td></tr>
+          <tr><td><code>recepcion_lineas</code></td><td>Precio</td><td><code>precio_coste</code></td><td>No usar <code>precio_unitario</code></td></tr>
+          <tr><td><code>pedido_compra_lineas</code></td><td>Precio</td><td><code>precio_unitario</code></td><td>Correcto</td></tr>
+          <tr><td><code>machines</code> (SAT)</td><td>Activos cliente</td><td>Usar <code>machines</code> existente</td><td>No crear tabla <code>activos_cliente</code> separada</td></tr>
+          <tr><td><code>bi_rentabilidad_producto</code></td><td>empresa_id en view</td><td><code>mv.empresa_id</code></td><td>No usar <code>p.empresa_id</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ PRÓXIMOS PASOS ══ -->
+  <div class="section-title">🗺️ Próximos pasos pendientes</div>
+  <div class="step-card slate">
+    <div class="step-header" style="border-left-color:#64748b">
+      <div>
+        <div class="step-title">Roadmap desde PASO 14 en adelante</div>
+        <div class="step-subtitle">Funcionalidades identificadas pero aún no implementadas</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="feat-grid">
+        <div class="feat-item" style="border-color:#fca5a5;background:#fff1f2"><span>14</span>&nbsp;<strong>Riesgo de crédito / COFACE</strong><br><small style="color:var(--c-muted)">Límite por cliente, alertas</small></div>
+        <div class="feat-item"><span>🗓️</span>&nbsp;<strong>Agenda / Calendario</strong><br><small style="color:var(--c-muted)">Citas, reuniones, servicios SAT</small></div>
+        <div class="feat-item"><span>📋</span>&nbsp;<strong>Proyectos / Kanban</strong><br><small style="color:var(--c-muted)">Tablero, tareas, responsables</small></div>
+        <div class="feat-item"><span>💰</span>&nbsp;<strong>TPV</strong><br><small style="color:var(--c-muted)">Sesión caja, ticket, arqueo</small></div>
+        <div class="feat-item"><span>🔢</span>&nbsp;<strong>Trazabilidad lotes/series</strong><br><small style="color:var(--c-muted)">Upstream/downstream por lote</small></div>
+        <div class="feat-item"><span>📦</span>&nbsp;<strong>MRP básico</strong><br><small style="color:var(--c-muted)">Stock mínimo, propuesta OC</small></div>
+        <div class="feat-item"><span>📊</span>&nbsp;<strong>Etiquetado / QR</strong><br><small style="color:var(--c-muted)">Etiquetas producto/almacén</small></div>
+        <div class="feat-item"><span>📱</span>&nbsp;<strong>App móvil SAT</strong><br><small style="color:var(--c-muted)">Partes offline, firma táctil</small></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>Portal Pedidos DM → ERP Digital Market · Documentación generada Marzo 2026</p>
+    <p style="margin-top:0.3rem">Stack: React 18 · TypeScript · Vite · Supabase · Tailwind CSS · Vercel</p>
+  </div>
+
+</div>
+</body>
+</html>

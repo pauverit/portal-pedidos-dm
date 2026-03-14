@@ -1276,3 +1276,114 @@ export interface Activo extends Machine {
   incidents?: Incident[];
   workOrders?: WorkOrder[];
 }
+
+// ============================================================
+// PASO 14 — RIESGO DE CRÉDITO / LÍMITE COFACE
+// ============================================================
+
+/** Clasificación de riesgo COFACE (@rating estándar) */
+export type ClasificacionCoface = 'A1' | 'A2' | 'A3' | 'A4' | 'B' | 'C' | 'D';
+
+/** Estado semáforo de riesgo del cliente */
+export type EstadoRiesgo =
+  | 'ok'          // Dentro del límite, sin deuda vencida
+  | 'alerta'      // >80% del límite consumido
+  | 'vencido'     // Tiene facturas con fecha de vencimiento superada
+  | 'excedido'    // Supera el 100% del límite
+  | 'bloqueado'   // Bloqueado manualmente por administración
+  | 'sin_limite'; // No tiene límite definido (COFACE ni interno)
+
+/** Registro de límite de crédito por cliente (tabla limites_credito) */
+export interface LimiteCredito {
+  id?: string;
+  empresaId: string;
+  clienteId: string;
+
+  // Datos COFACE
+  limiteCoface?: number;
+  clasificacionCoface?: ClasificacionCoface;
+  numeroPolizaCoface?: string;
+  fechaConsultaCoface?: string;
+  fechaVencimientoCoface?: string;
+
+  // Límite interno
+  limiteInterno?: number;
+
+  // Bloqueo
+  bloqueado: boolean;
+  motivoBloqueo?: string;
+  fechaBloqueo?: string;
+  bloqueadoPor?: string;
+
+  // Metadatos
+  notas?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/** Vista v_riesgo_cliente — riesgo calculado en tiempo real */
+export interface RiesgoCliente {
+  clienteId: string;
+  clienteNombre: string;
+  email: string;
+  cif?: string;
+  empresaId: string;
+
+  // Límite
+  limiteId?: string;
+  limiteCoface?: number;
+  clasificacionCoface?: ClasificacionCoface;
+  numeroPolizaCoface?: string;
+  fechaConsultaCoface?: string;
+  fechaVencimientoCoface?: string;
+  limiteInterno?: number;
+  limiteEfectivo: number; // COFACE ?? interno ?? 0
+
+  // Bloqueo
+  bloqueado: boolean;
+  motivoBloqueo?: string;
+  fechaBloqueo?: string;
+
+  // Riesgo calculado
+  deudaTotal: number;          // Facturas pendientes (vencidas + vigentes)
+  deudaVencida: number;        // Solo facturas vencidas
+  deudaVigente: number;        // Facturas en plazo
+  pedidosSinFacturar: number;  // Pedidos confirmados sin factura
+  numFacturasPendientes: number;
+  numPedidosVivos: number;
+  diasMayorVencimiento: number; // Antigüedad del vencimiento más viejo (días)
+  riesgoVivo: number;           // deudaTotal + pedidosSinFacturar
+
+  // Indicadores
+  pctLimiteUsado?: number;     // null si no hay límite definido
+  creditoDisponible: number;
+  estadoRiesgo: EstadoRiesgo;
+}
+
+/** Vista v_facturas_pendientes_cliente */
+export interface FacturaPendienteRiesgo {
+  id: string;
+  referencia: string;
+  empresaId: string;
+  clienteId: string;
+  clienteNombre?: string;
+  fecha: string;
+  fechaVencimiento?: string;
+  estado: string;
+  total: number;
+  totalCobrado: number;
+  saldoPendiente: number;
+  diasVencida: number; // 0 si aún no ha vencido
+}
+
+/** Resumen para tarjetas del dashboard de riesgo */
+export interface ResumenRiesgoEmpresa {
+  totalClientesConRiesgo: number;
+  totalRiesgoVivo: number;
+  totalDeudaVencida: number;
+  clientesBloqueados: number;
+  clientesSinLimite: number;
+  clientesEnAlerta: number;  // alerta + excedido + vencido
+  limiteCoface_total: number;
+  pctLimiteGlobalUsado?: number;
+}

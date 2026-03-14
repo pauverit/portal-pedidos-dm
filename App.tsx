@@ -62,6 +62,9 @@ const ExpensesView = React.lazy(() => import('./components/ExpensesView').then(m
 const NewVisitModal = React.lazy(() => import('./components/NewVisitModal').then(m => ({ default: m.NewVisitModal })));
 const NewCallModal  = React.lazy(() => import('./components/NewCallModal').then(m => ({ default: m.NewCallModal })));
 
+// Lazy-loaded: Riesgo de Crédito (PASO 14)
+const RiesgoClienteView = React.lazy(() => import('./components/RiesgoClienteView'));
+
 import {
     SALES_REPS, SALES_REPS_PHONES, SALES_REPS_EMAILS, INITIAL_PRODUCTS
 } from './constants';
@@ -86,7 +89,7 @@ export default function App() {
     } = useSupabaseData();
     const { currentUser, setCurrentUser, login, logout, updateCurrentUser } = useAuth();
     const { cart, setCart, addToCart, updateQuantity, clearCart, syncCartPrices } = useCart(currentUser);
-    const { almacenes } = useEmpresaData();
+    const { almacenes, empresas } = useEmpresaData();
     const { toast } = useToast();
 
     const [currentView, setCurrentView] = useState('login');
@@ -898,6 +901,20 @@ export default function App() {
         if (currentView === 'admin_tech_management') return <AdminTechManagement technicians={users.filter(u => u.role === 'tech' || u.role === 'tech_lead')} onRefresh={refreshData} />;
         if (currentView === 'admin_bulk_import_sat' && currentUser?.role === 'admin') return <AdminBulkImportSAT />;
         if (currentView === 'admin_empresa' && ['admin', 'administracion', 'direccion'].includes(currentUser?.role || '')) return <AdminEmpresasView />;
+        if (currentView === 'riesgo_credito'
+            && ['admin', 'administracion', 'direccion'].includes(currentUser?.role || '')
+            && currentUser) {
+          const empresaId = empresas[0]?.id ?? '';
+          return (
+            <div className="flex-1 overflow-auto h-full">
+              <RiesgoClienteView
+                empresaId={empresaId}
+                currentUserId={currentUser.id}
+                currentUserRole={currentUser.role}
+              />
+            </div>
+          );
+        }
         if (['ventas','ventas_presupuestos','ventas_pedidos','ventas_albaranes','ventas_facturas'].includes(currentView)
             && ['admin','sales','administracion','direccion'].includes(currentUser?.role || '')) {
           return (
