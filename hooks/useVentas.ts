@@ -2,7 +2,8 @@ import { useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import {
   Presupuesto, PedidoVenta, Albaran, Factura,
-  DocumentoLinea, EstadoPresupuesto, EstadoPedidoVenta, EstadoAlbaran, EstadoFactura
+  DocumentoLinea, EstadoPresupuesto, EstadoPedidoVenta, EstadoAlbaran, EstadoFactura,
+  DevolucionVenta, DevolucionLinea, EstadoDevolucion, MotivoDevolucion, TipoAbono,
 } from '../types';
 
 // ─── Helpers de mapeo DB → TS ─────────────────────────────────────────────────
@@ -85,6 +86,46 @@ const mapAlbaran = (r: any): Albaran => ({
   createdAt: r.created_at,
 });
 
+const mapDevolucion = (r: any): DevolucionVenta => ({
+  id: r.id,
+  referencia: r.referencia,
+  empresaId: r.empresa_id,
+  delegacionId: r.delegacion_id,
+  facturaId: r.factura_id,
+  facturaRef: r.factura_ref,
+  albaranId: r.albaran_id,
+  albaranRef: r.albaran_ref,
+  clienteId: r.cliente_id,
+  clienteNombre: r.cliente_nombre,
+  almacenId: r.almacen_id,
+  almacenNombre: r.almacen_nombre,
+  fecha: r.fecha,
+  motivo: r.motivo as MotivoDevolucion,
+  estado: r.estado as EstadoDevolucion,
+  subtotal: Number(r.subtotal),
+  baseImponible: Number(r.base_imponible),
+  ivaPorcentaje: Number(r.iva_porcentaje),
+  iva: Number(r.iva),
+  total: Number(r.total),
+  tipoAbono: r.tipo_abono as TipoAbono,
+  notaCreditoRef: r.nota_credito_ref,
+  notas: r.notas,
+  createdAt: r.created_at,
+});
+
+const mapDevolucionLinea = (r: any): DevolucionLinea => ({
+  id: r.id,
+  devolucionId: r.devolucion_id,
+  orden: r.orden,
+  productoId: r.producto_id,
+  descripcion: r.descripcion,
+  cantidad: Number(r.cantidad),
+  precioUnitario: Number(r.precio_unitario),
+  descuento: Number(r.descuento),
+  ivaPorcentaje: Number(r.iva_porcentaje),
+  subtotal: Number(r.subtotal),
+});
+
 const mapFactura = (r: any): Factura => ({
   id: r.id,
   serie: r.serie,
@@ -151,6 +192,7 @@ export function useVentas() {
   const [pedidos, setPedidos] = useState<PedidoVenta[]>([]);
   const [albaranes, setAlbaranes] = useState<Albaran[]>([]);
   const [facturas, setFacturas] = useState<Factura[]>([]);
+  const [devoluciones, setDevoluciones] = useState<DevolucionVenta[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -192,17 +234,26 @@ export function useVentas() {
     setFacturas((data || []).map(mapFactura));
   }, []);
 
+  const loadDevoluciones = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('devoluciones_venta')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    setDevoluciones((data || []).map(mapDevolucion));
+  }, []);
+
   const loadAll = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      await Promise.all([loadPresupuestos(), loadPedidos(), loadAlbaranes(), loadFacturas()]);
+      await Promise.all([loadPresupuestos(), loadPedidos(), loadAlbaranes(), loadFacturas(), loadDevoluciones()]);
     } catch (e: any) {
       setError(e.message);
     } finally {
       setLoading(false);
     }
-  }, [loadPresupuestos, loadPedidos, loadAlbaranes, loadFacturas]);
+  }, [loadPresupuestos, loadPedidos, loadAlbaranes, loadFacturas, loadDevoluciones]);
 
   // ── Cargar líneas de un documento ────────────────────────────
 
@@ -589,18 +640,90 @@ export function useVentas() {
     };
   };
 
+  // ── CRUD Devoluciones ────────────────────────────────────────
+
+  const getDevolucionConLineas = async (id: string): Promise<DevolucionVenta | null> => {
+    const { data, error } = await supabase.from('devoluciones_venta').select('*').eq('id', id).single();
+    if (error || !data) return null;
+    const { data: linData } = await supabase
+      .from('devolucion_lineas').select('*').eq('devolucion_id', id).order('orden');
+    const lineas = (linData || []).map(mapDevolucionLinea);
+    return { ...mapDevolucion(data), lineas };
+  };
+
+  const createDevolucion = async (
+    data: Omit<DevolucionVenta, 'id' | 'referencia' | 'lineas'>,
+    lineas: DevolucionLinea[]
+  ): Promise<DevolucionVenta> => {
+    const row = {
+      empresa_id: data.empresaId,
+      delegacion_id: data.delegacionId || null,
+      factura_id: data.facturaId || null,
+      albaran_id: data.albaranId || null,
+      cliente_id: data.clienteId || null,
+      cliente_nombre: data.clienteNombre,
+      almacen_id: data.almacenId || null,
+      fecha: data.fecha,
+      motivo: data.motivo,
+      estado: data.estado || 'pendiente',
+      subtotal: data.subtotal,
+      base_imponible: data.baseImponible,
+      iva_porcentaje: data.ivaPorcentaje,
+      iva: data.iva,
+      total: data.total,
+      tipo_abono: data.tipoAbono,
+      nota_credito_ref: data.notaCreditoRef || null,
+      notas: data.notas || null,
+    };
+    const { data: created, error } = await supabase
+      .from('devoluciones_venta').insert(row).select().single();
+    if (error || !created) throw new Error(error?.message || 'Error creando devolución');
+    if (lineas.length > 0) {
+      const rows = lineas.map((l, i) => ({
+        devolucion_id: created.id,
+        orden: i + 1,
+        producto_id: l.productoId || null,
+        descripcion: l.descripcion,
+        cantidad: l.cantidad,
+        precio_unitario: l.precioUnitario,
+        descuento: l.descuento,
+        iva_porcentaje: l.ivaPorcentaje,
+        subtotal: l.subtotal,
+      }));
+      const { error: linErr } = await supabase.from('devolucion_lineas').insert(rows);
+      if (linErr) throw new Error(linErr.message);
+    }
+    await loadDevoluciones();
+    return mapDevolucion(created);
+  };
+
+  const updateDevolucionEstado = async (
+    id: string,
+    estado: EstadoDevolucion,
+    extra?: { almacenId?: string; notas?: string; notaCreditoRef?: string }
+  ) => {
+    const row: any = { estado, updated_at: new Date().toISOString() };
+    if (extra?.almacenId) row.almacen_id = extra.almacenId;
+    if (extra?.notas !== undefined) row.notas = extra.notas;
+    if (extra?.notaCreditoRef !== undefined) row.nota_credito_ref = extra.notaCreditoRef;
+    const { error } = await supabase.from('devoluciones_venta').update(row).eq('id', id);
+    if (error) throw new Error(error.message);
+    await loadDevoluciones();
+  };
+
   return {
     // Estado
-    presupuestos, pedidos, albaranes, facturas, loading, error,
+    presupuestos, pedidos, albaranes, facturas, devoluciones, loading, error,
     // Cargas
-    loadAll, loadPresupuestos, loadPedidos, loadAlbaranes, loadFacturas,
+    loadAll, loadPresupuestos, loadPedidos, loadAlbaranes, loadFacturas, loadDevoluciones,
     // Detalle con líneas
-    getPresupuestoConLineas, getPedidoConLineas, getAlbaranConLineas, getFacturaConLineas,
+    getPresupuestoConLineas, getPedidoConLineas, getAlbaranConLineas, getFacturaConLineas, getDevolucionConLineas,
     // CRUD
     createPresupuesto, updatePresupuesto,
     createPedido, updatePedido,
     createAlbaran, firmarAlbaran,
     createFactura, updateFactura, marcarCobrada,
+    createDevolucion, updateDevolucionEstado,
     // Conversiones
     presupuestoToPedidoDraft, pedidoToAlbaranDraft, albaranToFacturaDraft,
     // Utilidades

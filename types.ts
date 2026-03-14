@@ -693,6 +693,53 @@ export interface LibroFacturaEmitida {
   qrUrl?: string;
 }
 
+// ── Devoluciones de venta — PASO 12 ───────────────────────────────────────────
+
+export type MotivoDevolucion = 'defecto' | 'error_pedido' | 'cambio' | 'no_deseado' | 'otro';
+export type EstadoDevolucion = 'pendiente' | 'recibida' | 'procesada' | 'anulada';
+export type TipoAbono        = 'nota_credito' | 'devolucion_efectivo' | 'canje' | 'saldo';
+
+export interface DevolucionVenta {
+  id: string;
+  referencia: string;
+  empresaId: string;
+  delegacionId?: string;
+  facturaId?: string;
+  facturaRef?: string;
+  albaranId?: string;
+  albaranRef?: string;
+  clienteId?: string;
+  clienteNombre: string;
+  almacenId?: string;
+  almacenNombre?: string;
+  fecha: string;
+  motivo: MotivoDevolucion;
+  estado: EstadoDevolucion;
+  subtotal: number;
+  baseImponible: number;
+  ivaPorcentaje: number;
+  iva: number;
+  total: number;
+  tipoAbono: TipoAbono;
+  notaCreditoRef?: string;
+  notas?: string;
+  createdAt?: string;
+  lineas?: DevolucionLinea[];
+}
+
+export interface DevolucionLinea {
+  id?: string;
+  devolucionId?: string;
+  orden: number;
+  productoId?: string;
+  descripcion: string;
+  cantidad: number;
+  precioUnitario: number;
+  descuento: number;
+  ivaPorcentaje: number;
+  subtotal: number;
+}
+
 // ============================================================
 // CONTABILIDAD PGC — PASO 5
 // ============================================================
