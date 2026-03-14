@@ -1229,3 +1229,50 @@ export interface BiMargenNetoEmpresa {
   resultadoNeto: number;
   margenNetoPct: number;
 }
+
+// ── PASO 13: Trazabilidad de documentos + Activos de cliente ──────────────────
+
+export type TipoDocTraza =
+  | 'presupuesto' | 'pedido' | 'albaran' | 'factura'
+  | 'devolucion'  | 'compra' | 'recepcion';
+
+export interface TrazaProducto {
+  tipoDoc: TipoDocTraza;
+  docId: string;
+  referencia: string;
+  empresaId?: string;
+  clienteNombre?: string;
+  fecha: string;
+  estado?: string;
+  total?: number;
+  productoId: string;
+  cantidad: number;
+  precioUnitario: number;
+  subtotal: number;
+}
+
+export interface StockAlmacenDetalle {
+  productoId: string;
+  almacenId: string;
+  almacenNombre: string;
+  almacenTipo?: string;
+  cantidad: number;
+  pmp?: number;
+  updatedAt?: string;
+}
+
+/** Activo de cliente (extiende Machine con campos de PASO 13) */
+export interface Activo extends Machine {
+  numeroActivo?: string;
+  nombre?: string;
+  empresaId?: string;
+  ubicacion?: string;
+  updatedAt?: string;
+  // Joined
+  clienteEmpresa?: string;
+  incidenciasAbiertas?: number;
+  otAbiertas?: number;
+  // Detail (loaded on demand)
+  incidents?: Incident[];
+  workOrders?: WorkOrder[];
+}

@@ -5,6 +5,7 @@ import {
   Upload, X, ShoppingBag, Scroll, Monitor, ClipboardList,
   ContactRound, Receipt, Building2, TrendingUp, FileText, Truck, BookOpen,
   PackageSearch, BarChart3, Package, Users, Droplets, Download, RefreshCcw,
+  Boxes,
 } from 'lucide-react';
 import { User } from '../types';
 
@@ -150,6 +151,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ]},
     { id: 'stock',    label: 'Almacén & Stocks', icon: BarChart3,
       section: 'Compras', roles: ['admin', 'compras', 'almacen', 'administracion', 'direccion'] },
+    { id: 'materiales', label: 'Materiales',      icon: Boxes,
+      section: 'Compras', roles: ['admin', 'compras', 'almacen', 'administracion', 'direccion', 'sales_lead'] },
 
     // ── GASTOS — todos los internos ───────────────────────────────────────────
     { id: 'expenses', label: 'Gastos', icon: Receipt,

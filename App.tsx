@@ -30,6 +30,7 @@ const AdminEmpresasView    = React.lazy(() => import('./components/AdminEmpresas
 const VentasView           = React.lazy(() => import('./components/VentasView').then(m => ({ default: m.VentasView })));
 const ComprasView          = React.lazy(() => import('./components/ComprasView').then(m => ({ default: m.ComprasView })));
 const StockView            = React.lazy(() => import('./components/StockView').then(m => ({ default: m.StockView })));
+const MaterialesView       = React.lazy(() => import('./components/MaterialesView').then(m => ({ default: m.MaterialesView })));
 const LibroFacturasView    = React.lazy(() => import('./components/LibroFacturasView').then(m => ({ default: m.LibroFacturasView })));
 const ContabilidadView         = React.lazy(() => import('./components/ContabilidadView').then(m => ({ default: m.ContabilidadView })));
 const FacturacionRecurrenteView = React.lazy(() => import('./components/FacturacionRecurrenteView').then(m => ({ default: m.FacturacionRecurrenteView })));
@@ -978,6 +979,14 @@ export default function App() {
           return (
             <div className="flex-1 overflow-auto">
               <StockView currentUser={currentUser} almacenes={almacenes} />
+            </div>
+          );
+        }
+        if (currentView === 'materiales'
+            && ['admin','compras','almacen','administracion','direccion','sales_lead'].includes(currentUser?.role || '')) {
+          return (
+            <div className="flex-1 overflow-hidden">
+              <MaterialesView productos={products} />
             </div>
           );
         }
