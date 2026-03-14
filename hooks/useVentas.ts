@@ -239,7 +239,8 @@ export function useVentas() {
       .from('devoluciones_venta')
       .select('*')
       .order('created_at', { ascending: false });
-    if (error) throw new Error(error.message);
+    // Si la tabla aún no existe (PASO 12 pendiente), ignorar silenciosamente
+    if (error) return;
     setDevoluciones((data || []).map(mapDevolucion));
   }, []);
 
