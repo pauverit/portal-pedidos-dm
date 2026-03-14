@@ -104,7 +104,7 @@ FULL OUTER JOIN gastos_nominas gn
 -- ============================================================
 CREATE OR REPLACE VIEW bi_funnel_ventas AS
 SELECT
-  empresa_id,
+  p.empresa_id,
   to_char(CURRENT_DATE, 'YYYY')          AS año,
   COUNT(DISTINCT p.id)                   AS presupuestos,
   COUNT(DISTINCT pv.id)                  AS pedidos,
@@ -119,7 +119,7 @@ FROM presupuestos p
 LEFT JOIN pedidos_venta pv ON pv.presupuesto_id = p.id
 LEFT JOIN facturas f ON f.presupuesto_id = p.id OR f.pedido_venta_id = pv.id
 WHERE extract(year FROM p.fecha::date) = extract(year FROM CURRENT_DATE)
-GROUP BY empresa_id;
+GROUP BY p.empresa_id;
 
 -- ============================================================
 -- 8.6  VISTA: KPI resumen empresa (un registro por empresa)
