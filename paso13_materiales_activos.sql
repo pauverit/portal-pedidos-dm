@@ -108,13 +108,13 @@ WHERE rl.producto_id IS NOT NULL;
 -- ============================================================
 CREATE OR REPLACE VIEW v_stock_producto AS
 SELECT
-  sa.producto_id,
-  sa.almacen_id,
+  s.producto_id,
+  s.almacen_id,
   al.nombre        AS almacen_nombre,
   al.tipo          AS almacen_tipo,
-  sa.cantidad,
-  sa.pmp,
-  sa.updated_at
-FROM stock_almacen sa
-JOIN almacenes al ON al.id = sa.almacen_id
-WHERE sa.cantidad <> 0;
+  s.cantidad,
+  s.pmp,
+  s.updated_at
+FROM stock s
+JOIN almacenes al ON al.id = s.almacen_id
+WHERE s.cantidad <> 0;

@@ -67,9 +67,9 @@ export function useMateriales() {
       .eq('producto_id', productoId);
 
     if (error) {
-      // Fallback: stock_almacen sin nombre de almacén
+      // Fallback: tabla stock base sin nombre de almacén
       const fallback = await supabase
-        .from('stock_almacen')
+        .from('stock')
         .select('*')
         .eq('producto_id', productoId);
       data = (fallback.data || []).map((r: any) => ({
