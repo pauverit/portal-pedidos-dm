@@ -65,6 +65,25 @@ const NewCallModal  = React.lazy(() => import('./components/NewCallModal').then(
 // Lazy-loaded: Riesgo de Crédito (PASO 14)
 const RiesgoClienteView = React.lazy(() => import('./components/RiesgoClienteView'));
 
+// Lazy-loaded: Centro 360° Cliente (PASO 16)
+const ClienteInfo360View = React.lazy(() => import('./components/ClienteInfo360View').then(m => ({ default: m.ClienteInfo360View })));
+
+// Lazy-loaded: Impresos Fiscales (PASO 15)
+const ImpresosFiscalesView = React.lazy(() => import('./components/ImpresosFiscalesView').then(m => ({ default: m.ImpresosFiscalesView })));
+
+// Lazy-loaded: Conciliación Bancaria (PASO 17)
+const ConciliacionBancariaView = React.lazy(() => import('./components/ConciliacionBancariaView').then(m => ({ default: m.ConciliacionBancariaView })));
+
+// Lazy-loaded: Libros Oficiales (PASO 18)
+const LibrosOficialesView = React.lazy(() => import('./components/LibrosOficialesView').then(m => ({ default: m.LibrosOficialesView })));
+
+// Lazy-loaded: Agenda & Calendario (PASO 20)
+const AgendaView = React.lazy(() => import('./components/AgendaView').then(m => ({ default: m.AgendaView })));
+
+// PASO 19 — UX SAGE-like
+import { GlobalSearch, useGlobalSearch } from './components/GlobalSearch';
+import { Breadcrumb } from './components/Breadcrumb';
+
 import {
     SALES_REPS, SALES_REPS_PHONES, SALES_REPS_EMAILS, INITIAL_PRODUCTS
 } from './constants';
@@ -98,6 +117,7 @@ export default function App() {
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+    const { open: searchOpen, setOpen: setSearchOpen } = useGlobalSearch();
     const [couponCode, setCouponCode] = useState('');
     const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
     const [shippingMethod, setShippingMethod] = useState<'agency' | 'own'>('own');
@@ -221,6 +241,50 @@ export default function App() {
             setOrders([]);
         }
     }, [currentUser]);
+
+    // Import products from Tarifa Online via hash parameter
+    useEffect(() => {
+        if (!currentUser || products.length === 0) return;
+        const hash = window.location.hash;
+        if (!hash.startsWith('#import=')) return;
+
+        try {
+            const encodedData = hash.substring('#import='.length);
+            const jsonStr = decodeURIComponent(escape(atob(encodedData)));
+            const importedItems: Array<{ name: string; price: number; category?: string; cat?: string; quantity?: number }> = JSON.parse(jsonStr);
+
+            if (!Array.isArray(importedItems) || importedItems.length === 0) return;
+
+            // Match imported items to ERP products by name (fuzzy: case-insensitive trim)
+            for (const item of importedItems) {
+                const match = products.find(p =>
+                    p.name.trim().toLowerCase() === item.name.trim().toLowerCase()
+                );
+                if (match) {
+                    addToCart(match, item.quantity || 1);
+                } else {
+                    // If no exact match, create an ad-hoc cart entry from tarifa data
+                    const adHocProduct: any = {
+                        id: `tarifa-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+                        name: item.name,
+                        reference: '',
+                        category: item.category || item.cat || 'otros',
+                        price: item.price,
+                        unit: 'ud',
+                        inStock: true,
+                    };
+                    addToCart(adHocProduct, item.quantity || 1);
+                }
+            }
+
+            // Clean the hash and navigate to cart
+            window.location.hash = '';
+            setCurrentView('cart');
+            toast(`${importedItems.length} producto(s) importados desde la Tarifa`, 'success');
+        } catch (e) {
+            console.error('Error importing tarifa data:', e);
+        }
+    }, [currentUser, products.length]);
 
     // Load CRM data when entering the crm view (or on login for sales)
     useEffect(() => {
@@ -901,6 +965,20 @@ export default function App() {
         if (currentView === 'admin_tech_management') return <AdminTechManagement technicians={users.filter(u => u.role === 'tech' || u.role === 'tech_lead')} onRefresh={refreshData} />;
         if (currentView === 'admin_bulk_import_sat' && currentUser?.role === 'admin') return <AdminBulkImportSAT />;
         if (currentView === 'admin_empresa' && ['admin', 'administracion', 'direccion'].includes(currentUser?.role || '')) return <AdminEmpresasView />;
+        if (currentView === 'cliente_360'
+            && ['admin', 'sales', 'sales_lead', 'administracion', 'direccion'].includes(currentUser?.role || '')
+            && currentUser) {
+          const empresaId = empresas[0]?.id ?? '';
+          return (
+            <div className="flex-1 flex flex-col overflow-hidden h-full">
+              <ClienteInfo360View
+                empresaId={empresaId}
+                clients={users}
+                currentUserRole={currentUser.role}
+              />
+            </div>
+          );
+        }
         if (currentView === 'riesgo_credito'
             && ['admin', 'administracion', 'direccion'].includes(currentUser?.role || '')
             && currentUser) {
@@ -940,6 +1018,33 @@ export default function App() {
           return (
             <div className="flex-1 overflow-auto">
               <ContabilidadView currentUser={currentUser} />
+            </div>
+          );
+        }
+        if (currentView === 'impresos_fiscales'
+            && ['admin','administracion','direccion'].includes(currentUser?.role || '')) {
+          const empresaId = empresas[0]?.id ?? '';
+          return (
+            <div className="flex-1 flex flex-col overflow-hidden h-full">
+              <ImpresosFiscalesView empresaId={empresaId} />
+            </div>
+          );
+        }
+        if (currentView === 'conciliacion_bancaria'
+            && ['admin','administracion','direccion'].includes(currentUser?.role || '')) {
+          const empresaId = empresas[0]?.id ?? '';
+          return (
+            <div className="flex-1 flex flex-col overflow-hidden h-full">
+              <ConciliacionBancariaView empresaId={empresaId} />
+            </div>
+          );
+        }
+        if (currentView === 'libros_oficiales'
+            && ['admin','administracion','direccion'].includes(currentUser?.role || '')) {
+          const empresaId = empresas[0]?.id ?? '';
+          return (
+            <div className="flex-1 flex flex-col overflow-hidden h-full">
+              <LibrosOficialesView empresaId={empresaId} />
             </div>
           );
         }
@@ -1007,6 +1112,14 @@ export default function App() {
             </div>
           );
         }
+        if (currentView === 'agenda'
+            && ['admin','sales','sales_lead','tech','tech_lead','administracion','direccion','compras'].includes(currentUser?.role || '')) {
+            return (
+                <Suspense fallback={<div className="flex items-center justify-center h-64"><div className="w-5 h-5 border-2 border-slate-300 border-t-slate-700 rounded-full animate-spin" /></div>}>
+                    <AgendaView currentUser={currentUser!} />
+                </Suspense>
+            );
+        }
         if (currentView === 'sat_machines' && currentUser) return (
             <MachinesPanel
                 currentUser={currentUser}
@@ -1067,6 +1180,13 @@ export default function App() {
                 onProfileClick={() => setIsProfileModalOpen(true)}
             />
             <div className="flex-1 flex flex-col h-screen overflow-y-auto">
+                {/* PASO 19 — Breadcrumb */}
+                {currentView !== 'login' && (
+                    <Breadcrumb
+                        currentView={currentView}
+                        onOpenSearch={() => setSearchOpen(true)}
+                    />
+                )}
                 <header className="md:hidden flex items-center justify-between px-3 py-2 bg-white border-b border-slate-200 sticky top-0 z-30">
                     <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 text-slate-600">
                         <Menu size={24} />
@@ -1116,6 +1236,15 @@ export default function App() {
                         onClose={() => setEditingProduct(null)}
                     />
                 </Suspense>
+            )}
+            {/* PASO 19 — Global Search (Ctrl+K) */}
+            {currentUser && (
+                <GlobalSearch
+                    open={searchOpen}
+                    onClose={() => setSearchOpen(false)}
+                    onNavigate={setCurrentView}
+                    currentUserRole={currentUser.role}
+                />
             )}
         </div>
     );

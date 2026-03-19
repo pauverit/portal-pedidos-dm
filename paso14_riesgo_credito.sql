@@ -80,47 +80,58 @@
   CREATE OR REPLACE VIEW public.v_riesgo_cliente AS
   WITH
 
-  -- ── CTE 1: saldos pendientes por cliente desde facturas ───────
+  -- ── CTE 0: empresa_id del cliente (desde su factura más reciente) ──
+  -- clients no tiene empresa_id; lo derivamos de facturas o limites_credito
+  empresa_cliente AS (
+    SELECT DISTINCT ON (cliente_id)
+      cliente_id,
+      empresa_id
+    FROM public.facturas
+    WHERE cliente_id IS NOT NULL
+    ORDER BY cliente_id, fecha DESC
+  ),
+
+  -- ── CTE 1: saldos pendientes agrupados por cliente ────────────
   facturas_pendientes AS (
     SELECT
-      f.empresa_id,
       f.cliente_id,
 
-      -- Saldo total pendiente = total factura - lo ya cobrado
       SUM(
         f.total - COALESCE(
-          (SELECT SUM(c.importe) FROM public.cobros c WHERE c.factura_id = f.id),
+          (SELECT SUM(co.importe) FROM public.cobros co WHERE co.factura_id = f.id),
           0
         )
       )                                                         AS saldo_pendiente,
 
-      -- Parte vencida (fecha_vencimiento ya superada)
+      -- Parte vencida
       SUM(
         CASE
           WHEN COALESCE(f.fecha_vencimiento, f.fecha + INTERVAL '30 days') < CURRENT_DATE
           THEN f.total - COALESCE(
-            (SELECT SUM(c.importe) FROM public.cobros c WHERE c.factura_id = f.id), 0
+            (SELECT SUM(co.importe) FROM public.cobros co WHERE co.factura_id = f.id), 0
           )
           ELSE 0
         END
       )                                                         AS saldo_vencido,
 
-      -- Parte vigente (aún dentro de plazo)
+      -- Parte vigente
       SUM(
         CASE
           WHEN COALESCE(f.fecha_vencimiento, f.fecha + INTERVAL '30 days') >= CURRENT_DATE
           THEN f.total - COALESCE(
-            (SELECT SUM(c.importe) FROM public.cobros c WHERE c.factura_id = f.id), 0
+            (SELECT SUM(co.importe) FROM public.cobros co WHERE co.factura_id = f.id), 0
           )
           ELSE 0
         END
       )                                                         AS saldo_vigente,
 
-      -- Días del vencimiento más antiguo sin cobrar
+      -- Días del vencimiento más antiguo
       MAX(
         CASE
           WHEN COALESCE(f.fecha_vencimiento, f.fecha + INTERVAL '30 days') < CURRENT_DATE
-          THEN EXTRACT(DAY FROM (CURRENT_DATE - COALESCE(f.fecha_vencimiento, f.fecha + INTERVAL '30 days')))
+          THEN EXTRACT(DAY FROM (
+            CURRENT_DATE - COALESCE(f.fecha_vencimiento, f.fecha + INTERVAL '30 days')
+          ))
           ELSE 0
         END
       )::int                                                    AS dias_mayor_vencimiento,
@@ -129,14 +140,12 @@
 
     FROM public.facturas f
     WHERE f.estado IN ('emitida', 'parcialmente_cobrada', 'vencida')
-    GROUP BY f.empresa_id, f.cliente_id
+    GROUP BY f.cliente_id
   ),
 
   -- ── CTE 2: pedidos confirmados sin factura emitida ────────────
-  -- El riesgo no empieza en la factura; empieza cuando el pedido se confirma
   pedidos_sin_facturar AS (
     SELECT
-      pv.empresa_id,
       pv.cliente_id,
       SUM(pv.total)                                             AS total_pedidos_vivos,
       COUNT(*)::int                                             AS num_pedidos_vivos
@@ -147,16 +156,17 @@
         WHERE f.pedido_venta_id = pv.id
           AND f.estado NOT IN ('anulada', 'borrador')
       )
-    GROUP BY pv.empresa_id, pv.cliente_id
+    GROUP BY pv.cliente_id
   )
 
   SELECT
     -- ── Datos del cliente ──────────────────────────────────────
     c.id                                                        AS cliente_id,
-    c.name                                                      AS cliente_nombre,
+    c.company_name                                              AS cliente_nombre,
     c.email,
-    c.cif,
-    c.empresa_id,
+    NULL::text                                                  AS cif,
+    -- empresa_id viene de limites_credito si existe, sino de la última factura
+    COALESCE(lc.empresa_id, ec.empresa_id)                      AS empresa_id,
 
     -- ── Datos del límite ──────────────────────────────────────
     lc.id                                                       AS limite_id,
@@ -167,7 +177,6 @@
     lc.fecha_vencimiento_coface,
     lc.limite_interno,
 
-    -- Límite efectivo: COFACE prevalece sobre interno
     COALESCE(lc.limite_coface, lc.limite_interno, 0)            AS limite_efectivo,
 
     -- ── Bloqueo ───────────────────────────────────────────────
@@ -184,7 +193,6 @@
     COALESCE(ps.num_pedidos_vivos,      0)                      AS num_pedidos_vivos,
     COALESCE(fp.dias_mayor_vencimiento, 0)                      AS dias_mayor_vencimiento,
 
-    -- Riesgo vivo total
     COALESCE(fp.saldo_pendiente, 0) + COALESCE(ps.total_pedidos_vivos, 0)
                                                                 AS riesgo_vivo,
 
@@ -208,12 +216,6 @@
     )                                                           AS credito_disponible,
 
     -- ── Estado semáforo ───────────────────────────────────────
-    -- bloqueado  → bloqueado manualmente (rojo oscuro)
-    -- excedido   → supera el 100% del límite (rojo)
-    -- vencido    → tiene facturas vencidas sin cobrar (naranja)
-    -- alerta     → supera el 80% del límite (amarillo)
-    -- sin_limite → no tiene límite definido (gris)
-    -- ok         → todo en orden (verde)
     CASE
       WHEN COALESCE(lc.bloqueado, false) = true
         THEN 'bloqueado'
@@ -233,11 +235,18 @@
     END                                                         AS estado_riesgo
 
   FROM public.clients c
-  LEFT JOIN public.limites_credito  lc ON lc.cliente_id = c.id AND lc.empresa_id = c.empresa_id
-  LEFT JOIN facturas_pendientes     fp ON fp.cliente_id  = c.id AND fp.empresa_id  = c.empresa_id
-  LEFT JOIN pedidos_sin_facturar    ps ON ps.cliente_id  = c.id AND ps.empresa_id  = c.empresa_id
+  -- empresa_id desde la última factura del cliente
+  LEFT JOIN empresa_cliente           ec ON ec.cliente_id = c.id
+  -- límite de crédito (sin filtrar por empresa_id en el JOIN)
+  LEFT JOIN public.limites_credito    lc ON lc.cliente_id = c.id
+  -- saldos de facturas pendientes
+  LEFT JOIN facturas_pendientes       fp ON fp.cliente_id  = c.id
+  -- pedidos sin facturar
+  LEFT JOIN pedidos_sin_facturar      ps ON ps.cliente_id  = c.id
   WHERE c.role = 'client'
-    AND COALESCE(c.is_active, true) = true;
+    AND COALESCE(c.is_active, true) = true
+    -- Solo mostrar clientes que tengan algún registro en el sistema
+    AND (lc.id IS NOT NULL OR ec.empresa_id IS NOT NULL);
 
 
   -- ============================================================

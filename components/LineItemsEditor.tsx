@@ -34,15 +34,16 @@ const DescripcionCombobox: React.FC<{
   const [query, setQuery]     = useState('');
   const inputRef              = useRef<HTMLInputElement>(null);
   const dropRef               = useRef<HTMLDivElement>(null);
+  const wrapRef               = useRef<HTMLDivElement>(null);
 
-  // Filtrar productos: si hay query filtra, si no muestra todos (máx 10)
+  // Filtrar productos: usa query (que se sincroniza con lo que escribe el usuario)
   const filtered = productos
     .filter(p => {
       if (!query) return true;
       const q = query.toLowerCase();
       return p.name.toLowerCase().includes(q) || p.reference.toLowerCase().includes(q);
     })
-    .slice(0, 10);
+    .slice(0, 12);
 
   const handleSelect = (p: ProductoSugerido) => {
     onChange(p.name, p);
@@ -54,13 +55,18 @@ const DescripcionCombobox: React.FC<{
     onChange(value, undefined);
   };
 
+  // Al escribir en el campo descripción → sincronizar query y abrir lista
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    onChange(v, undefined);
+    setQuery(v);
+    if (productos.length > 0) setOpen(v.length > 0);
+  };
+
   // Cerrar al hacer click fuera
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (
-        dropRef.current && !dropRef.current.contains(e.target as Node) &&
-        inputRef.current && !inputRef.current.contains(e.target as Node)
-      ) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
         setOpen(false);
         setQuery('');
       }
@@ -76,22 +82,25 @@ const DescripcionCombobox: React.FC<{
   }
 
   return (
-    <div className="relative w-full">
+    <div ref={wrapRef} className="relative w-full">
       <div className="flex items-center gap-1">
-        {/* Campo descripción libre */}
+        {/* Campo descripción — al escribir abre sugerencias del catálogo */}
         <input
+          ref={inputRef}
           className="flex-1 text-sm border-0 bg-transparent outline-none focus:bg-slate-50 focus:rounded px-1 py-0.5 min-w-0"
           value={value}
-          onChange={e => onChange(e.target.value, undefined)}
-          placeholder="Descripción del artículo…"
+          onChange={handleDescriptionChange}
+          onFocus={() => { if (productos.length > 0 && value.length > 0) { setQuery(value); setOpen(true); } }}
+          placeholder="Descripción o busca artículo…"
+          autoComplete="off"
         />
 
-        {/* Botón abrir buscador de catálogo */}
+        {/* Botón lupa: abre/cierra la lista (para ver todos o limpiar) */}
         {productos.length > 0 && (
           <button
             type="button"
-            onMouseDown={e => { e.preventDefault(); setOpen(o => !o); setQuery(''); }}
-            title="Buscar producto del catálogo"
+            onMouseDown={e => { e.preventDefault(); setOpen(o => !o); if (!open) setQuery(''); }}
+            title="Ver catálogo de artículos"
             className={`shrink-0 p-1 rounded transition-colors ${
               open
                 ? 'bg-blue-600 text-white'
@@ -105,25 +114,20 @@ const DescripcionCombobox: React.FC<{
         )}
       </div>
 
-      {/* Panel de búsqueda de productos */}
+      {/* Lista de sugerencias — se muestra al escribir O al pulsar la lupa */}
       {open && (
         <div
           ref={dropRef}
           className="absolute z-50 top-full left-0 mt-1 w-80 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden"
         >
-          {/* Barra de búsqueda dentro del panel */}
+          {/* Cabecera: muestra el filtro activo */}
           <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-100 bg-slate-50">
             <Search size={13} className="text-slate-400 shrink-0" />
-            <input
-              ref={inputRef}
-              autoFocus
-              className="flex-1 text-sm outline-none bg-transparent"
-              placeholder="Nombre o referencia…"
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-            />
+            <span className="flex-1 text-sm text-slate-500 truncate">
+              {query ? <>Resultados para <strong className="text-slate-700">"{query}"</strong></> : 'Todos los artículos'}
+            </span>
             {query && (
-              <button onClick={() => setQuery('')} className="text-slate-400 hover:text-slate-600">
+              <button onMouseDown={e => { e.preventDefault(); setQuery(''); onChange('', undefined); }} className="text-slate-400 hover:text-slate-600">
                 <X size={12} />
               </button>
             )}

@@ -2,8 +2,12 @@
 import {
   ShoppingCart, Truck, Package, ArrowLeftRight,
   Plus, Search, X, ChevronDown, Check, AlertCircle,
-  FileText, Pencil, Eye,
+  FileText, Pencil, Eye, RefreshCw,
 } from 'lucide-react';
+import {
+  SageToolbar, SageTabStrip, SageFilterInput,
+  sageTh, sageThR, sageRowClass,
+} from './SageToolbar';
 import { useCompras, calcularSubtotalCompraLinea, calcularTotalesCompra } from '../hooks/useCompras';
 import {
   Proveedor, PedidoCompra, Recepcion, Traspaso,
@@ -109,11 +113,11 @@ const ProveedorModal: React.FC<ProveedorModalProps> = ({ proveedor, onSave, onCl
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100">
-          <h2 className="text-base font-semibold text-slate-800">
+        <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-slate-700 to-slate-600 shrink-0 rounded-t-2xl">
+          <h2 className="text-[13px] font-semibold text-white">
             {proveedor ? 'Editar Proveedor' : 'Nuevo Proveedor'}
           </h2>
-          <button onClick={onClose}><X size={18} className="text-slate-400 hover:text-slate-600" /></button>
+          <button onClick={onClose}><X size={16} className="text-slate-300 hover:text-white" /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 px-3 py-2">
@@ -1057,146 +1061,133 @@ export const ComprasView: React.FC<ComprasViewProps> = ({ currentUser, almacenes
     </div>
   );
 
+  // ─── derived new-button label ────────────────────────────────────────────────
+  const newLabel = tab === 'proveedores' ? 'Nuevo proveedor'
+    : tab === 'pedidos' ? 'Nueva OC'
+    : tab === 'recepciones' ? 'Nueva recepción'
+    : 'Nuevo traspaso';
+
+  const handleNew = () => {
+    if (tab === 'proveedores') { setEditProveedor(null); setShowProvModal(true); }
+    else if (tab === 'pedidos') openOC();
+    else if (tab === 'recepciones') openRec();
+    else openTra();
+  };
+
+  const currentCount = tab === 'proveedores' ? filteredProv.length
+    : tab === 'pedidos' ? filteredOC.length
+    : tab === 'recepciones' ? filteredRec.length
+    : filteredTra.length;
+
   return (
-    <div className="p-2 sm:p-4 space-y-3">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-bold text-slate-900">Compras y Almacén</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Proveedores, órdenes de compra, recepciones y traspasos</p>
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* ── Module header ──────────────────────────────────────────────────── */}
+      <div className="shrink-0 bg-gradient-to-r from-slate-700 to-slate-600 px-4 py-2 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <ShoppingCart size={13} className="text-slate-300" />
+          <span className="text-white font-semibold text-[13px]">Compras y Almacén</span>
         </div>
-        <button onClick={reload} className="text-xs text-slate-400 hover:text-slate-600 underline">Actualizar</button>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-slate-200">
-        {TABS.map(t => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`flex items-center gap-2 px-3 py-2 text-sm font-medium border-b-2 transition-colors ${
-              tab === t.id
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            {t.icon}
-            {t.label}
-            <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-              tab === t.id ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-500'
-            }`}>
-              {t.id === 'proveedores' ? proveedores.length
-                : t.id === 'pedidos' ? pedidosCompra.length
-                : t.id === 'recepciones' ? recepciones.length
-                : traspasos.length}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {/* Search + New */}
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-xs">
-          <Search size={14} className="absolute left-3 top-2.5 text-slate-400" />
-          <input
-            className="w-full pl-8 pr-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-400"
-            placeholder="Buscar…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-        </div>
-        <button
-          onClick={() => {
-            if (tab === 'proveedores') { setEditProveedor(null); setShowProvModal(true); }
-            else if (tab === 'pedidos') openOC();
-            else if (tab === 'recepciones') openRec();
-            else openTra();
-          }}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700"
-        >
-          <Plus size={15} />
-          {tab === 'proveedores' ? 'Nuevo proveedor'
-            : tab === 'pedidos' ? 'Nueva OC'
-            : tab === 'recepciones' ? 'Nueva recepción'
-            : 'Nuevo traspaso'}
+        <button onClick={reload} title="Actualizar" className="text-slate-400 hover:text-white transition-colors">
+          <RefreshCw size={13} />
         </button>
       </div>
 
-      {/* ── Tabla Proveedores ─────────────────────────────── */}
+      {/* ── Tab strip ──────────────────────────────────────────────────────── */}
+      <SageTabStrip
+        tabs={[
+          { id: 'proveedores', label: 'Proveedores',       icon: Package,       count: proveedores.length },
+          { id: 'pedidos',     label: 'Órdenes de Compra', icon: ShoppingCart,  count: pedidosCompra.length },
+          { id: 'recepciones', label: 'Recepciones',       icon: Truck,         count: recepciones.length },
+          { id: 'traspasos',   label: 'Traspasos',         icon: ArrowLeftRight, count: traspasos.length },
+        ]}
+        active={tab}
+        onChange={(id) => setTab(id as Tab)}
+      />
+
+      {/* ── Toolbar ────────────────────────────────────────────────────────── */}
+      <SageToolbar
+        groups={[[
+          { label: newLabel, icon: Plus, onClick: handleNew, variant: 'primary' },
+        ]]}
+        filter={<SageFilterInput value={search} onChange={setSearch} placeholder="Buscar…" />}
+        recordCount={currentCount}
+      />
+
+      {/* ── Table content ──────────────────────────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto min-h-0">
+
+      {/* Tabla Proveedores */}
       {tab === 'proveedores' && (
-        <div className="border border-slate-200 rounded-xl overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-slate-50 text-xs text-slate-500 uppercase">
-                <th className="px-3 py-2 text-left">Nombre</th>
-                <th className="px-3 py-2 text-left">CIF</th>
-                <th className="px-3 py-2 text-left">Contacto</th>
-                <th className="px-3 py-2 text-left">Teléfono</th>
-                <th className="px-3 py-2 text-left">Email</th>
-                <th className="px-3 py-2 text-right">Días pago</th>
-                <th className="px-3 py-2 w-8" />
+        <table className="w-full">
+          <thead className="sticky top-0 bg-slate-50 border-b border-slate-200">
+            <tr>
+              <th className={sageTh}>Nombre</th>
+              <th className={sageTh}>CIF</th>
+              <th className={sageTh}>Contacto</th>
+              <th className={sageTh}>Teléfono</th>
+              <th className={sageTh}>Email</th>
+              <th className={sageThR}>Días pago</th>
+              <th className="w-8 px-2"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredProv.map((p, idx) => (
+              <tr key={p.id} className={sageRowClass(false, idx % 2 === 1)}>
+                <td className="px-2 py-1">
+                  <div className="text-[12px] font-medium text-slate-800">{p.nombre}</div>
+                  {p.codigo && <div className="text-[11px] text-slate-400">{p.codigo}</div>}
+                </td>
+                <td className="px-2 py-1 text-[12px] text-slate-600">{p.cif || '—'}</td>
+                <td className="px-2 py-1 text-[12px] text-slate-600">{p.contacto || '—'}</td>
+                <td className="px-2 py-1 text-[12px] text-slate-600">{p.telefono || '—'}</td>
+                <td className="px-2 py-1 text-[12px] text-slate-600">{p.email || '—'}</td>
+                <td className="px-2 py-1 text-right text-[12px] text-slate-600">{p.diasPago || 30}d</td>
+                <td className="px-2 py-1">
+                  <button onClick={() => { setEditProveedor(p); setShowProvModal(true); }}
+                    className="text-slate-400 hover:text-blue-600">
+                    <Pencil size={13} />
+                  </button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {filteredProv.map(p => (
-                <tr key={p.id} className="border-t border-slate-100 hover:bg-slate-50">
-                  <td className="px-3 py-2">
-                    <div className="font-medium text-slate-800">{p.nombre}</div>
-                    {p.codigo && <div className="text-xs text-slate-400">{p.codigo}</div>}
-                  </td>
-                  <td className="px-3 py-2 text-slate-600">{p.cif || '—'}</td>
-                  <td className="px-3 py-2 text-slate-600">{p.contacto || '—'}</td>
-                  <td className="px-3 py-2 text-slate-600">{p.telefono || '—'}</td>
-                  <td className="px-3 py-2 text-slate-600">{p.email || '—'}</td>
-                  <td className="px-3 py-2 text-right text-slate-600">{p.diasPago || 30}d</td>
-                  <td className="px-3 py-2">
-                    <button onClick={() => { setEditProveedor(p); setShowProvModal(true); }}
-                      className="text-slate-400 hover:text-blue-600">
-                      <Pencil size={14} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {filteredProv.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400 text-sm italic">
-                  Sin proveedores. Pulsa &quot;Nuevo proveedor&quot; para empezar.
-                </td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+            ))}
+            {filteredProv.length === 0 && (
+              <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400 text-sm italic">
+                Sin proveedores. Pulsa &quot;Nuevo proveedor&quot; para empezar.
+              </td></tr>
+            )}
+          </tbody>
+        </table>
       )}
 
-      {/* ── Tabla Órdenes de Compra ─────────────────────── */}
+      {/* Tabla Órdenes de Compra */}
       {tab === 'pedidos' && (
-        <div className="border border-slate-200 rounded-xl overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-slate-50 text-xs text-slate-500 uppercase">
-                <th className="px-3 py-2 text-left">Referencia</th>
-                <th className="px-3 py-2 text-left">Proveedor</th>
-                <th className="px-3 py-2 text-left">Fecha</th>
-                <th className="px-3 py-2 text-left">Entrega</th>
-                <th className="px-3 py-2 text-left">Estado</th>
-                <th className="px-3 py-2 text-right">Total</th>
-                <th className="px-3 py-2 w-8" />
-              </tr>
-            </thead>
-            <tbody>
-              {filteredOC.map(oc => (
-                <tr key={oc.id} className="border-t border-slate-100 hover:bg-slate-50">
-                  <td className="px-3 py-2 font-medium text-blue-700">{oc.referencia}</td>
-                  <td className="px-3 py-2 text-slate-700">{oc.proveedorNombre || '—'}</td>
-                  <td className="px-3 py-2 text-slate-600">{oc.fecha}</td>
-                  <td className="px-3 py-2 text-slate-600">{oc.fechaEntrega || '—'}</td>
-                  <td className="px-3 py-2">
-                    <EstadoBadge text={oc.estado.replace('_', ' ')} color={ESTADO_OC_COLOR[oc.estado]} />
-                  </td>
-                  <td className="px-3 py-2 text-right font-semibold text-slate-800">{fmt(oc.total)}</td>
-                  <td className="px-3 py-2">
-                    <button onClick={() => openOC(oc)} className="text-slate-400 hover:text-blue-600">
-                      <Eye size={14} />
-                    </button>
+        <table className="w-full">
+          <thead className="sticky top-0 bg-slate-50 border-b border-slate-200">
+            <tr>
+              <th className={sageTh}>Referencia</th>
+              <th className={sageTh}>Proveedor</th>
+              <th className={sageTh}>Fecha</th>
+              <th className={sageTh}>Entrega</th>
+              <th className={sageTh}>Estado</th>
+              <th className={sageThR}>Total</th>
+              <th className="w-8 px-2"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredOC.map((oc, idx) => (
+              <tr key={oc.id} className={sageRowClass(false, idx % 2 === 1)}>
+                <td className="px-2 py-1 text-[12px] font-medium text-blue-700">{oc.referencia}</td>
+                <td className="px-2 py-1 text-[12px] text-slate-700">{oc.proveedorNombre || '—'}</td>
+                <td className="px-2 py-1 text-[12px] text-slate-600 whitespace-nowrap">{oc.fecha}</td>
+                <td className="px-2 py-1 text-[12px] text-slate-600 whitespace-nowrap">{oc.fechaEntrega || '—'}</td>
+                <td className="px-2 py-1">
+                  <EstadoBadge text={oc.estado.replace('_', ' ')} color={ESTADO_OC_COLOR[oc.estado]} />
+                </td>
+                <td className="px-2 py-1 text-right text-[12px] font-semibold text-slate-800">{fmt(oc.total)}</td>
+                <td className="px-2 py-1">
+                  <button onClick={() => openOC(oc)} className="text-slate-400 hover:text-blue-600">
+                    <Eye size={13} />
+                  </button>
                   </td>
                 </tr>
               ))}
@@ -1207,92 +1198,89 @@ export const ComprasView: React.FC<ComprasViewProps> = ({ currentUser, almacenes
               )}
             </tbody>
           </table>
-        </div>
       )}
 
-      {/* ── Tabla Recepciones ───────────────────────────── */}
+      {/* Tabla Recepciones */}
       {tab === 'recepciones' && (
-        <div className="border border-slate-200 rounded-xl overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-slate-50 text-xs text-slate-500 uppercase">
-                <th className="px-3 py-2 text-left">Referencia</th>
-                <th className="px-3 py-2 text-left">Proveedor</th>
-                <th className="px-3 py-2 text-left">Almacén</th>
-                <th className="px-3 py-2 text-left">Fecha</th>
-                <th className="px-3 py-2 text-left">Estado</th>
-                <th className="px-3 py-2 text-right">Total</th>
-                <th className="px-3 py-2 w-8" />
+        <table className="w-full">
+          <thead className="sticky top-0 bg-slate-50 border-b border-slate-200">
+            <tr>
+              <th className={sageTh}>Referencia</th>
+              <th className={sageTh}>Proveedor</th>
+              <th className={sageTh}>Almacén</th>
+              <th className={sageTh}>Fecha</th>
+              <th className={sageTh}>Estado</th>
+              <th className={sageThR}>Total</th>
+              <th className="w-8 px-2"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredRec.map((rec, idx) => (
+              <tr key={rec.id} className={sageRowClass(false, idx % 2 === 1)}>
+                <td className="px-2 py-1 text-[12px] font-medium text-blue-700">{rec.referencia}</td>
+                <td className="px-2 py-1 text-[12px] text-slate-700">{rec.proveedorNombre || '—'}</td>
+                <td className="px-2 py-1 text-[12px] text-slate-600">{rec.almacenNombre || rec.almacenId}</td>
+                <td className="px-2 py-1 text-[12px] text-slate-600 whitespace-nowrap">{rec.fecha}</td>
+                <td className="px-2 py-1">
+                  <EstadoBadge text={rec.estado} color={ESTADO_REC_COLOR[rec.estado]} />
+                </td>
+                <td className="px-2 py-1 text-right text-[12px] font-semibold text-slate-800">{fmt(rec.total)}</td>
+                <td className="px-2 py-1">
+                  <button onClick={() => openRec(rec)} className="text-slate-400 hover:text-blue-600">
+                    <Eye size={13} />
+                  </button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {filteredRec.map(rec => (
-                <tr key={rec.id} className="border-t border-slate-100 hover:bg-slate-50">
-                  <td className="px-3 py-2 font-medium text-blue-700">{rec.referencia}</td>
-                  <td className="px-3 py-2 text-slate-700">{rec.proveedorNombre || '—'}</td>
-                  <td className="px-3 py-2 text-slate-600">{rec.almacenNombre || rec.almacenId}</td>
-                  <td className="px-3 py-2 text-slate-600">{rec.fecha}</td>
-                  <td className="px-3 py-2">
-                    <EstadoBadge text={rec.estado} color={ESTADO_REC_COLOR[rec.estado]} />
-                  </td>
-                  <td className="px-3 py-2 text-right font-semibold text-slate-800">{fmt(rec.total)}</td>
-                  <td className="px-3 py-2">
-                    <button onClick={() => openRec(rec)} className="text-slate-400 hover:text-blue-600">
-                      <Eye size={14} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {filteredRec.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400 text-sm italic">
-                  Sin recepciones.
-                </td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+            ))}
+            {filteredRec.length === 0 && (
+              <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400 text-sm italic">
+                Sin recepciones.
+              </td></tr>
+            )}
+          </tbody>
+        </table>
       )}
 
-      {/* ── Tabla Traspasos ─────────────────────────────── */}
+      {/* Tabla Traspasos */}
       {tab === 'traspasos' && (
-        <div className="border border-slate-200 rounded-xl overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-slate-50 text-xs text-slate-500 uppercase">
-                <th className="px-3 py-2 text-left">Referencia</th>
-                <th className="px-3 py-2 text-left">Origen</th>
-                <th className="px-3 py-2 text-left">Destino</th>
-                <th className="px-3 py-2 text-left">Fecha</th>
-                <th className="px-3 py-2 text-left">Estado</th>
-                <th className="px-3 py-2 w-8" />
+        <table className="w-full">
+          <thead className="sticky top-0 bg-slate-50 border-b border-slate-200">
+            <tr>
+              <th className={sageTh}>Referencia</th>
+              <th className={sageTh}>Origen</th>
+              <th className={sageTh}>Destino</th>
+              <th className={sageTh}>Fecha</th>
+              <th className={sageTh}>Estado</th>
+              <th className="w-8 px-2"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredTra.map((tra, idx) => (
+              <tr key={tra.id} className={sageRowClass(false, idx % 2 === 1)}>
+                <td className="px-2 py-1 text-[12px] font-medium text-blue-700">{tra.referencia}</td>
+                <td className="px-2 py-1 text-[12px] text-slate-700">{tra.almacenOrigenNombre || tra.almacenOrigenId}</td>
+                <td className="px-2 py-1 text-[12px] text-slate-700">{tra.almacenDestinoNombre || tra.almacenDestinoId}</td>
+                <td className="px-2 py-1 text-[12px] text-slate-600 whitespace-nowrap">{tra.fecha}</td>
+                <td className="px-2 py-1">
+                  <EstadoBadge text={tra.estado.replace('_', ' ')} color={ESTADO_TRA_COLOR[tra.estado]} />
+                </td>
+                <td className="px-2 py-1">
+                  <button onClick={() => openTra(tra)} className="text-slate-400 hover:text-blue-600">
+                    <Eye size={13} />
+                  </button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {filteredTra.map(tra => (
-                <tr key={tra.id} className="border-t border-slate-100 hover:bg-slate-50">
-                  <td className="px-3 py-2 font-medium text-blue-700">{tra.referencia}</td>
-                  <td className="px-3 py-2 text-slate-700">{tra.almacenOrigenNombre || tra.almacenOrigenId}</td>
-                  <td className="px-3 py-2 text-slate-700">{tra.almacenDestinoNombre || tra.almacenDestinoId}</td>
-                  <td className="px-3 py-2 text-slate-600">{tra.fecha}</td>
-                  <td className="px-3 py-2">
-                    <EstadoBadge text={tra.estado.replace('_', ' ')} color={ESTADO_TRA_COLOR[tra.estado]} />
-                  </td>
-                  <td className="px-3 py-2">
-                    <button onClick={() => openTra(tra)} className="text-slate-400 hover:text-blue-600">
-                      <Eye size={14} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {filteredTra.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-400 text-sm italic">
-                  Sin traspasos.
-                </td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+            ))}
+            {filteredTra.length === 0 && (
+              <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-400 text-sm italic">
+                Sin traspasos.
+              </td></tr>
+            )}
+          </tbody>
+        </table>
       )}
+
+      </div>{/* end flex-1 table area */}
 
       {/* ── Modals ─────────────────────────────────────── */}
 

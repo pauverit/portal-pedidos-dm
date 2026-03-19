@@ -5,7 +5,7 @@ import {
   Upload, X, ShoppingBag, Scroll, Monitor, ClipboardList,
   ContactRound, Receipt, Building2, TrendingUp, FileText, Truck, BookOpen,
   PackageSearch, BarChart3, Package, Users, Droplets, Download, RefreshCcw,
-  Boxes, ShieldAlert,
+  Boxes, ShieldAlert, ScanSearch, ArrowRightLeft, CalendarDays,
 } from 'lucide-react';
 import { User } from '../types';
 
@@ -40,6 +40,19 @@ type MenuItemDef = {
 const ROLES_ADMIN  = ['admin', 'administracion', 'direccion'];
 const ROLES_VENTAS = ['admin', 'sales', 'sales_lead', 'administracion', 'direccion'];
 const ROLES_COMERCIAL = ['sales', 'sales_lead'];
+
+// ─── Color del punto de sección (estilo SAGE) ───────────────────────────────
+const SECTION_DOT: Record<string, string> = {
+  'Catálogo':       'bg-amber-400',
+  'Ventas':         'bg-blue-500',
+  'Clientes':       'bg-cyan-500',
+  'Compras':        'bg-green-500',
+  'Gastos':         'bg-orange-500',
+  'Contabilidad':   'bg-indigo-500',
+  'SAT / Soporte':  'bg-orange-400',
+  'RRHH':           'bg-violet-500',
+  'Configuración':  'bg-slate-400',
+};
 
 export const Sidebar: React.FC<SidebarProps> = ({
   currentView,
@@ -138,6 +151,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'crm',               label: 'CRM',              icon: ContactRound,  section: 'Clientes', roles: ROLES_VENTAS },
     { id: 'admin_client_list', label: 'Clientes',         icon: Users,         section: 'Clientes', roles: ROLES_VENTAS },
     { id: 'admin_new_client',  label: 'Nuevo Cliente',    icon: UserPlus,      section: 'Clientes', roles: [...ROLES_COMERCIAL, 'admin'] },
+    { id: 'cliente_360',       label: 'Centro 360° Cliente', icon: ScanSearch,  section: 'Clientes', roles: ROLES_VENTAS },
     { id: 'riesgo_credito',    label: 'Riesgo de Crédito',icon: ShieldAlert,   section: 'Clientes', roles: ROLES_ADMIN },
 
     // ── COMPRAS — administración + compras/almacén ────────────────────────────
@@ -163,7 +177,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
     // ── CONTABILIDAD — administración ─────────────────────────────────────────
     { id: 'contabilidad',          label: 'Contabilidad',          icon: BookOpen,   section: 'Contabilidad', roles: ROLES_ADMIN },
+    { id: 'impresos_fiscales',     label: 'Impresos Fiscales',     icon: FileText,   section: 'Contabilidad', roles: ROLES_ADMIN },
     { id: 'gastos_empresa',        label: 'Gastos de Empresa',     icon: Receipt,    section: 'Contabilidad', roles: ROLES_ADMIN },
+    { id: 'conciliacion_bancaria', label: 'Conciliación Bancaria', icon: ArrowRightLeft, section: 'Contabilidad', roles: ROLES_ADMIN },
+    { id: 'libros_oficiales',      label: 'Libros Oficiales',      icon: BookOpen,       section: 'Contabilidad', roles: ROLES_ADMIN },
     { id: 'analisis_rentabilidad', label: 'Business Intelligence', icon: TrendingUp, section: 'Contabilidad', roles: ROLES_ADMIN },
     { id: 'remesas_sepa',          label: 'Remesas SEPA',          icon: Building2,  section: 'Contabilidad', roles: ROLES_ADMIN },
 
@@ -174,6 +191,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'sat_machines',          label: 'Máquinas',             icon: Database,        section: 'SAT / Soporte', roles: ['tech_lead', 'admin'] },
     { id: 'admin_tech_management', label: 'Gestión Técnicos',     icon: UserPlus,        section: 'SAT / Soporte', roles: ['tech_lead', 'admin'] },
     { id: 'admin_bulk_import_sat', label: 'Carga Masiva SAT',     icon: Upload,          section: 'SAT / Soporte', roles: ['admin'] },
+
+    // ── AGENDA ────────────────────────────────────────────────────────────────
+    { id: 'agenda', label: 'Agenda & Calendario', icon: CalendarDays, section: 'Agenda',
+      roles: ['admin','sales','sales_lead','tech','tech_lead','administracion','direccion','compras'] },
 
     // ── RRHH — administración ─────────────────────────────────────────────────
     { id: 'rrhh', label: 'RRHH & Nóminas', icon: Users, section: 'RRHH', roles: ROLES_ADMIN },
@@ -268,7 +289,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             return (
               <div key={item.id}>
                 {showSectionHeader && (
-                  <div className="px-1 pt-3.5 pb-1">
+                  <div className="px-1 pt-3.5 pb-1 flex items-center gap-1.5">
+                    {item.section && SECTION_DOT[item.section] && (
+                      <span className={`w-1.5 h-1.5 rounded-full ${SECTION_DOT[item.section]} flex-shrink-0`} />
+                    )}
                     <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
                       {item.section}
                     </p>
@@ -289,9 +313,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     item.soon
                       ? 'text-slate-300 cursor-default'
                       : isActive && !hasSubItems
-                        ? 'bg-slate-900 text-white shadow-sm'
+                        ? 'bg-blue-600 text-white shadow-sm'
                         : isActive && hasSubItems
-                          ? 'text-slate-900 bg-slate-100'
+                          ? 'text-blue-700 bg-blue-50'
                           : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}
                 >
@@ -326,7 +350,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           sub.soon
                             ? 'text-slate-300 cursor-default'
                             : currentView === sub.id
-                              ? 'text-slate-900 font-bold bg-slate-100'
+                              ? 'text-blue-700 font-semibold bg-blue-50'
                               : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                         }`}
                       >
@@ -351,7 +375,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               onClick={() => { setCurrentView('cart'); onClose(); }}
               className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium transition-colors ${
-                currentView === 'cart' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50'
+                currentView === 'cart' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
               <div className="relative">

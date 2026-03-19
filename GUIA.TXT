@@ -386,13 +386,34 @@ REGISTRO DE AVANCE
         - Conversiones en un clic: presupuesto→pedido→albarán→factura
         - Firma digital táctil en albaranes
         - Registro de cobro en facturas (método + fecha)
-[X] PASO 3 — Compras y almacén multi-almacén con PMP
-[ ] PASO 4 — Facturación legal + VeriFactu AEAT
-[ ] PASO 5 — Contabilidad PGC española
-[ ] PASO 6 — Facturación recurrente + SEPA XML
-[ ] PASO 7 — RRHH y nóminas
-[ ] PASO 8 — Agenda, Proyectos/Kanban, TPV
-[ ] PASO 9 — Trazabilidad lotes/series + MRP básico
+[X] PASO 3  — Compras y almacén multi-almacén con PMP
+[X] PASO 4  — Facturación legal + VeriFactu AEAT (LibroFacturasView)
+[X] PASO 5  — Contabilidad PGC española (ContabilidadView, asientos, plan de cuentas)
+[X] PASO 6  — Facturación recurrente + SEPA XML (FacturacionRecurrenteView, RemesasSEPAView)
+[X] PASO 7  — RRHH y nóminas (RRHHView)
+[X] PASO 8  — BI & Analítica (BIAnalyticsView, dashboards por rol)
+[X] PASO 9  — Riesgo de Crédito (RiesgoClienteView)
+[X] PASO 10 — Gastos de empresa (GastosView)
+[X] PASO 11 — Stock y Materiales flexibles (StockView, MaterialesView)
+[X] PASO 12 — Conciliación bancaria (ConciliacionBancariaView)
+[X] PASO 13 — Libros oficiales (LibrosOficialesView)
+[X] PASO 14 — Activos fijos (ActivosView — pendiente de conectar al router)
+[X] PASO 15 — Impresos fiscales (ImpresosFiscalesView: Mod303, Mod349, Mod111, Mod115)
+[X] PASO 16 — Centro 360° Cliente (ClienteInfo360View)
+[X] PASO 17 — Redesign SAGE 200 UI (SageToolbar.tsx — toolbar groups, tabs, filtros)
+[X] PASO 18 — SAGE 200 aplicado a ContabilidadView y ComprasView
+[X] PASO 19 — GlobalSearch + Breadcrumb (PASO 19 — UX SAGE-like)
+[X] PASO 20 — Agenda & Calendario (AgendaView, citas tabla, vista mes+lista)
+      COMPLETADO Marzo 2026
+      Archivos creados/modificados:
+        + sql/paso20_agenda.sql           → tabla citas, RLS, view v_agenda_proximas, fn get_citas_mes
+        + hooks/useAgenda.ts              → CRUD citas con TIPO_CONFIG y ESTADO_CONFIG
+        + components/AgendaView.tsx       → calendario mensual + vista lista + modal
+        ~ components/Sidebar.tsx          → sección Agenda con CalendarDays icon
+        ~ App.tsx                         → lazy import + renderContent case 'agenda'
+[ ] PASO 21 — Proyectos / Kanban
+[ ] PASO 22 — TPV (Terminal Punto de Venta)
+[ ] PASO 23 — Trazabilidad lotes/series + MRP básico
 
 ================================================================================
 FIN DE GUIA

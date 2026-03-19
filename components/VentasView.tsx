@@ -5,6 +5,7 @@ import {
   ChevronRight, CheckCircle, Clock, ArrowRight,
   X, Check,
 } from 'lucide-react';
+import { ModuleHeader } from './ModuleHeader';
 import {
   Presupuesto, PedidoVenta, Albaran, Factura, DevolucionVenta, DevolucionLinea,
   DocumentoLinea, User, Empresa, Delegacion, Almacen, Product,
@@ -192,12 +193,12 @@ function TablaDocumentos<T extends { id: string }>({
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className={`border-b ${tabColor.border} ${tabColor.bg} text-[11px] uppercase tracking-wider ${tabColor.text} font-semibold`}>
+          <tr className="border-b border-slate-200 bg-slate-50 text-[11px] uppercase tracking-wider text-slate-600 font-semibold">
             <th className="w-1 p-0" />
             {cols.map(c => (
-              <th key={c.key} className={`px-3 py-2.5 text-left ${c.right ? 'text-right' : ''}`}>{c.label}</th>
+              <th key={c.key} className={`px-3 py-2 text-left ${c.right ? 'text-right' : ''}`}>{c.label}</th>
             ))}
-            <th className="px-3 py-2.5 w-24 text-right">Acción</th>
+            <th className="px-3 py-2 w-24 text-right">Acción</th>
           </tr>
         </thead>
         <tbody>
@@ -211,9 +212,9 @@ function TablaDocumentos<T extends { id: string }>({
                 <div className={`w-1 h-full min-h-[44px] ${tabColor.dotColor} rounded-l opacity-60 group-hover:opacity-100 transition-opacity`} />
               </td>
               {cols.map(c => (
-                <td key={c.key} className={`px-3 py-2.5 ${c.right ? 'text-right' : ''}`}>{c.render(d)}</td>
+                <td key={c.key} className={`px-3 py-2 ${c.right ? 'text-right' : ''}`}>{c.render(d)}</td>
               ))}
-              <td className="px-3 py-2.5 text-right">
+              <td className="px-3 py-2 text-right">
                 <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   {actions ? actions(d) : null}
                   <span className={`p-1 rounded-lg ${tabColor.light} ${tabColor.text}`}>
@@ -771,47 +772,44 @@ export const VentasView: React.FC<VentasViewProps> = ({ currentUser, clientes, p
         </div>
       )}
 
-      {/* Header */}
-      <div className="px-4 pt-4 pb-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-xl bg-gradient-to-br ${cfg.gradient} text-white shadow`}>
-            <cfg.icon size={20} />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">Ventas</h1>
-            <p className="text-xs text-slate-500">Gestión del ciclo completo de documentos</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              className="pl-8 pr-3 py-1.5 text-sm border border-slate-200 bg-white rounded-xl outline-none focus:ring-2 focus:ring-slate-300 w-52 shadow-sm"
-              placeholder="Buscar referencia o cliente…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-          </div>
-          <button onClick={ventas.loadAll}
-            className="p-1.5 text-slate-500 hover:text-slate-800 border border-slate-200 bg-white rounded-xl shadow-sm">
-            <RefreshCw size={15} className={ventas.loading ? 'animate-spin' : ''} />
-          </button>
-          {canEdit && (
-            <button
-              onClick={() => {
-                if (activeTab === 'presupuestos') openPresupuesto();
-                else if (activeTab === 'pedidos') openPedido();
-                else if (activeTab === 'albaranes') openAlbaran();
-                else if (activeTab === 'facturas') openFactura();
-                else setDevModal(true);
-              }}
-              className={`flex items-center gap-1.5 bg-gradient-to-r ${cfg.gradient} text-white px-4 py-1.5 rounded-xl text-sm font-semibold hover:opacity-90 shadow-sm transition-opacity`}
-            >
-              <Plus size={15} /> Nuevo {cfg.abbr}
+      {/* Header SAGE */}
+      <ModuleHeader
+        icon={ShoppingCart}
+        title="Ventas"
+        subtitle="Gestión del ciclo completo de documentos"
+        color="blue"
+        actions={
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-blue-300" />
+              <input
+                className="pl-8 pr-3 py-1.5 text-sm border border-blue-600 bg-blue-700/50 text-white placeholder-blue-300 rounded-lg outline-none focus:bg-blue-700 w-48"
+                placeholder="Buscar ref. o cliente…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+            </div>
+            <button onClick={ventas.loadAll}
+              className="p-1.5 text-blue-200 hover:text-white border border-blue-600 bg-blue-700/50 rounded-lg transition-colors">
+              <RefreshCw size={14} className={ventas.loading ? 'animate-spin' : ''} />
             </button>
-          )}
-        </div>
-      </div>
+            {canEdit && (
+              <button
+                onClick={() => {
+                  if (activeTab === 'presupuestos') openPresupuesto();
+                  else if (activeTab === 'pedidos') openPedido();
+                  else if (activeTab === 'albaranes') openAlbaran();
+                  else if (activeTab === 'facturas') openFactura();
+                  else setDevModal(true);
+                }}
+                className="flex items-center gap-1.5 bg-white text-blue-700 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-blue-50 shadow-sm transition-colors"
+              >
+                <Plus size={14} /> Nuevo {cfg.abbr}
+              </button>
+            )}
+          </div>
+        }
+      />
 
       {/* Pipeline de documentos */}
       <div className="mx-4 mb-2 bg-white rounded-2xl border border-slate-200 shadow-sm">
