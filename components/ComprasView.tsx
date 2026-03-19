@@ -13,8 +13,10 @@ import {
   Proveedor, PedidoCompra, Recepcion, Traspaso,
   CompraLinea, RecepcionLinea, TraspasoLinea,
   EstadoPedidoCompra, EstadoRecepcion, EstadoTraspaso,
+  Product
 } from '../types';
 import { User, Almacen } from '../types';
+import { MaterialSelectorModal } from './MaterialSelectorModal';
 
 // ─── Helpers visuales ─────────────────────────────────────────────────────────
 
@@ -171,10 +173,25 @@ const ProveedorModal: React.FC<ProveedorModalProps> = ({ proveedor, onSave, onCl
 interface CompraLineasEditorProps {
   lineas: CompraLinea[];
   onChange: (lineas: CompraLinea[]) => void;
+  productos: Product[];
   readonly?: boolean;
 }
 
-const CompraLineasEditor: React.FC<CompraLineasEditorProps> = ({ lineas, onChange, readonly }) => {
+const mapProductToCompraLinea = (p: Product, orden: number): CompraLinea => ({
+  orden,
+  productoId: p.id,
+  descripcion: p.name,
+  cantidad: 1,
+  precioUnitario: p.price, // Precio de coste base
+  descuento: 0,
+  ivaPorcentaje: 21,
+  subtotal: p.price,
+});
+
+const CompraLineasEditor: React.FC<CompraLineasEditorProps> = ({ lineas, onChange, productos, readonly }) => {
+  const { stock } = useCompras();
+  const [catalogMode, setCatalogMode] = useState<{ isOpen: boolean; lineIndex?: number }>({ isOpen: false });
+
   const addLinea = () => onChange([...lineas, {
     orden: lineas.length + 1,
     descripcion: '',
@@ -184,6 +201,31 @@ const CompraLineasEditor: React.FC<CompraLineasEditorProps> = ({ lineas, onChang
     ivaPorcentaje: 21,
     subtotal: 0,
   }]);
+
+  const handleCatalogSelect = (seleccionados: Product[]) => {
+    if (seleccionados.length === 0) return;
+
+    if (catalogMode.lineIndex !== undefined) {
+      const i = catalogMode.lineIndex;
+      const first = mapProductToCompraLinea(seleccionados[0], lineas[i].orden);
+      const nextLineas = [...lineas];
+      nextLineas[i] = { ...nextLineas[i], ...first };
+
+      if (seleccionados.length > 1) {
+        const masivas = seleccionados.slice(1).map((p, idx) =>
+          mapProductToCompraLinea(p, lineas.length + idx + 1)
+        );
+        onChange([...nextLineas, ...masivas]);
+      } else {
+        onChange(nextLineas);
+      }
+    } else {
+      const nuevasLineas = seleccionados.map((p, i) =>
+        mapProductToCompraLinea(p, lineas.length + i + 1)
+      );
+      onChange([...lineas, ...nuevasLineas]);
+    }
+  };
 
   const update = (i: number, changes: Partial<CompraLinea>) => {
     const updated = lineas.map((l, idx) => {
@@ -220,12 +262,22 @@ const CompraLineasEditor: React.FC<CompraLineasEditorProps> = ({ lineas, onChang
                 <td className="px-2 py-1.5">
                   {readonly
                     ? <span className="text-sm text-slate-800">{l.descripcion}</span>
-                    : <input
-                        className="w-full text-sm border-0 bg-transparent outline-none focus:bg-white focus:border focus:border-blue-300 focus:rounded px-1 py-0.5"
-                        value={l.descripcion}
-                        onChange={e => update(i, { descripcion: e.target.value })}
-                        placeholder="Descripción…"
-                      />
+                    : (
+                      <div className="flex items-center gap-1 group/input">
+                        <input
+                          className="flex-1 text-sm border-0 bg-transparent outline-none focus:bg-white focus:border focus:border-blue-300 focus:rounded px-1 py-0.5"
+                          value={l.descripcion}
+                          onChange={e => update(i, { descripcion: e.target.value })}
+                          placeholder="Descripción…"
+                        />
+                        <button
+                          onClick={() => setCatalogMode({ isOpen: true, lineIndex: i })}
+                          className="p-1 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors opacity-0 group-hover/input:opacity-100"
+                        >
+                          <Search size={12} />
+                        </button>
+                      </div>
+                    )
                   }
                 </td>
                 {(['cantidad', 'precioUnitario', 'descuento'] as (keyof CompraLinea)[]).map(field => (
@@ -233,11 +285,11 @@ const CompraLineasEditor: React.FC<CompraLineasEditorProps> = ({ lineas, onChang
                     {readonly
                       ? <span className="text-sm text-right block">{Number(l[field])}</span>
                       : <input
-                          type="number" min="0" step="0.01"
-                          className="w-full text-sm text-right border-0 bg-transparent outline-none focus:bg-white focus:border focus:border-blue-300 focus:rounded px-1 py-0.5"
-                          value={Number(l[field])}
-                          onChange={e => update(i, { [field]: parseFloat(e.target.value) || 0 })}
-                        />
+                        type="number" min="0" step="0.01"
+                        className="w-full text-sm text-right border-0 bg-transparent outline-none focus:bg-white focus:border focus:border-blue-300 focus:rounded px-1 py-0.5"
+                        value={Number(l[field])}
+                        onChange={e => update(i, { [field]: parseFloat(e.target.value) || 0 })}
+                      />
                     }
                   </td>
                 ))}
@@ -245,15 +297,15 @@ const CompraLineasEditor: React.FC<CompraLineasEditorProps> = ({ lineas, onChang
                   {readonly
                     ? <span className="text-sm text-right block">{l.ivaPorcentaje}%</span>
                     : <select
-                        className="w-full text-sm border-0 bg-transparent outline-none focus:bg-white"
-                        value={l.ivaPorcentaje}
-                        onChange={e => update(i, { ivaPorcentaje: Number(e.target.value) })}
-                      >
-                        <option value={0}>0%</option>
-                        <option value={4}>4%</option>
-                        <option value={10}>10%</option>
-                        <option value={21}>21%</option>
-                      </select>
+                      className="w-full text-sm border-0 bg-transparent outline-none focus:bg-white"
+                      value={l.ivaPorcentaje}
+                      onChange={e => update(i, { ivaPorcentaje: Number(e.target.value) })}
+                    >
+                      <option value={0}>0%</option>
+                      <option value={4}>4%</option>
+                      <option value={10}>10%</option>
+                      <option value={21}>21%</option>
+                    </select>
                   }
                 </td>
                 <td className="px-3 py-1.5 text-right text-sm font-semibold text-slate-800">{fmt(l.subtotal)}</td>
@@ -274,17 +326,38 @@ const CompraLineasEditor: React.FC<CompraLineasEditorProps> = ({ lineas, onChang
             )}
           </tbody>
         </table>
-      </div>
-      <div className="flex items-center justify-between px-3 py-2 bg-slate-50 border-t border-slate-200">
-        {!readonly
-          ? <button onClick={addLinea} className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium">
-              <Plus size={15} /> Añadir línea
-            </button>
-          : <div />
-        }
-        <div className="text-sm font-semibold text-slate-700">
-          Subtotal: <span className="text-slate-900 ml-1">{fmt(total)}</span>
+        {/* Footer */}
+        <div className="flex items-center justify-between px-3 py-2 bg-slate-50 border-t border-slate-200">
+          {!readonly ? (
+            <div className="flex gap-2">
+              <button
+                onClick={addLinea}
+                className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium hover:bg-white px-2.5 py-1 rounded-lg transition-colors border border-transparent hover:border-slate-200"
+              >
+                <Plus size={14} /> Añadir línea
+              </button>
+              <button
+                onClick={() => setCatalogMode({ isOpen: true })}
+                className="flex items-center gap-2 text-xs font-bold bg-indigo-600 text-white px-3 py-1 rounded-lg hover:bg-indigo-700 transition-all shadow-sm"
+              >
+                <Search size={13} /> Catálogo [Q]
+              </button>
+            </div>
+          ) : <div />}
+
+          <div className="text-sm font-semibold text-slate-700">
+            Total: <span className="text-slate-900 ml-1">{fmt(total)}</span>
+          </div>
         </div>
+
+        <MaterialSelectorModal
+          isOpen={catalogMode.isOpen}
+          onClose={() => setCatalogMode({ isOpen: false })}
+          productos={productos}
+          stock={stock}
+          initialQuery={catalogMode.lineIndex !== undefined ? lineas[catalogMode.lineIndex].descripcion : ''}
+          onSelect={handleCatalogSelect}
+        />
       </div>
     </div>
   );
@@ -297,13 +370,14 @@ interface PedidoCompraModalProps {
   lineasIniciales?: CompraLinea[];
   proveedores: Proveedor[];
   almacenes: Almacen[];
+  productos: Product[];
   currentUser: User;
   onSave: (data: Omit<PedidoCompra, 'id' | 'referencia' | 'createdAt'>, lineas: CompraLinea[]) => Promise<void>;
   onClose: () => void;
 }
 
 const PedidoCompraModal: React.FC<PedidoCompraModalProps> = ({
-  pedido, lineasIniciales, proveedores, almacenes, currentUser, onSave, onClose,
+  pedido, lineasIniciales, proveedores, almacenes, productos, currentUser, onSave, onClose,
 }) => {
   const [form, setForm] = useState({
     proveedorId: pedido?.proveedorId || '',
@@ -415,7 +489,7 @@ const PedidoCompraModal: React.FC<PedidoCompraModalProps> = ({
           </div>
 
           {/* Líneas */}
-          <CompraLineasEditor lineas={lineas} onChange={setLineas} readonly={readonly} />
+          <CompraLineasEditor lineas={lineas} onChange={setLineas} productos={productos} readonly={readonly} />
 
           {/* Totales */}
           <div className="flex justify-end">
@@ -479,6 +553,7 @@ interface RecepcionModalProps {
   lineasIniciales?: RecepcionLinea[];
   proveedores: Proveedor[];
   almacenes: Almacen[];
+  productos: Product[];
   currentUser: User;
   onSave: (data: Omit<Recepcion, 'id' | 'referencia' | 'createdAt'>, lineas: RecepcionLinea[]) => Promise<void>;
   onConfirmar?: (id: string) => Promise<void>;
@@ -486,8 +561,10 @@ interface RecepcionModalProps {
 }
 
 const RecepcionModal: React.FC<RecepcionModalProps> = ({
-  recepcion, lineasIniciales, proveedores, almacenes, currentUser, onSave, onConfirmar, onClose,
+  recepcion, lineasIniciales, proveedores, almacenes, productos, currentUser, onSave, onConfirmar, onClose,
 }) => {
+  const { stock } = useCompras();
+  const [catalogMode, setCatalogMode] = useState<{ isOpen: boolean; lineIndex?: number }>({ isOpen: false });
   const [form, setForm] = useState({
     almacenId: recepcion?.almacenId || '',
     proveedorId: recepcion?.proveedorId || '',
@@ -502,6 +579,47 @@ const RecepcionModal: React.FC<RecepcionModalProps> = ({
 
   const readonly = recepcion?.estado === 'confirmada' || recepcion?.estado === 'anulada';
   const total = lineas.reduce((s, l) => s + l.subtotal, 0);
+
+  const handleCatalogSelect = (seleccionados: Product[]) => {
+    if (seleccionados.length === 0) return;
+
+    if (catalogMode.lineIndex !== undefined) {
+      const i = catalogMode.lineIndex;
+      const first = seleccionados[0];
+      const nextLineas = [...lineas];
+      nextLineas[i] = {
+        ...nextLineas[i],
+        productoId: first.id,
+        descripcion: first.name,
+        precioCoste: first.price,
+        subtotal: nextLineas[i].cantidad * first.price
+      };
+
+      if (seleccionados.length > 1) {
+        const masivas = seleccionados.slice(1).map((p, idx) => ({
+          orden: lineas.length + idx + 1,
+          productoId: p.id,
+          descripcion: p.name,
+          cantidad: 1,
+          precioCoste: p.price,
+          subtotal: p.price,
+        }));
+        setLineas([...nextLineas, ...masivas]);
+      } else {
+        setLineas(nextLineas);
+      }
+    } else {
+      const nuevas = seleccionados.map((p, i) => ({
+        orden: lineas.length + i + 1,
+        productoId: p.id,
+        descripcion: p.name,
+        cantidad: 1,
+        precioCoste: p.price,
+        subtotal: p.price,
+      }));
+      setLineas(prev => [...prev, ...nuevas]);
+    }
+  };
 
   const updateLinea = (i: number, changes: Partial<RecepcionLinea>) => {
     setLineas(prev => prev.map((l, idx) => {
@@ -609,24 +727,34 @@ const RecepcionModal: React.FC<RecepcionModalProps> = ({
                     <td className="px-2 py-1.5">
                       {readonly
                         ? <span className="text-sm">{l.descripcion}</span>
-                        : <input className="w-full text-sm border-0 bg-transparent outline-none focus:bg-white"
-                            value={l.descripcion} onChange={e => updateLinea(i, { descripcion: e.target.value })} />
+                        : (
+                          <div className="flex items-center gap-1 group/input">
+                            <input className="flex-1 text-sm border-0 bg-transparent outline-none focus:bg-white focus:border focus:border-blue-300 focus:rounded px-1 py-0.5"
+                              value={l.descripcion} onChange={e => updateLinea(i, { descripcion: e.target.value })} />
+                            <button
+                              onClick={() => setCatalogMode({ isOpen: true, lineIndex: i })}
+                              className="p-1 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors opacity-0 group-hover/input:opacity-100"
+                            >
+                              <Search size={12} />
+                            </button>
+                          </div>
+                        )
                       }
                     </td>
                     <td className="px-2 py-1.5 w-24">
                       {readonly
                         ? <span className="text-sm text-right block">{l.cantidad}</span>
                         : <input type="number" min="0" step="0.01"
-                            className="w-full text-sm text-right border-0 bg-transparent outline-none focus:bg-white"
-                            value={l.cantidad} onChange={e => updateLinea(i, { cantidad: parseFloat(e.target.value) || 0 })} />
+                          className="w-full text-sm text-right border-0 bg-transparent outline-none focus:bg-white"
+                          value={l.cantidad} onChange={e => updateLinea(i, { cantidad: parseFloat(e.target.value) || 0 })} />
                       }
                     </td>
                     <td className="px-2 py-1.5 w-28">
                       {readonly
                         ? <span className="text-sm text-right block">{fmt(l.precioCoste)}</span>
                         : <input type="number" min="0" step="0.0001"
-                            className="w-full text-sm text-right border-0 bg-transparent outline-none focus:bg-white"
-                            value={l.precioCoste} onChange={e => updateLinea(i, { precioCoste: parseFloat(e.target.value) || 0 })} />
+                          className="w-full text-sm text-right border-0 bg-transparent outline-none focus:bg-white"
+                          value={l.precioCoste} onChange={e => updateLinea(i, { precioCoste: parseFloat(e.target.value) || 0 })} />
                       }
                     </td>
                     <td className="px-3 py-1.5 text-right text-sm font-semibold">{fmt(l.subtotal)}</td>
@@ -645,16 +773,36 @@ const RecepcionModal: React.FC<RecepcionModalProps> = ({
                 )}
               </tbody>
             </table>
-            <div className="flex items-center justify-between px-3 py-2 bg-slate-50 border-t border-slate-200">
+            <div className="flex items-center justify-between px-3 py-2.5 bg-slate-50 border-t border-slate-200">
               {!readonly
-                ? <button onClick={() => setLineas(prev => [...prev, { orden: prev.length + 1, descripcion: '', cantidad: 1, precioCoste: 0, subtotal: 0 }])}
-                    className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium">
-                    <Plus size={15} /> Añadir línea
-                  </button>
-                : <div />
+                ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setLineas(prev => [...prev, { orden: prev.length + 1, descripcion: '', cantidad: 1, precioCoste: 0, subtotal: 0 }])}
+                      className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium hover:bg-blue-50 px-2.5 py-1 rounded-lg"
+                    >
+                      <Plus size={15} /> Añadir línea vacía
+                    </button>
+                    <button
+                      onClick={() => setCatalogMode({ isOpen: true })}
+                      className="flex items-center gap-2 text-sm bg-indigo-600 text-white hover:bg-indigo-700 font-bold px-4 py-1.5 rounded-lg shadow-sm transition-all"
+                    >
+                      <Search size={15} /> Catálogo [Q]
+                    </button>
+                  </div>
+                ) : <div />
               }
-              <div className="text-sm font-semibold">Total: <span className="text-slate-900 ml-1">{fmt(total)}</span></div>
+              <div className="text-sm font-semibold text-slate-700">Total: <span className="text-slate-900 ml-1">{fmt(total)}</span></div>
             </div>
+
+            <MaterialSelectorModal
+              isOpen={catalogMode.isOpen}
+              onClose={() => setCatalogMode({ isOpen: false })}
+              productos={productos}
+              stock={stock}
+              initialQuery={catalogMode.lineIndex !== undefined ? lineas[catalogMode.lineIndex].descripcion : ''}
+              onSelect={handleCatalogSelect}
+            />
           </div>
         </div>
 
@@ -698,8 +846,10 @@ interface TraspasoModalProps {
 }
 
 const TraspasoModal: React.FC<TraspasoModalProps> = ({
-  traspaso, lineasIniciales, almacenes, currentUser, onSave, onEnviar, onConfirmar, onClose,
+  traspaso, lineasIniciales, almacenes, productos, currentUser, onSave, onEnviar, onConfirmar, onClose,
 }) => {
+  const { stock } = useCompras();
+  const [catalogMode, setCatalogMode] = useState<{ isOpen: boolean; lineIndex?: number }>({ isOpen: false });
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [firmaNombre, setFirmaNombre] = useState('');
@@ -711,6 +861,42 @@ const TraspasoModal: React.FC<TraspasoModalProps> = ({
   });
   const [lineas, setLineas] = useState<TraspasoLinea[]>(lineasIniciales || []);
   const [saving, setSaving] = useState(false);
+
+  const handleCatalogSelect = (seleccionados: Product[]) => {
+    if (seleccionados.length === 0) return;
+
+    if (catalogMode.lineIndex !== undefined) {
+      const i = catalogMode.lineIndex;
+      const first = seleccionados[0];
+      const nextLineas = [...lineas];
+      nextLineas[i] = {
+        ...nextLineas[i],
+        productoId: first.id,
+        descripcion: first.name,
+        cantidad: nextLineas[i].cantidad || 1
+      };
+
+      if (seleccionados.length > 1) {
+        const masivas = seleccionados.slice(1).map((p, idx) => ({
+          orden: lineas.length + idx + 1,
+          productoId: p.id,
+          descripcion: p.name,
+          cantidad: 1,
+        }));
+        setLineas([...nextLineas, ...masivas]);
+      } else {
+        setLineas(nextLineas);
+      }
+    } else {
+      const nuevas = seleccionados.map((p, i) => ({
+        orden: lineas.length + i + 1,
+        productoId: p.id,
+        descripcion: p.name,
+        cantidad: 1,
+      }));
+      setLineas(prev => [...prev, ...nuevas]);
+    }
+  };
 
   const readonly = traspaso?.estado === 'confirmado' || traspaso?.estado === 'anulado';
   const canSign = traspaso?.estado === 'en_transito';
@@ -856,18 +1042,28 @@ const TraspasoModal: React.FC<TraspasoModalProps> = ({
                     <td className="px-2 py-1.5">
                       {readonly
                         ? <span className="text-sm">{l.descripcion}</span>
-                        : <input className="w-full text-sm border-0 bg-transparent outline-none focus:bg-white"
-                            value={l.descripcion}
-                            onChange={e => setLineas(prev => prev.map((li, idx) => idx === i ? { ...li, descripcion: e.target.value } : li))} />
+                        : (
+                          <div className="flex items-center gap-1 group/input">
+                            <input className="flex-1 text-sm border-0 bg-transparent outline-none focus:bg-white focus:border focus:border-blue-300 focus:rounded px-1 py-0.5"
+                              value={l.descripcion}
+                              onChange={e => setLineas(prev => prev.map((li, idx) => idx === i ? { ...li, descripcion: e.target.value } : li))} />
+                            <button
+                              onClick={() => setCatalogMode({ isOpen: true, lineIndex: i })}
+                              className="p-1 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors opacity-0 group-hover/input:opacity-100"
+                            >
+                              <Search size={12} />
+                            </button>
+                          </div>
+                        )
                       }
                     </td>
                     <td className="px-2 py-1.5 w-24">
                       {readonly
                         ? <span className="text-sm text-right block">{l.cantidad}</span>
                         : <input type="number" min="0" step="0.01"
-                            className="w-full text-sm text-right border-0 bg-transparent outline-none focus:bg-white"
-                            value={l.cantidad}
-                            onChange={e => setLineas(prev => prev.map((li, idx) => idx === i ? { ...li, cantidad: parseFloat(e.target.value) || 0 } : li))} />
+                          className="w-full text-sm text-right border-0 bg-transparent outline-none focus:bg-white"
+                          value={l.cantidad}
+                          onChange={e => setLineas(prev => prev.map((li, idx) => idx === i ? { ...li, cantidad: parseFloat(e.target.value) || 0 } : li))} />
                       }
                     </td>
                     {!readonly && (
@@ -886,12 +1082,33 @@ const TraspasoModal: React.FC<TraspasoModalProps> = ({
               </tbody>
             </table>
             {!readonly && (
-              <div className="px-3 py-2 bg-slate-50 border-t border-slate-200">
-                <button onClick={() => setLineas(prev => [...prev, { orden: prev.length + 1, descripcion: '', cantidad: 1 }])}
-                  className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium">
-                  <Plus size={15} /> Añadir línea
-                </button>
-              </div>
+              <>
+                <div className="flex items-center justify-between px-3 py-2.5 bg-slate-50 border-t border-slate-200">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setLineas(prev => [...prev, { orden: prev.length + 1, descripcion: '', cantidad: 1 }])}
+                      className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium hover:bg-blue-50 px-2.5 py-1.5 rounded-lg transition-colors border border-transparent hover:border-blue-200"
+                    >
+                      <Plus size={15} /> Añadir línea vacía
+                    </button>
+                    <button
+                      onClick={() => setCatalogMode({ isOpen: true })}
+                      className="flex items-center gap-2 text-sm bg-indigo-600 text-white hover:bg-indigo-700 font-bold px-4 py-1.5 rounded-lg shadow-sm transition-all"
+                    >
+                      <Search size={15} /> Catálogo [Q]
+                    </button>
+                  </div>
+                </div>
+
+                <MaterialSelectorModal
+                  isOpen={catalogMode.isOpen}
+                  onClose={() => setCatalogMode({ isOpen: false })}
+                  productos={productos}
+                  stock={stock}
+                  initialQuery={catalogMode.lineIndex !== undefined ? lineas[catalogMode.lineIndex].descripcion : ''}
+                  onSelect={handleCatalogSelect}
+                />
+              </>
             )}
           </div>
 
@@ -963,9 +1180,10 @@ const TraspasoModal: React.FC<TraspasoModalProps> = ({
 interface ComprasViewProps {
   currentUser: User;
   almacenes: Almacen[];
+  productos: Product[];
 }
 
-export const ComprasView: React.FC<ComprasViewProps> = ({ currentUser, almacenes }) => {
+export const ComprasView: React.FC<ComprasViewProps> = ({ currentUser, almacenes, productos }) => {
   const {
     proveedores, pedidosCompra, recepciones, traspasos,
     loading, error, reload,
@@ -1064,8 +1282,8 @@ export const ComprasView: React.FC<ComprasViewProps> = ({ currentUser, almacenes
   // ─── derived new-button label ────────────────────────────────────────────────
   const newLabel = tab === 'proveedores' ? 'Nuevo proveedor'
     : tab === 'pedidos' ? 'Nueva OC'
-    : tab === 'recepciones' ? 'Nueva recepción'
-    : 'Nuevo traspaso';
+      : tab === 'recepciones' ? 'Nueva recepción'
+        : 'Nuevo traspaso';
 
   const handleNew = () => {
     if (tab === 'proveedores') { setEditProveedor(null); setShowProvModal(true); }
@@ -1076,8 +1294,8 @@ export const ComprasView: React.FC<ComprasViewProps> = ({ currentUser, almacenes
 
   const currentCount = tab === 'proveedores' ? filteredProv.length
     : tab === 'pedidos' ? filteredOC.length
-    : tab === 'recepciones' ? filteredRec.length
-    : filteredTra.length;
+      : tab === 'recepciones' ? filteredRec.length
+        : filteredTra.length;
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -1095,10 +1313,10 @@ export const ComprasView: React.FC<ComprasViewProps> = ({ currentUser, almacenes
       {/* ── Tab strip ──────────────────────────────────────────────────────── */}
       <SageTabStrip
         tabs={[
-          { id: 'proveedores', label: 'Proveedores',       icon: Package,       count: proveedores.length },
-          { id: 'pedidos',     label: 'Órdenes de Compra', icon: ShoppingCart,  count: pedidosCompra.length },
-          { id: 'recepciones', label: 'Recepciones',       icon: Truck,         count: recepciones.length },
-          { id: 'traspasos',   label: 'Traspasos',         icon: ArrowLeftRight, count: traspasos.length },
+          { id: 'proveedores', label: 'Proveedores', icon: Package, count: proveedores.length },
+          { id: 'pedidos', label: 'Órdenes de Compra', icon: ShoppingCart, count: pedidosCompra.length },
+          { id: 'recepciones', label: 'Recepciones', icon: Truck, count: recepciones.length },
+          { id: 'traspasos', label: 'Traspasos', icon: ArrowLeftRight, count: traspasos.length },
         ]}
         active={tab}
         onChange={(id) => setTab(id as Tab)}
@@ -1116,78 +1334,78 @@ export const ComprasView: React.FC<ComprasViewProps> = ({ currentUser, almacenes
       {/* ── Table content ──────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto min-h-0">
 
-      {/* Tabla Proveedores */}
-      {tab === 'proveedores' && (
-        <table className="w-full">
-          <thead className="sticky top-0 bg-slate-50 border-b border-slate-200">
-            <tr>
-              <th className={sageTh}>Nombre</th>
-              <th className={sageTh}>CIF</th>
-              <th className={sageTh}>Contacto</th>
-              <th className={sageTh}>Teléfono</th>
-              <th className={sageTh}>Email</th>
-              <th className={sageThR}>Días pago</th>
-              <th className="w-8 px-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredProv.map((p, idx) => (
-              <tr key={p.id} className={sageRowClass(false, idx % 2 === 1)}>
-                <td className="px-2 py-1">
-                  <div className="text-[12px] font-medium text-slate-800">{p.nombre}</div>
-                  {p.codigo && <div className="text-[11px] text-slate-400">{p.codigo}</div>}
-                </td>
-                <td className="px-2 py-1 text-[12px] text-slate-600">{p.cif || '—'}</td>
-                <td className="px-2 py-1 text-[12px] text-slate-600">{p.contacto || '—'}</td>
-                <td className="px-2 py-1 text-[12px] text-slate-600">{p.telefono || '—'}</td>
-                <td className="px-2 py-1 text-[12px] text-slate-600">{p.email || '—'}</td>
-                <td className="px-2 py-1 text-right text-[12px] text-slate-600">{p.diasPago || 30}d</td>
-                <td className="px-2 py-1">
-                  <button onClick={() => { setEditProveedor(p); setShowProvModal(true); }}
-                    className="text-slate-400 hover:text-blue-600">
-                    <Pencil size={13} />
-                  </button>
-                </td>
+        {/* Tabla Proveedores */}
+        {tab === 'proveedores' && (
+          <table className="w-full">
+            <thead className="sticky top-0 bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th className={sageTh}>Nombre</th>
+                <th className={sageTh}>CIF</th>
+                <th className={sageTh}>Contacto</th>
+                <th className={sageTh}>Teléfono</th>
+                <th className={sageTh}>Email</th>
+                <th className={sageThR}>Días pago</th>
+                <th className="w-8 px-2"></th>
               </tr>
-            ))}
-            {filteredProv.length === 0 && (
-              <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400 text-sm italic">
-                Sin proveedores. Pulsa &quot;Nuevo proveedor&quot; para empezar.
-              </td></tr>
-            )}
-          </tbody>
-        </table>
-      )}
+            </thead>
+            <tbody>
+              {filteredProv.map((p, idx) => (
+                <tr key={p.id} className={sageRowClass(false, idx % 2 === 1)}>
+                  <td className="px-2 py-1">
+                    <div className="text-[12px] font-medium text-slate-800">{p.nombre}</div>
+                    {p.codigo && <div className="text-[11px] text-slate-400">{p.codigo}</div>}
+                  </td>
+                  <td className="px-2 py-1 text-[12px] text-slate-600">{p.cif || '—'}</td>
+                  <td className="px-2 py-1 text-[12px] text-slate-600">{p.contacto || '—'}</td>
+                  <td className="px-2 py-1 text-[12px] text-slate-600">{p.telefono || '—'}</td>
+                  <td className="px-2 py-1 text-[12px] text-slate-600">{p.email || '—'}</td>
+                  <td className="px-2 py-1 text-right text-[12px] text-slate-600">{p.diasPago || 30}d</td>
+                  <td className="px-2 py-1">
+                    <button onClick={() => { setEditProveedor(p); setShowProvModal(true); }}
+                      className="text-slate-400 hover:text-blue-600">
+                      <Pencil size={13} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {filteredProv.length === 0 && (
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400 text-sm italic">
+                  Sin proveedores. Pulsa &quot;Nuevo proveedor&quot; para empezar.
+                </td></tr>
+              )}
+            </tbody>
+          </table>
+        )}
 
-      {/* Tabla Órdenes de Compra */}
-      {tab === 'pedidos' && (
-        <table className="w-full">
-          <thead className="sticky top-0 bg-slate-50 border-b border-slate-200">
-            <tr>
-              <th className={sageTh}>Referencia</th>
-              <th className={sageTh}>Proveedor</th>
-              <th className={sageTh}>Fecha</th>
-              <th className={sageTh}>Entrega</th>
-              <th className={sageTh}>Estado</th>
-              <th className={sageThR}>Total</th>
-              <th className="w-8 px-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredOC.map((oc, idx) => (
-              <tr key={oc.id} className={sageRowClass(false, idx % 2 === 1)}>
-                <td className="px-2 py-1 text-[12px] font-medium text-blue-700">{oc.referencia}</td>
-                <td className="px-2 py-1 text-[12px] text-slate-700">{oc.proveedorNombre || '—'}</td>
-                <td className="px-2 py-1 text-[12px] text-slate-600 whitespace-nowrap">{oc.fecha}</td>
-                <td className="px-2 py-1 text-[12px] text-slate-600 whitespace-nowrap">{oc.fechaEntrega || '—'}</td>
-                <td className="px-2 py-1">
-                  <EstadoBadge text={oc.estado.replace('_', ' ')} color={ESTADO_OC_COLOR[oc.estado]} />
-                </td>
-                <td className="px-2 py-1 text-right text-[12px] font-semibold text-slate-800">{fmt(oc.total)}</td>
-                <td className="px-2 py-1">
-                  <button onClick={() => openOC(oc)} className="text-slate-400 hover:text-blue-600">
-                    <Eye size={13} />
-                  </button>
+        {/* Tabla Órdenes de Compra */}
+        {tab === 'pedidos' && (
+          <table className="w-full">
+            <thead className="sticky top-0 bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th className={sageTh}>Referencia</th>
+                <th className={sageTh}>Proveedor</th>
+                <th className={sageTh}>Fecha</th>
+                <th className={sageTh}>Entrega</th>
+                <th className={sageTh}>Estado</th>
+                <th className={sageThR}>Total</th>
+                <th className="w-8 px-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredOC.map((oc, idx) => (
+                <tr key={oc.id} className={sageRowClass(false, idx % 2 === 1)}>
+                  <td className="px-2 py-1 text-[12px] font-medium text-blue-700">{oc.referencia}</td>
+                  <td className="px-2 py-1 text-[12px] text-slate-700">{oc.proveedorNombre || '—'}</td>
+                  <td className="px-2 py-1 text-[12px] text-slate-600 whitespace-nowrap">{oc.fecha}</td>
+                  <td className="px-2 py-1 text-[12px] text-slate-600 whitespace-nowrap">{oc.fechaEntrega || '—'}</td>
+                  <td className="px-2 py-1">
+                    <EstadoBadge text={oc.estado.replace('_', ' ')} color={ESTADO_OC_COLOR[oc.estado]} />
+                  </td>
+                  <td className="px-2 py-1 text-right text-[12px] font-semibold text-slate-800">{fmt(oc.total)}</td>
+                  <td className="px-2 py-1">
+                    <button onClick={() => openOC(oc)} className="text-slate-400 hover:text-blue-600">
+                      <Eye size={13} />
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -1198,87 +1416,87 @@ export const ComprasView: React.FC<ComprasViewProps> = ({ currentUser, almacenes
               )}
             </tbody>
           </table>
-      )}
+        )}
 
-      {/* Tabla Recepciones */}
-      {tab === 'recepciones' && (
-        <table className="w-full">
-          <thead className="sticky top-0 bg-slate-50 border-b border-slate-200">
-            <tr>
-              <th className={sageTh}>Referencia</th>
-              <th className={sageTh}>Proveedor</th>
-              <th className={sageTh}>Almacén</th>
-              <th className={sageTh}>Fecha</th>
-              <th className={sageTh}>Estado</th>
-              <th className={sageThR}>Total</th>
-              <th className="w-8 px-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredRec.map((rec, idx) => (
-              <tr key={rec.id} className={sageRowClass(false, idx % 2 === 1)}>
-                <td className="px-2 py-1 text-[12px] font-medium text-blue-700">{rec.referencia}</td>
-                <td className="px-2 py-1 text-[12px] text-slate-700">{rec.proveedorNombre || '—'}</td>
-                <td className="px-2 py-1 text-[12px] text-slate-600">{rec.almacenNombre || rec.almacenId}</td>
-                <td className="px-2 py-1 text-[12px] text-slate-600 whitespace-nowrap">{rec.fecha}</td>
-                <td className="px-2 py-1">
-                  <EstadoBadge text={rec.estado} color={ESTADO_REC_COLOR[rec.estado]} />
-                </td>
-                <td className="px-2 py-1 text-right text-[12px] font-semibold text-slate-800">{fmt(rec.total)}</td>
-                <td className="px-2 py-1">
-                  <button onClick={() => openRec(rec)} className="text-slate-400 hover:text-blue-600">
-                    <Eye size={13} />
-                  </button>
-                </td>
+        {/* Tabla Recepciones */}
+        {tab === 'recepciones' && (
+          <table className="w-full">
+            <thead className="sticky top-0 bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th className={sageTh}>Referencia</th>
+                <th className={sageTh}>Proveedor</th>
+                <th className={sageTh}>Almacén</th>
+                <th className={sageTh}>Fecha</th>
+                <th className={sageTh}>Estado</th>
+                <th className={sageThR}>Total</th>
+                <th className="w-8 px-2"></th>
               </tr>
-            ))}
-            {filteredRec.length === 0 && (
-              <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400 text-sm italic">
-                Sin recepciones.
-              </td></tr>
-            )}
-          </tbody>
-        </table>
-      )}
+            </thead>
+            <tbody>
+              {filteredRec.map((rec, idx) => (
+                <tr key={rec.id} className={sageRowClass(false, idx % 2 === 1)}>
+                  <td className="px-2 py-1 text-[12px] font-medium text-blue-700">{rec.referencia}</td>
+                  <td className="px-2 py-1 text-[12px] text-slate-700">{rec.proveedorNombre || '—'}</td>
+                  <td className="px-2 py-1 text-[12px] text-slate-600">{rec.almacenNombre || rec.almacenId}</td>
+                  <td className="px-2 py-1 text-[12px] text-slate-600 whitespace-nowrap">{rec.fecha}</td>
+                  <td className="px-2 py-1">
+                    <EstadoBadge text={rec.estado} color={ESTADO_REC_COLOR[rec.estado]} />
+                  </td>
+                  <td className="px-2 py-1 text-right text-[12px] font-semibold text-slate-800">{fmt(rec.total)}</td>
+                  <td className="px-2 py-1">
+                    <button onClick={() => openRec(rec)} className="text-slate-400 hover:text-blue-600">
+                      <Eye size={13} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {filteredRec.length === 0 && (
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400 text-sm italic">
+                  Sin recepciones.
+                </td></tr>
+              )}
+            </tbody>
+          </table>
+        )}
 
-      {/* Tabla Traspasos */}
-      {tab === 'traspasos' && (
-        <table className="w-full">
-          <thead className="sticky top-0 bg-slate-50 border-b border-slate-200">
-            <tr>
-              <th className={sageTh}>Referencia</th>
-              <th className={sageTh}>Origen</th>
-              <th className={sageTh}>Destino</th>
-              <th className={sageTh}>Fecha</th>
-              <th className={sageTh}>Estado</th>
-              <th className="w-8 px-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredTra.map((tra, idx) => (
-              <tr key={tra.id} className={sageRowClass(false, idx % 2 === 1)}>
-                <td className="px-2 py-1 text-[12px] font-medium text-blue-700">{tra.referencia}</td>
-                <td className="px-2 py-1 text-[12px] text-slate-700">{tra.almacenOrigenNombre || tra.almacenOrigenId}</td>
-                <td className="px-2 py-1 text-[12px] text-slate-700">{tra.almacenDestinoNombre || tra.almacenDestinoId}</td>
-                <td className="px-2 py-1 text-[12px] text-slate-600 whitespace-nowrap">{tra.fecha}</td>
-                <td className="px-2 py-1">
-                  <EstadoBadge text={tra.estado.replace('_', ' ')} color={ESTADO_TRA_COLOR[tra.estado]} />
-                </td>
-                <td className="px-2 py-1">
-                  <button onClick={() => openTra(tra)} className="text-slate-400 hover:text-blue-600">
-                    <Eye size={13} />
-                  </button>
-                </td>
+        {/* Tabla Traspasos */}
+        {tab === 'traspasos' && (
+          <table className="w-full">
+            <thead className="sticky top-0 bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th className={sageTh}>Referencia</th>
+                <th className={sageTh}>Origen</th>
+                <th className={sageTh}>Destino</th>
+                <th className={sageTh}>Fecha</th>
+                <th className={sageTh}>Estado</th>
+                <th className="w-8 px-2"></th>
               </tr>
-            ))}
-            {filteredTra.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-400 text-sm italic">
-                Sin traspasos.
-              </td></tr>
-            )}
-          </tbody>
-        </table>
-      )}
+            </thead>
+            <tbody>
+              {filteredTra.map((tra, idx) => (
+                <tr key={tra.id} className={sageRowClass(false, idx % 2 === 1)}>
+                  <td className="px-2 py-1 text-[12px] font-medium text-blue-700">{tra.referencia}</td>
+                  <td className="px-2 py-1 text-[12px] text-slate-700">{tra.almacenOrigenNombre || tra.almacenOrigenId}</td>
+                  <td className="px-2 py-1 text-[12px] text-slate-700">{tra.almacenDestinoNombre || tra.almacenDestinoId}</td>
+                  <td className="px-2 py-1 text-[12px] text-slate-600 whitespace-nowrap">{tra.fecha}</td>
+                  <td className="px-2 py-1">
+                    <EstadoBadge text={tra.estado.replace('_', ' ')} color={ESTADO_TRA_COLOR[tra.estado]} />
+                  </td>
+                  <td className="px-2 py-1">
+                    <button onClick={() => openTra(tra)} className="text-slate-400 hover:text-blue-600">
+                      <Eye size={13} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {filteredTra.length === 0 && (
+                <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-400 text-sm italic">
+                  Sin traspasos.
+                </td></tr>
+              )}
+            </tbody>
+          </table>
+        )}
 
       </div>{/* end flex-1 table area */}
 
@@ -1301,6 +1519,7 @@ export const ComprasView: React.FC<ComprasViewProps> = ({ currentUser, almacenes
           lineasIniciales={editOCLineas}
           proveedores={proveedores}
           almacenes={almacenes}
+          productos={productos}
           currentUser={currentUser}
           onSave={async (data, lineas) => {
             if (editOC) await updatePedidoCompra(editOC.id, data, lineas);
@@ -1316,6 +1535,7 @@ export const ComprasView: React.FC<ComprasViewProps> = ({ currentUser, almacenes
           lineasIniciales={editRecLineas}
           proveedores={proveedores}
           almacenes={almacenes}
+          productos={productos}
           currentUser={currentUser}
           onSave={async (data, lineas) => {
             await createRecepcion(data, lineas);
@@ -1332,6 +1552,7 @@ export const ComprasView: React.FC<ComprasViewProps> = ({ currentUser, almacenes
           traspaso={editTra}
           lineasIniciales={editTraLineas}
           almacenes={almacenes}
+          productos={productos}
           currentUser={currentUser}
           onSave={async (data, lineas) => {
             await createTraspaso(data, lineas);

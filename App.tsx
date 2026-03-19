@@ -16,51 +16,51 @@ import { useSATParts } from './hooks/useSATParts';
 import { useCRM } from './hooks/useCRM';
 
 // Lazy-loaded: Admin
-const AdminBulkLoad        = React.lazy(() => import('./components/AdminBulkLoad').then(m => ({ default: m.AdminBulkLoad })));
-const AdminBulkEdit        = React.lazy(() => import('./components/AdminBulkEdit').then(m => ({ default: m.AdminBulkEdit })));
-const AdminClientList      = React.lazy(() => import('./components/AdminClientList').then(m => ({ default: m.AdminClientList })));
-const AdminCoupons         = React.lazy(() => import('./components/AdminCoupons').then(m => ({ default: m.AdminCoupons })));
-const AdminDashboard       = React.lazy(() => import('./components/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
-const AdminProductList     = React.lazy(() => import('./components/AdminProductList').then(m => ({ default: m.AdminProductList })));
-const AdminNewClient       = React.lazy(() => import('./components/AdminNewClient').then(m => ({ default: m.AdminNewClient })));
+const AdminBulkLoad = React.lazy(() => import('./components/AdminBulkLoad').then(m => ({ default: m.AdminBulkLoad })));
+const AdminBulkEdit = React.lazy(() => import('./components/AdminBulkEdit').then(m => ({ default: m.AdminBulkEdit })));
+const AdminClientList = React.lazy(() => import('./components/AdminClientList').then(m => ({ default: m.AdminClientList })));
+const AdminCoupons = React.lazy(() => import('./components/AdminCoupons').then(m => ({ default: m.AdminCoupons })));
+const AdminDashboard = React.lazy(() => import('./components/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
+const AdminProductList = React.lazy(() => import('./components/AdminProductList').then(m => ({ default: m.AdminProductList })));
+const AdminNewClient = React.lazy(() => import('./components/AdminNewClient').then(m => ({ default: m.AdminNewClient })));
 const AdminSalesManagement = React.lazy(() => import('./components/AdminSalesManagement').then(m => ({ default: m.AdminSalesManagement })));
-const AdminTechManagement  = React.lazy(() => import('./components/AdminTechManagement').then(m => ({ default: m.AdminTechManagement })));
-const AdminBulkImportSAT   = React.lazy(() => import('./components/AdminBulkImportSAT').then(m => ({ default: m.AdminBulkImportSAT })));
-const AdminEmpresasView    = React.lazy(() => import('./components/AdminEmpresasView').then(m => ({ default: m.AdminEmpresasView })));
-const VentasView           = React.lazy(() => import('./components/VentasView').then(m => ({ default: m.VentasView })));
-const ComprasView          = React.lazy(() => import('./components/ComprasView').then(m => ({ default: m.ComprasView })));
-const StockView            = React.lazy(() => import('./components/StockView').then(m => ({ default: m.StockView })));
-const MaterialesView       = React.lazy(() => import('./components/MaterialesView').then(m => ({ default: m.MaterialesView })));
-const LibroFacturasView    = React.lazy(() => import('./components/LibroFacturasView').then(m => ({ default: m.LibroFacturasView })));
-const ContabilidadView         = React.lazy(() => import('./components/ContabilidadView').then(m => ({ default: m.ContabilidadView })));
+const AdminTechManagement = React.lazy(() => import('./components/AdminTechManagement').then(m => ({ default: m.AdminTechManagement })));
+const AdminBulkImportSAT = React.lazy(() => import('./components/AdminBulkImportSAT').then(m => ({ default: m.AdminBulkImportSAT })));
+const AdminEmpresasView = React.lazy(() => import('./components/AdminEmpresasView').then(m => ({ default: m.AdminEmpresasView })));
+const VentasView = React.lazy(() => import('./components/VentasView').then(m => ({ default: m.VentasView })));
+const ComprasView = React.lazy(() => import('./components/ComprasView').then(m => ({ default: m.ComprasView })));
+const StockView = React.lazy(() => import('./components/StockView').then(m => ({ default: m.StockView })));
+const MaterialesView = React.lazy(() => import('./components/MaterialesView').then(m => ({ default: m.MaterialesView })));
+const LibroFacturasView = React.lazy(() => import('./components/LibroFacturasView').then(m => ({ default: m.LibroFacturasView })));
+const ContabilidadView = React.lazy(() => import('./components/ContabilidadView').then(m => ({ default: m.ContabilidadView })));
 const FacturacionRecurrenteView = React.lazy(() => import('./components/FacturacionRecurrenteView').then(m => ({ default: m.FacturacionRecurrenteView })));
-const RRHHView        = React.lazy(() => import('./components/RRHHView'));
+const RRHHView = React.lazy(() => import('./components/RRHHView'));
 const BIAnalyticsView = React.lazy(() => import('./components/BIAnalyticsView'));
 const RemesasSEPAView = React.lazy(() => import('./components/RemesasSEPAView'));
-const GastosView      = React.lazy(() => import('./components/GastosView'));
+const GastosView = React.lazy(() => import('./components/GastosView'));
 const AdminProductEditModal = React.lazy(() => import('./components/AdminProductEditModal').then(m => ({ default: m.AdminProductEditModal })));
 
 // Lazy-loaded: SAT / Técnico
-const MachinesPanel    = React.lazy(() => import('./components/MachinesPanel').then(m => ({ default: m.MachinesPanel })));
-const WorkOrderList    = React.lazy(() => import('./components/WorkOrderList').then(m => ({ default: m.WorkOrderList })));
-const WorkOrderDetail  = React.lazy(() => import('./components/WorkOrderDetail').then(m => ({ default: m.WorkOrderDetail })));
+const MachinesPanel = React.lazy(() => import('./components/MachinesPanel').then(m => ({ default: m.MachinesPanel })));
+const WorkOrderList = React.lazy(() => import('./components/WorkOrderList').then(m => ({ default: m.WorkOrderList })));
+const WorkOrderDetail = React.lazy(() => import('./components/WorkOrderDetail').then(m => ({ default: m.WorkOrderDetail })));
 const NewWorkOrderModal = React.lazy(() => import('./components/NewWorkOrderModal').then(m => ({ default: m.NewWorkOrderModal })));
-const SATPartsList     = React.lazy(() => import('./components/SATPartsList').then(m => ({ default: m.SATPartsList })));
-const SATPartDetail    = React.lazy(() => import('./components/SATPartDetail').then(m => ({ default: m.SATPartDetail })));
-const NewSATPartModal  = React.lazy(() => import('./components/NewSATPartModal').then(m => ({ default: m.NewSATPartModal })));
-const IncidentList     = React.lazy(() => import('./components/IncidentList').then(m => ({ default: m.IncidentList })));
-const IncidentDetail   = React.lazy(() => import('./components/IncidentDetail').then(m => ({ default: m.IncidentDetail })));
+const SATPartsList = React.lazy(() => import('./components/SATPartsList').then(m => ({ default: m.SATPartsList })));
+const SATPartDetail = React.lazy(() => import('./components/SATPartDetail').then(m => ({ default: m.SATPartDetail })));
+const NewSATPartModal = React.lazy(() => import('./components/NewSATPartModal').then(m => ({ default: m.NewSATPartModal })));
+const IncidentList = React.lazy(() => import('./components/IncidentList').then(m => ({ default: m.IncidentList })));
+const IncidentDetail = React.lazy(() => import('./components/IncidentDetail').then(m => ({ default: m.IncidentDetail })));
 const NewIncidentModal = React.lazy(() => import('./components/NewIncidentModal').then(m => ({ default: m.NewIncidentModal })));
-const SalesDashboard        = React.lazy(() => import('./components/SalesDashboard').then(m => ({ default: m.SalesDashboard })));
+const SalesDashboard = React.lazy(() => import('./components/SalesDashboard').then(m => ({ default: m.SalesDashboard })));
 const SalesDirectorDashboard = React.lazy(() => import('./components/SalesDirectorDashboard').then(m => ({ default: m.SalesDirectorDashboard })));
-const SatDashboard          = React.lazy(() => import('./components/SatDashboard').then(m => ({ default: m.SatDashboard })));
-const TechLeadDashboard     = React.lazy(() => import('./components/TechLeadDashboard').then(m => ({ default: m.TechLeadDashboard })));
+const SatDashboard = React.lazy(() => import('./components/SatDashboard').then(m => ({ default: m.SatDashboard })));
+const TechLeadDashboard = React.lazy(() => import('./components/TechLeadDashboard').then(m => ({ default: m.TechLeadDashboard })));
 
 // Lazy-loaded: CRM / Gastos
-const CRMView      = React.lazy(() => import('./components/CRMView').then(m => ({ default: m.CRMView })));
+const CRMView = React.lazy(() => import('./components/CRMView').then(m => ({ default: m.CRMView })));
 const ExpensesView = React.lazy(() => import('./components/ExpensesView').then(m => ({ default: m.ExpensesView })));
 const NewVisitModal = React.lazy(() => import('./components/NewVisitModal').then(m => ({ default: m.NewVisitModal })));
-const NewCallModal  = React.lazy(() => import('./components/NewCallModal').then(m => ({ default: m.NewCallModal })));
+const NewCallModal = React.lazy(() => import('./components/NewCallModal').then(m => ({ default: m.NewCallModal })));
 
 // Lazy-loaded: Riesgo de Crédito (PASO 14)
 const RiesgoClienteView = React.lazy(() => import('./components/RiesgoClienteView'));
@@ -230,10 +230,10 @@ export default function App() {
                 setCurrentView(
                     currentUser.role === 'admin' ? 'admin_dashboard'
                         : currentUser.role === 'tech_lead' ? 'tech_lead_dashboard'
-                        : currentUser.role === 'tech' ? 'sat_dashboard'
-                        : currentUser.role === 'sales' && currentUser.username === 'corcoles' ? 'dashboard'
-                        : currentUser.role === 'sales' ? 'crm'
-                        : 'dashboard'
+                            : currentUser.role === 'tech' ? 'sat_dashboard'
+                                : currentUser.role === 'sales' && currentUser.username === 'corcoles' ? 'dashboard'
+                                    : currentUser.role === 'sales' ? 'crm'
+                                        : 'dashboard'
                 );
             }
             loadUserOrders(currentUser, users);
@@ -968,152 +968,152 @@ export default function App() {
         if (currentView === 'cliente_360'
             && ['admin', 'sales', 'sales_lead', 'administracion', 'direccion'].includes(currentUser?.role || '')
             && currentUser) {
-          const empresaId = empresas[0]?.id ?? '';
-          return (
-            <div className="flex-1 flex flex-col overflow-hidden h-full">
-              <ClienteInfo360View
-                empresaId={empresaId}
-                clients={users}
-                currentUserRole={currentUser.role}
-              />
-            </div>
-          );
+            const empresaId = empresas[0]?.id ?? '';
+            return (
+                <div className="flex-1 flex flex-col overflow-hidden h-full">
+                    <ClienteInfo360View
+                        empresaId={empresaId}
+                        clients={users}
+                        currentUserRole={currentUser.role}
+                    />
+                </div>
+            );
         }
         if (currentView === 'riesgo_credito'
             && ['admin', 'administracion', 'direccion'].includes(currentUser?.role || '')
             && currentUser) {
-          const empresaId = empresas[0]?.id ?? '';
-          return (
-            <div className="flex-1 overflow-auto h-full">
-              <RiesgoClienteView
-                empresaId={empresaId}
-                currentUserId={currentUser.id}
-                currentUserRole={currentUser.role}
-              />
-            </div>
-          );
+            const empresaId = empresas[0]?.id ?? '';
+            return (
+                <div className="flex-1 overflow-auto h-full">
+                    <RiesgoClienteView
+                        empresaId={empresaId}
+                        currentUserId={currentUser.id}
+                        currentUserRole={currentUser.role}
+                    />
+                </div>
+            );
         }
-        if (['ventas','ventas_presupuestos','ventas_pedidos','ventas_albaranes','ventas_facturas'].includes(currentView)
-            && ['admin','sales','administracion','direccion'].includes(currentUser?.role || '')) {
-          return (
-            <div className="flex-1 flex flex-col overflow-hidden p-4">
-              <VentasView
-                currentUser={currentUser}
-                clientes={users}
-                productos={products}
-              />
-            </div>
-          );
+        if (['ventas', 'ventas_presupuestos', 'ventas_pedidos', 'ventas_albaranes', 'ventas_facturas'].includes(currentView)
+            && ['admin', 'sales', 'administracion', 'direccion'].includes(currentUser?.role || '')) {
+            return (
+                <div className="flex-1 flex flex-col overflow-hidden p-4">
+                    <VentasView
+                        currentUser={currentUser}
+                        clientes={users}
+                        productos={products}
+                    />
+                </div>
+            );
         }
         if (currentView === 'libro_facturas'
-            && ['admin','administracion','direccion'].includes(currentUser?.role || '')) {
-          return (
-            <div className="flex-1 overflow-auto">
-              <LibroFacturasView currentUser={currentUser} />
-            </div>
-          );
+            && ['admin', 'administracion', 'direccion'].includes(currentUser?.role || '')) {
+            return (
+                <div className="flex-1 overflow-auto">
+                    <LibroFacturasView currentUser={currentUser} />
+                </div>
+            );
         }
         if (currentView === 'contabilidad'
-            && ['admin','administracion','direccion'].includes(currentUser?.role || '')) {
-          return (
-            <div className="flex-1 overflow-auto">
-              <ContabilidadView currentUser={currentUser} />
-            </div>
-          );
+            && ['admin', 'administracion', 'direccion'].includes(currentUser?.role || '')) {
+            return (
+                <div className="flex-1 overflow-auto">
+                    <ContabilidadView currentUser={currentUser} />
+                </div>
+            );
         }
         if (currentView === 'impresos_fiscales'
-            && ['admin','administracion','direccion'].includes(currentUser?.role || '')) {
-          const empresaId = empresas[0]?.id ?? '';
-          return (
-            <div className="flex-1 flex flex-col overflow-hidden h-full">
-              <ImpresosFiscalesView empresaId={empresaId} />
-            </div>
-          );
+            && ['admin', 'administracion', 'direccion'].includes(currentUser?.role || '')) {
+            const empresaId = empresas[0]?.id ?? '';
+            return (
+                <div className="flex-1 flex flex-col overflow-hidden h-full">
+                    <ImpresosFiscalesView empresaId={empresaId} />
+                </div>
+            );
         }
         if (currentView === 'conciliacion_bancaria'
-            && ['admin','administracion','direccion'].includes(currentUser?.role || '')) {
-          const empresaId = empresas[0]?.id ?? '';
-          return (
-            <div className="flex-1 flex flex-col overflow-hidden h-full">
-              <ConciliacionBancariaView empresaId={empresaId} />
-            </div>
-          );
+            && ['admin', 'administracion', 'direccion'].includes(currentUser?.role || '')) {
+            const empresaId = empresas[0]?.id ?? '';
+            return (
+                <div className="flex-1 flex flex-col overflow-hidden h-full">
+                    <ConciliacionBancariaView empresaId={empresaId} />
+                </div>
+            );
         }
         if (currentView === 'libros_oficiales'
-            && ['admin','administracion','direccion'].includes(currentUser?.role || '')) {
-          const empresaId = empresas[0]?.id ?? '';
-          return (
-            <div className="flex-1 flex flex-col overflow-hidden h-full">
-              <LibrosOficialesView empresaId={empresaId} />
-            </div>
-          );
+            && ['admin', 'administracion', 'direccion'].includes(currentUser?.role || '')) {
+            const empresaId = empresas[0]?.id ?? '';
+            return (
+                <div className="flex-1 flex flex-col overflow-hidden h-full">
+                    <LibrosOficialesView empresaId={empresaId} />
+                </div>
+            );
         }
         if (currentView === 'facturacion_recurrente'
-            && ['admin','administracion','direccion'].includes(currentUser?.role || '')) {
-          return (
-            <div className="flex-1 overflow-auto">
-              <FacturacionRecurrenteView currentUser={currentUser} />
-            </div>
-          );
+            && ['admin', 'administracion', 'direccion'].includes(currentUser?.role || '')) {
+            return (
+                <div className="flex-1 overflow-auto">
+                    <FacturacionRecurrenteView currentUser={currentUser} />
+                </div>
+            );
         }
         if (currentView === 'rrhh'
-            && ['admin','administracion','direccion'].includes(currentUser?.role || '')) {
-          return (
-            <div className="flex-1 overflow-auto h-full">
-              <RRHHView />
-            </div>
-          );
+            && ['admin', 'administracion', 'direccion'].includes(currentUser?.role || '')) {
+            return (
+                <div className="flex-1 overflow-auto h-full">
+                    <RRHHView />
+                </div>
+            );
         }
         if (currentView === 'analisis_rentabilidad'
-            && ['admin','administracion','direccion'].includes(currentUser?.role || '')) {
-          return (
-            <div className="flex-1 overflow-auto h-full">
-              <BIAnalyticsView />
-            </div>
-          );
+            && ['admin', 'administracion', 'direccion'].includes(currentUser?.role || '')) {
+            return (
+                <div className="flex-1 overflow-auto h-full">
+                    <BIAnalyticsView />
+                </div>
+            );
         }
         if (currentView === 'remesas_sepa'
-            && ['admin','administracion','direccion'].includes(currentUser?.role || '')) {
-          return (
-            <div className="flex-1 overflow-auto h-full">
-              <RemesasSEPAView />
-            </div>
-          );
+            && ['admin', 'administracion', 'direccion'].includes(currentUser?.role || '')) {
+            return (
+                <div className="flex-1 overflow-auto h-full">
+                    <RemesasSEPAView />
+                </div>
+            );
         }
         if (currentView === 'gastos_empresa'
-            && ['admin','administracion','direccion'].includes(currentUser?.role || '')) {
-          return (
-            <div className="flex-1 overflow-auto h-full">
-              <GastosView />
-            </div>
-          );
+            && ['admin', 'administracion', 'direccion'].includes(currentUser?.role || '')) {
+            return (
+                <div className="flex-1 overflow-auto h-full">
+                    <GastosView />
+                </div>
+            );
         }
-        if (['compras','compras_proveedores','compras_oc','compras_recepciones','compras_traspasos'].includes(currentView)
-            && ['admin','compras','almacen','administracion','direccion'].includes(currentUser?.role || '')) {
-          return (
-            <div className="flex-1 overflow-auto">
-              <ComprasView currentUser={currentUser} almacenes={almacenes} />
-            </div>
-          );
+        if (['compras', 'compras_proveedores', 'compras_oc', 'compras_recepciones', 'compras_traspasos'].includes(currentView)
+            && ['admin', 'compras', 'almacen', 'administracion', 'direccion'].includes(currentUser?.role || '')) {
+            return (
+                <div className="flex-1 overflow-auto">
+                    <ComprasView currentUser={currentUser} almacenes={almacenes} productos={products} />
+                </div>
+            );
         }
         if (currentView === 'stock'
-            && ['admin','compras','almacen','administracion','direccion'].includes(currentUser?.role || '')) {
-          return (
-            <div className="flex-1 overflow-auto">
-              <StockView currentUser={currentUser} almacenes={almacenes} />
-            </div>
-          );
+            && ['admin', 'compras', 'almacen', 'administracion', 'direccion'].includes(currentUser?.role || '')) {
+            return (
+                <div className="flex-1 overflow-auto">
+                    <StockView currentUser={currentUser} almacenes={almacenes} />
+                </div>
+            );
         }
         if (currentView === 'materiales'
-            && ['admin','compras','almacen','administracion','direccion','sales_lead'].includes(currentUser?.role || '')) {
-          return (
-            <div className="flex-1 overflow-hidden">
-              <MaterialesView productos={products} />
-            </div>
-          );
+            && ['admin', 'compras', 'almacen', 'administracion', 'direccion', 'sales_lead'].includes(currentUser?.role || '')) {
+            return (
+                <div className="flex-1 overflow-hidden">
+                    <MaterialesView productos={products} />
+                </div>
+            );
         }
         if (currentView === 'agenda'
-            && ['admin','sales','sales_lead','tech','tech_lead','administracion','direccion','compras'].includes(currentUser?.role || '')) {
+            && ['admin', 'sales', 'sales_lead', 'tech', 'tech_lead', 'administracion', 'direccion', 'compras'].includes(currentUser?.role || '')) {
             return (
                 <Suspense fallback={<div className="flex items-center justify-center h-64"><div className="w-5 h-5 border-2 border-slate-300 border-t-slate-700 rounded-full animate-spin" /></div>}>
                     <AgendaView currentUser={currentUser!} />

@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import {
   Presupuesto, PedidoVenta, Albaran, Factura,
-  DocumentoLinea, User, Empresa, Delegacion, Almacen
+  DocumentoLinea, User, Empresa, Delegacion, Almacen, Product, StockItem
 } from '../types';
 import { LineItemsEditor } from './LineItemsEditor';
 import { calcularTotalesLineas, calcularSubtotalLinea } from '../hooks/useVentas';
@@ -223,7 +223,8 @@ interface DocumentoModalProps {
   delegaciones: Delegacion[];
   almacenes: Almacen[];
   clientes: User[];
-  productos: { id: string; name: string; reference: string; price: number }[];
+  productos: Product[];
+  stock?: StockItem[];
   currentUser: User;
   onClose: () => void;
   onSave: (data: any, lineas: DocumentoLinea[]) => Promise<void>;
@@ -238,37 +239,37 @@ interface DocumentoModalProps {
 
 export const DocumentoModal: React.FC<DocumentoModalProps> = ({
   tipo, inicial = {} as DocumentoInicial, lineasIniciales = [], empresas, delegaciones, almacenes,
-  clientes, productos, currentUser, onClose, onSave,
+  clientes, productos, stock, currentUser, onClose, onSave,
   onConvertirPedido, onGenerarAlbaran, onGenerarFactura,
   onFirmar, onMarcarCobrada, readonly = false,
 }) => {
   const today = new Date().toISOString().split('T')[0];
 
   // ── Estado del formulario ─────────────────────────────────
-  const [empresaId, setEmpresaId]           = useState(inicial.empresaId || empresas[0]?.id || '');
-  const [delegacionId, setDelegacionId]     = useState(inicial.delegacionId || '');
-  const [almacenId, setAlmacenId]           = useState((inicial as any).almacenId || '');
-  const [clienteId, setClienteId]           = useState(inicial.clienteId || '');
-  const [clienteSearch, setClienteSearch]   = useState(inicial.clienteNombre || '');
-  const [showClientes, setShowClientes]     = useState(false);
-  const [fecha, setFecha]                   = useState(inicial.fecha || today);
-  const [fechaExtra, setFechaExtra]         = useState(
+  const [empresaId, setEmpresaId] = useState(inicial.empresaId || empresas[0]?.id || '');
+  const [delegacionId, setDelegacionId] = useState(inicial.delegacionId || '');
+  const [almacenId, setAlmacenId] = useState((inicial as any).almacenId || '');
+  const [clienteId, setClienteId] = useState(inicial.clienteId || '');
+  const [clienteSearch, setClienteSearch] = useState(inicial.clienteNombre || '');
+  const [showClientes, setShowClientes] = useState(false);
+  const [fecha, setFecha] = useState(inicial.fecha || today);
+  const [fechaExtra, setFechaExtra] = useState(
     (inicial as any).fechaValidez || (inicial as any).fechaEntrega || (inicial as any).fechaVencimiento || ''
   );
-  const [metodoEnvio, setMetodoEnvio]       = useState((inicial as any).metodoEnvio || 'agencia');
-  const [metodoCobro, setMetodoCobro]       = useState((inicial as any).metodoCobro || '');
-  const [notas, setNotas]                   = useState(inicial.notas || '');
-  const [condiciones, setCondiciones]       = useState((inicial as any).condiciones || '');
+  const [metodoEnvio, setMetodoEnvio] = useState((inicial as any).metodoEnvio || 'agencia');
+  const [metodoCobro, setMetodoCobro] = useState((inicial as any).metodoCobro || '');
+  const [notas, setNotas] = useState(inicial.notas || '');
+  const [condiciones, setCondiciones] = useState((inicial as any).condiciones || '');
   const [descuentoGlobal, setDescuentoGlobal] = useState(inicial.descuentoGlobal ?? 0);
-  const [ivaPorcentaje, setIvaPorcentaje]   = useState(inicial.ivaPorcentaje ?? 21);
-  const [lineas, setLineas]                 = useState<DocumentoLinea[]>(lineasIniciales);
-  const [saving, setSaving]                 = useState(false);
-  const [error, setError]                   = useState('');
-  const [showFirma, setShowFirma]           = useState(false);
-  const [firmaNombre, setFirmaNombre]       = useState('');
-  const [showCobro, setShowCobro]           = useState(false);
-  const [fechaCobro, setFechaCobro]         = useState(today);
-  const [signingFirma, setSigningFirma]     = useState(false);
+  const [ivaPorcentaje, setIvaPorcentaje] = useState(inicial.ivaPorcentaje ?? 21);
+  const [lineas, setLineas] = useState<DocumentoLinea[]>(lineasIniciales);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [showFirma, setShowFirma] = useState(false);
+  const [firmaNombre, setFirmaNombre] = useState('');
+  const [showCobro, setShowCobro] = useState(false);
+  const [fechaCobro, setFechaCobro] = useState(today);
+  const [signingFirma, setSigningFirma] = useState(false);
 
   // Delegaciones filtradas por empresa seleccionada
   const delFiltradas = delegaciones.filter(d => d.empresaId === empresaId);
@@ -290,12 +291,12 @@ export const DocumentoModal: React.FC<DocumentoModalProps> = ({
   // Búsqueda de clientes
   const clientesFiltrados = clienteSearch.length >= 1
     ? clientes
-        .filter(c => c.role === 'client' || c.role === 'admin' || c.role === 'sales')
-        .filter(c =>
-          c.name.toLowerCase().includes(clienteSearch.toLowerCase()) ||
-          (c.email || '').toLowerCase().includes(clienteSearch.toLowerCase())
-        )
-        .slice(0, 8)
+      .filter(c => c.role === 'client' || c.role === 'admin' || c.role === 'sales')
+      .filter(c =>
+        c.name.toLowerCase().includes(clienteSearch.toLowerCase()) ||
+        (c.email || '').toLowerCase().includes(clienteSearch.toLowerCase())
+      )
+      .slice(0, 8)
     : [];
 
   const selectCliente = (c: User) => {
@@ -327,23 +328,31 @@ export const DocumentoModal: React.FC<DocumentoModalProps> = ({
 
       let docData: any = { ...base };
       if (tipo === 'presupuesto') {
-        docData = { ...base, fechaValidez: fechaExtra || undefined, condiciones: condiciones || undefined,
-          estado: estadoOverride || (inicial as Presupuesto).estado || 'borrador' };
+        docData = {
+          ...base, fechaValidez: fechaExtra || undefined, condiciones: condiciones || undefined,
+          estado: estadoOverride || (inicial as Presupuesto).estado || 'borrador'
+        };
       } else if (tipo === 'pedido') {
-        docData = { ...base, fechaEntrega: fechaExtra || undefined, metodoEnvio,
+        docData = {
+          ...base, fechaEntrega: fechaExtra || undefined, metodoEnvio,
           presupuestoId: (inicial as PedidoVenta).presupuestoId,
           almacenId: almacenId || undefined,
-          estado: estadoOverride || (inicial as PedidoVenta).estado || 'confirmado' };
+          estado: estadoOverride || (inicial as PedidoVenta).estado || 'confirmado'
+        };
       } else if (tipo === 'albaran') {
-        docData = { ...base, pedidoVentaId: (inicial as Albaran).pedidoVentaId,
+        docData = {
+          ...base, pedidoVentaId: (inicial as Albaran).pedidoVentaId,
           almacenId: almacenId || undefined,
-          estado: estadoOverride || 'pendiente' };
+          estado: estadoOverride || 'pendiente'
+        };
       } else if (tipo === 'factura') {
-        docData = { ...base, fechaVencimiento: fechaExtra || undefined, metodoCobro: metodoCobro || undefined,
+        docData = {
+          ...base, fechaVencimiento: fechaExtra || undefined, metodoCobro: metodoCobro || undefined,
           presupuestoId: (inicial as Factura).presupuestoId,
           pedidoVentaId: (inicial as Factura).pedidoVentaId,
           albaranId: (inicial as Factura).albaranId,
-          estado: estadoOverride || 'emitida' };
+          estado: estadoOverride || 'emitida'
+        };
         await onSave(docData, lineas);
         return;
       }
@@ -577,6 +586,7 @@ export const DocumentoModal: React.FC<DocumentoModalProps> = ({
               lineas={lineas}
               onChange={setLineas}
               productos={productos}
+              stock={stock}
               readonly={docReadonly}
               ivaPorcentajeDefault={ivaPorcentaje}
             />

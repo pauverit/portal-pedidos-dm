@@ -13,6 +13,7 @@ import {
 } from '../types';
 import { useVentas, calcularSubtotalLinea } from '../hooks/useVentas';
 import { useEmpresaData } from '../hooks/useEmpresaData';
+import { useCompras } from '../hooks/useCompras';
 import { DocumentoModal } from './DocumentoModal';
 
 const fmt = (n: number) =>
@@ -76,23 +77,23 @@ const DOC_CONFIG = {
 // ─── Colores de estado ─────────────────────────────────────────────────────────
 
 const ESTADO_CONFIG: Record<string, { bg: string; text: string; dot: string }> = {
-  borrador:    { bg: 'bg-slate-100',   text: 'text-slate-600',   dot: 'bg-slate-400' },
-  enviado:     { bg: 'bg-sky-100',     text: 'text-sky-700',     dot: 'bg-sky-500' },
-  aceptado:    { bg: 'bg-green-100',   text: 'text-green-700',   dot: 'bg-green-500' },
-  rechazado:   { bg: 'bg-red-100',     text: 'text-red-700',     dot: 'bg-red-500' },
-  facturado:   { bg: 'bg-purple-100',  text: 'text-purple-700',  dot: 'bg-purple-500' },
-  cancelado:   { bg: 'bg-red-50',      text: 'text-red-400',     dot: 'bg-red-300' },
-  confirmado:  { bg: 'bg-blue-100',    text: 'text-blue-700',    dot: 'bg-blue-500' },
-  en_proceso:  { bg: 'bg-amber-100',   text: 'text-amber-700',   dot: 'bg-amber-500' },
-  entregado:   { bg: 'bg-teal-100',    text: 'text-teal-700',    dot: 'bg-teal-500' },
-  pendiente:   { bg: 'bg-slate-100',   text: 'text-slate-600',   dot: 'bg-slate-400' },
-  firmado:     { bg: 'bg-green-100',   text: 'text-green-700',   dot: 'bg-green-500' },
-  emitida:     { bg: 'bg-blue-100',    text: 'text-blue-700',    dot: 'bg-blue-500' },
-  enviada:     { bg: 'bg-indigo-100',  text: 'text-indigo-700',  dot: 'bg-indigo-500' },
-  cobrada:     { bg: 'bg-emerald-100', text: 'text-emerald-700', dot: 'bg-emerald-500' },
-  recibida:    { bg: 'bg-amber-100',   text: 'text-amber-700',   dot: 'bg-amber-500' },
-  procesada:   { bg: 'bg-green-100',   text: 'text-green-700',   dot: 'bg-green-500' },
-  anulada:     { bg: 'bg-red-50',      text: 'text-red-400',     dot: 'bg-red-300' },
+  borrador: { bg: 'bg-slate-100', text: 'text-slate-600', dot: 'bg-slate-400' },
+  enviado: { bg: 'bg-sky-100', text: 'text-sky-700', dot: 'bg-sky-500' },
+  aceptado: { bg: 'bg-green-100', text: 'text-green-700', dot: 'bg-green-500' },
+  rechazado: { bg: 'bg-red-100', text: 'text-red-700', dot: 'bg-red-500' },
+  facturado: { bg: 'bg-purple-100', text: 'text-purple-700', dot: 'bg-purple-500' },
+  cancelado: { bg: 'bg-red-50', text: 'text-red-400', dot: 'bg-red-300' },
+  confirmado: { bg: 'bg-blue-100', text: 'text-blue-700', dot: 'bg-blue-500' },
+  en_proceso: { bg: 'bg-amber-100', text: 'text-amber-700', dot: 'bg-amber-500' },
+  entregado: { bg: 'bg-teal-100', text: 'text-teal-700', dot: 'bg-teal-500' },
+  pendiente: { bg: 'bg-slate-100', text: 'text-slate-600', dot: 'bg-slate-400' },
+  firmado: { bg: 'bg-green-100', text: 'text-green-700', dot: 'bg-green-500' },
+  emitida: { bg: 'bg-blue-100', text: 'text-blue-700', dot: 'bg-blue-500' },
+  enviada: { bg: 'bg-indigo-100', text: 'text-indigo-700', dot: 'bg-indigo-500' },
+  cobrada: { bg: 'bg-emerald-100', text: 'text-emerald-700', dot: 'bg-emerald-500' },
+  recibida: { bg: 'bg-amber-100', text: 'text-amber-700', dot: 'bg-amber-500' },
+  procesada: { bg: 'bg-green-100', text: 'text-green-700', dot: 'bg-green-500' },
+  anulada: { bg: 'bg-red-50', text: 'text-red-400', dot: 'bg-red-300' },
 };
 
 const EstadoBadge: React.FC<{ estado: string }> = ({ estado }) => {
@@ -109,9 +110,9 @@ const EstadoBadge: React.FC<{ estado: string }> = ({ estado }) => {
 
 const FLOW_STEPS = [
   { key: 'presupuestos', label: 'Presupuesto' },
-  { key: 'pedidos',      label: 'Pedido' },
-  { key: 'albaranes',    label: 'Albarán' },
-  { key: 'facturas',     label: 'Factura' },
+  { key: 'pedidos', label: 'Pedido' },
+  { key: 'albaranes', label: 'Albarán' },
+  { key: 'facturas', label: 'Factura' },
   { key: 'devoluciones', label: 'Devolución' },
 ] as const;
 
@@ -128,13 +129,12 @@ const FlowBanner: React.FC<{ active: TabId; onChange: (t: TabId) => void }> = ({
         <React.Fragment key={step.key}>
           <button
             onClick={() => onChange(step.key)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 border ${
-              isActive
-                ? `${cfg.active} shadow-sm`
-                : isPast
-                  ? `bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200`
-                  : `bg-white text-slate-500 border-slate-200 hover:${cfg.bg} hover:${cfg.text}`
-            }`}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 border ${isActive
+              ? `${cfg.active} shadow-sm`
+              : isPast
+                ? `bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200`
+                : `bg-white text-slate-500 border-slate-200 hover:${cfg.bg} hover:${cfg.text}`
+              }`}
           >
             <Icon size={13} />
             {step.label}
@@ -236,7 +236,7 @@ interface DevolucionModalProps {
   empresas: any[];
   almacenes: any[];
   clientes: User[];
-  productos: { id: string; name: string; reference?: string; price: number }[];
+  productos: Product[];
   onClose: () => void;
   onSave: (data: Omit<DevolucionVenta, 'id' | 'referencia' | 'lineas'>, lineas: DevolucionLinea[]) => Promise<void>;
   facturas: Factura[];
@@ -527,15 +527,9 @@ export const VentasView: React.FC<VentasViewProps> = ({ currentUser, clientes, p
 
   const ventas = useVentas();
   const empresaData = useEmpresaData();
+  const { stock } = useCompras();
 
   useEffect(() => { ventas.loadAll(); }, []);
-
-  const productosEditor = productos.map(p => ({
-    id: p.id,
-    name: p.name,
-    reference: p.reference,
-    price: p.price > 0 ? p.price : (p.pricePerM2 ?? 0),
-  }));
 
   const canEdit = ['admin', 'sales', 'sales_lead', 'administracion', 'direccion'].includes(currentUser.role);
 
@@ -668,9 +662,9 @@ export const VentasView: React.FC<VentasViewProps> = ({ currentUser, clientes, p
     search.length < 2
       ? docs
       : docs.filter(d =>
-          (d.referencia || '').toLowerCase().includes(search.toLowerCase()) ||
-          (d.clienteNombre || '').toLowerCase().includes(search.toLowerCase())
-        );
+        (d.referencia || '').toLowerCase().includes(search.toLowerCase()) ||
+        (d.clienteNombre || '').toLowerCase().includes(search.toLowerCase())
+      );
 
   // ── KPIs por tab ───────────────────────────────────────────
 
@@ -710,54 +704,58 @@ export const VentasView: React.FC<VentasViewProps> = ({ currentUser, clientes, p
   // ── Columnas por tipo ──────────────────────────────────────
 
   const colsPresupuesto: ColDef<Presupuesto>[] = [
-    { key: 'ref',      label: 'Referencia',  render: d => <span className="font-mono font-bold text-violet-700">{d.referencia}</span> },
-    { key: 'cliente',  label: 'Cliente',     render: d => <span className="truncate max-w-[180px] block font-medium">{d.clienteNombre || '—'}</span> },
-    { key: 'fecha',    label: 'Fecha',       render: d => <span className="text-slate-500">{d.fecha}</span> },
-    { key: 'validez',  label: 'Válido hasta', render: d => <span className="text-slate-500">{d.fechaValidez || '—'}</span> },
-    { key: 'total',    label: 'Total',       render: d => <span className="font-bold text-slate-800">{fmt(d.total)}</span>, right: true },
-    { key: 'estado',   label: 'Estado',      render: d => <EstadoBadge estado={d.estado} /> },
+    { key: 'ref', label: 'Referencia', render: d => <span className="font-mono font-bold text-violet-700">{d.referencia}</span> },
+    { key: 'cliente', label: 'Cliente', render: d => <span className="truncate max-w-[180px] block font-medium">{d.clienteNombre || '—'}</span> },
+    { key: 'fecha', label: 'Fecha', render: d => <span className="text-slate-500">{d.fecha}</span> },
+    { key: 'validez', label: 'Válido hasta', render: d => <span className="text-slate-500">{d.fechaValidez || '—'}</span> },
+    { key: 'total', label: 'Total', render: d => <span className="font-bold text-slate-800">{fmt(d.total)}</span>, right: true },
+    { key: 'estado', label: 'Estado', render: d => <EstadoBadge estado={d.estado} /> },
   ];
 
   const colsPedido: ColDef<PedidoVenta>[] = [
-    { key: 'ref',     label: 'Referencia', render: d => <span className="font-mono font-bold text-blue-700">{d.referencia}</span> },
-    { key: 'cliente', label: 'Cliente',    render: d => <span className="truncate max-w-[180px] block font-medium">{d.clienteNombre || '—'}</span> },
-    { key: 'fecha',   label: 'Fecha',      render: d => <span className="text-slate-500">{d.fecha}</span> },
-    { key: 'entrega', label: 'Entrega',    render: d => <span className="text-slate-500">{d.fechaEntrega || '—'}</span> },
-    { key: 'total',   label: 'Total',      render: d => <span className="font-bold text-slate-800">{fmt(d.total)}</span>, right: true },
-    { key: 'estado',  label: 'Estado',     render: d => <EstadoBadge estado={d.estado} /> },
+    { key: 'ref', label: 'Referencia', render: d => <span className="font-mono font-bold text-blue-700">{d.referencia}</span> },
+    { key: 'cliente', label: 'Cliente', render: d => <span className="truncate max-w-[180px] block font-medium">{d.clienteNombre || '—'}</span> },
+    { key: 'fecha', label: 'Fecha', render: d => <span className="text-slate-500">{d.fecha}</span> },
+    { key: 'entrega', label: 'Entrega', render: d => <span className="text-slate-500">{d.fechaEntrega || '—'}</span> },
+    { key: 'total', label: 'Total', render: d => <span className="font-bold text-slate-800">{fmt(d.total)}</span>, right: true },
+    { key: 'estado', label: 'Estado', render: d => <EstadoBadge estado={d.estado} /> },
   ];
 
   const colsAlbaran: ColDef<Albaran>[] = [
-    { key: 'ref',     label: 'Referencia', render: d => <span className="font-mono font-bold text-amber-700">{d.referencia}</span> },
-    { key: 'cliente', label: 'Cliente',    render: d => <span className="truncate max-w-[180px] block font-medium">{d.clienteNombre || '—'}</span> },
-    { key: 'fecha',   label: 'Fecha',      render: d => <span className="text-slate-500">{d.fecha}</span> },
-    { key: 'firma',   label: 'Firma',      render: d => d.firmaCliente
+    { key: 'ref', label: 'Referencia', render: d => <span className="font-mono font-bold text-amber-700">{d.referencia}</span> },
+    { key: 'cliente', label: 'Cliente', render: d => <span className="truncate max-w-[180px] block font-medium">{d.clienteNombre || '—'}</span> },
+    { key: 'fecha', label: 'Fecha', render: d => <span className="text-slate-500">{d.fecha}</span> },
+    {
+      key: 'firma', label: 'Firma', render: d => d.firmaCliente
         ? <span className="flex items-center gap-1 text-green-700 text-xs font-semibold"><CheckCircle size={12} /> {d.firmaNombre}</span>
-        : <span className="text-slate-400 text-xs">Sin firmar</span> },
-    { key: 'estado',  label: 'Estado',     render: d => <EstadoBadge estado={d.estado} /> },
+        : <span className="text-slate-400 text-xs">Sin firmar</span>
+    },
+    { key: 'estado', label: 'Estado', render: d => <EstadoBadge estado={d.estado} /> },
   ];
 
   const colsFactura: ColDef<Factura>[] = [
-    { key: 'ref',        label: 'Referencia', render: d => <span className="font-mono font-bold text-emerald-700">{d.referencia}</span> },
-    { key: 'cliente',    label: 'Cliente',    render: d => <span className="truncate max-w-[160px] block font-medium">{d.clienteNombre || '—'}</span> },
-    { key: 'fecha',      label: 'Fecha',      render: d => <span className="text-slate-500">{d.fecha}</span> },
-    { key: 'vencimiento',label: 'Vence',      render: d => <span className="text-slate-500">{d.fechaVencimiento || '—'}</span> },
-    { key: 'total',      label: 'Total',      render: d => <span className="font-bold text-slate-800">{fmt(d.total)}</span>, right: true },
-    { key: 'cobro',      label: 'Cobro',      render: d => d.estado === 'cobrada'
+    { key: 'ref', label: 'Referencia', render: d => <span className="font-mono font-bold text-emerald-700">{d.referencia}</span> },
+    { key: 'cliente', label: 'Cliente', render: d => <span className="truncate max-w-[160px] block font-medium">{d.clienteNombre || '—'}</span> },
+    { key: 'fecha', label: 'Fecha', render: d => <span className="text-slate-500">{d.fecha}</span> },
+    { key: 'vencimiento', label: 'Vence', render: d => <span className="text-slate-500">{d.fechaVencimiento || '—'}</span> },
+    { key: 'total', label: 'Total', render: d => <span className="font-bold text-slate-800">{fmt(d.total)}</span>, right: true },
+    {
+      key: 'cobro', label: 'Cobro', render: d => d.estado === 'cobrada'
         ? <span className="flex items-center gap-1 text-emerald-700 text-xs font-semibold"><CheckCircle size={12} />{d.metodoCobro}</span>
-        : <span className="text-slate-400 text-xs flex items-center gap-1"><Clock size={11} /> Pendiente</span> },
-    { key: 'estado',     label: 'Estado',     render: d => <EstadoBadge estado={d.estado} /> },
+        : <span className="text-slate-400 text-xs flex items-center gap-1"><Clock size={11} /> Pendiente</span>
+    },
+    { key: 'estado', label: 'Estado', render: d => <EstadoBadge estado={d.estado} /> },
   ];
 
   const colsDevolucion: ColDef<DevolucionVenta>[] = [
-    { key: 'ref',     label: 'Referencia', render: d => <span className="font-mono font-bold text-rose-700">{d.referencia || '—'}</span> },
-    { key: 'cliente', label: 'Cliente',    render: d => <span className="truncate max-w-[160px] block font-medium">{d.clienteNombre}</span> },
-    { key: 'fecha',   label: 'Fecha',      render: d => <span className="text-slate-500">{d.fecha}</span> },
-    { key: 'motivo',  label: 'Motivo',     render: d => <span className="text-slate-600 capitalize">{(d.motivo || '').replace('_', ' ')}</span> },
-    { key: 'origen',  label: 'Origen',     render: d => <span className="text-xs text-slate-400">{d.facturaRef || d.albaranRef || '—'}</span> },
-    { key: 'total',   label: 'Total',      render: d => <span className="font-bold text-rose-700">{fmt(d.total)}</span>, right: true },
-    { key: 'abono',   label: 'Abono',      render: d => <span className="text-xs text-slate-500 capitalize">{(d.tipoAbono || '').replace('_', ' ')}</span> },
-    { key: 'estado',  label: 'Estado',     render: d => <EstadoBadge estado={d.estado} /> },
+    { key: 'ref', label: 'Referencia', render: d => <span className="font-mono font-bold text-rose-700">{d.referencia || '—'}</span> },
+    { key: 'cliente', label: 'Cliente', render: d => <span className="truncate max-w-[160px] block font-medium">{d.clienteNombre}</span> },
+    { key: 'fecha', label: 'Fecha', render: d => <span className="text-slate-500">{d.fecha}</span> },
+    { key: 'motivo', label: 'Motivo', render: d => <span className="text-slate-600 capitalize">{(d.motivo || '').replace('_', ' ')}</span> },
+    { key: 'origen', label: 'Origen', render: d => <span className="text-xs text-slate-400">{d.facturaRef || d.albaranRef || '—'}</span> },
+    { key: 'total', label: 'Total', render: d => <span className="font-bold text-rose-700">{fmt(d.total)}</span>, right: true },
+    { key: 'abono', label: 'Abono', render: d => <span className="text-xs text-slate-500 capitalize">{(d.tipoAbono || '').replace('_', ' ')}</span> },
+    { key: 'estado', label: 'Estado', render: d => <EstadoBadge estado={d.estado} /> },
   ];
 
   const cfg = DOC_CONFIG[activeTab];
@@ -908,20 +906,21 @@ export const VentasView: React.FC<VentasViewProps> = ({ currentUser, clientes, p
           delegaciones={empresaData.delegaciones}
           almacenes={empresaData.almacenes}
           clientes={clientes}
-          productos={productosEditor}
+          productos={productos}
+          stock={stock}
           currentUser={currentUser}
           onClose={() => setModal(null)}
           onSave={
             modal.tipo === 'presupuesto' ? handleSavePresupuesto :
-            modal.tipo === 'pedido'      ? handleSavePedido      :
-            modal.tipo === 'albaran'     ? handleSaveAlbaran     :
-                                           handleSaveFactura
+              modal.tipo === 'pedido' ? handleSavePedido :
+                modal.tipo === 'albaran' ? handleSaveAlbaran :
+                  handleSaveFactura
           }
           onConvertirPedido={modal.tipo === 'presupuesto' && modal.doc?.id ? handleConvertirPedido : undefined}
           onGenerarAlbaran={modal.tipo === 'pedido' && modal.doc?.id ? handleGenerarAlbaran : undefined}
           onGenerarFactura={
             modal.tipo === 'albaran' && modal.doc?.id ? handleGenerarFacturaDesdeAlbaran :
-            modal.tipo === 'pedido'  && modal.doc?.id ? handleGenerarFacturaDesdePedido  : undefined
+              modal.tipo === 'pedido' && modal.doc?.id ? handleGenerarFacturaDesdePedido : undefined
           }
           onFirmar={modal.tipo === 'albaran' ? handleFirmarAlbaran : undefined}
           onMarcarCobrada={modal.tipo === 'factura' && modal.doc?.id ? handleMarcarCobrada : undefined}
@@ -935,7 +934,7 @@ export const VentasView: React.FC<VentasViewProps> = ({ currentUser, clientes, p
           empresas={empresaData.empresas}
           almacenes={empresaData.almacenes}
           clientes={clientes}
-          productos={productosEditor}
+          productos={productos}
           facturas={ventas.facturas}
           albaranes={ventas.albaranes}
           onClose={() => setDevModal(false)}

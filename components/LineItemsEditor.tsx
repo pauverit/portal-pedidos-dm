@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Plus, Trash2, Search, Package, X } from 'lucide-react';
-import { DocumentoLinea } from '../types';
+import { DocumentoLinea, Product, StockItem } from '../types';
 import { calcularSubtotalLinea } from '../hooks/useVentas';
+import { MaterialSelectorModal } from './MaterialSelectorModal';
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(n);
@@ -17,9 +18,23 @@ interface LineItemsEditorProps {
   lineas: DocumentoLinea[];
   onChange: (lineas: DocumentoLinea[]) => void;
   productos?: ProductoSugerido[];
+  stock?: StockItem[];
   readonly?: boolean;
   ivaPorcentajeDefault?: number;
 }
+
+// ─── Mapper de Product a DocumentoLinea ───────────────────────────────────────
+
+const mapProductToLinea = (p: Product, orden: number, ivaDefault: number): DocumentoLinea => ({
+  orden,
+  productoId: p.id,
+  descripcion: p.name,
+  cantidad: 1,
+  precioUnitario: p.pvp ?? p.price,
+  descuento: 0,
+  ivaPorcentaje: ivaDefault,
+  subtotal: p.pvp ?? p.price,
+});
 
 // ─── Combobox descripción + búsqueda de producto ──────────────────────────────
 
@@ -28,13 +43,14 @@ const DescripcionCombobox: React.FC<{
   productoId?: string;
   productos: ProductoSugerido[];
   onChange: (desc: string, prod?: ProductoSugerido) => void;
+  onOpenCatalog?: () => void;
   disabled?: boolean;
-}> = ({ value, productoId, productos, onChange, disabled }) => {
-  const [open, setOpen]       = useState(false);
-  const [query, setQuery]     = useState('');
-  const inputRef              = useRef<HTMLInputElement>(null);
-  const dropRef               = useRef<HTMLDivElement>(null);
-  const wrapRef               = useRef<HTMLDivElement>(null);
+}> = ({ value, productoId, productos, onChange, onOpenCatalog, disabled }) => {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
 
   // Filtrar productos: usa query (que se sincroniza con lo que escribe el usuario)
   const filtered = productos
@@ -97,20 +113,27 @@ const DescripcionCombobox: React.FC<{
 
         {/* Botón lupa: abre/cierra la lista (para ver todos o limpiar) */}
         {productos.length > 0 && (
-          <button
-            type="button"
-            onMouseDown={e => { e.preventDefault(); setOpen(o => !o); if (!open) setQuery(''); }}
-            title="Ver catálogo de artículos"
-            className={`shrink-0 p-1 rounded transition-colors ${
-              open
+          <div className="flex items-center">
+            <button
+              type="button"
+              onMouseDown={e => { e.preventDefault(); setOpen(o => !o); if (!open) setQuery(''); }}
+              title="Sugerencias rápidas"
+              className={`shrink-0 p-1 rounded-l transition-colors border-r border-slate-100 ${open
                 ? 'bg-blue-600 text-white'
-                : productoId
-                  ? 'bg-green-100 text-green-600 hover:bg-green-200'
-                  : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'
-            }`}
-          >
-            {open ? <X size={13} /> : <Search size={13} />}
-          </button>
+                : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50 bg-slate-50'
+                }`}
+            >
+              {open ? <X size={13} /> : <div className="w-3.5 h-3.5 flex items-center justify-center text-[10px] font-bold">▽</div>}
+            </button>
+            <button
+              type="button"
+              onClick={(e) => { e.preventDefault(); onOpenCatalog?.(); }}
+              title="Abrir catálogo avanzado [Q]"
+              className="shrink-0 p-1 rounded-r bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
+            >
+              <Search size={13} strokeWidth={3} />
+            </button>
+          </div>
         )}
       </div>
 
@@ -183,10 +206,11 @@ interface FilaProps {
   productos: ProductoSugerido[];
   onUpdate: (index: number, changes: Partial<DocumentoLinea>) => void;
   onDelete: (index: number) => void;
+  onOpenCatalog: (index: number) => void;
   readonly?: boolean;
 }
 
-const FilaLinea: React.FC<FilaProps> = ({ linea, index, productos, onUpdate, onDelete, readonly }) => {
+const FilaLinea: React.FC<FilaProps> = ({ linea, index, productos, onUpdate, onDelete, onOpenCatalog, readonly }) => {
 
   const handleSelectProduct = (desc: string, prod?: ProductoSugerido) => {
     if (prod) {
@@ -234,6 +258,7 @@ const FilaLinea: React.FC<FilaProps> = ({ linea, index, productos, onUpdate, onD
           productoId={linea.productoId}
           productos={productos}
           onChange={handleSelectProduct}
+          onOpenCatalog={() => onOpenCatalog(index)}
         />
       </td>
 
@@ -309,9 +334,12 @@ export const LineItemsEditor: React.FC<LineItemsEditorProps> = ({
   lineas,
   onChange,
   productos = [],
+  stock = [],
   readonly = false,
   ivaPorcentajeDefault = 21,
 }) => {
+  const [catalogMode, setCatalogMode] = useState<{ isOpen: boolean; lineIndex?: number }>({ isOpen: false });
+
   const addLinea = () => {
     const nueva: DocumentoLinea = {
       orden: lineas.length + 1,
@@ -323,6 +351,34 @@ export const LineItemsEditor: React.FC<LineItemsEditorProps> = ({
       subtotal: 0,
     };
     onChange([...lineas, nueva]);
+  };
+
+  const handleCatalogSelect = (seleccionados: Product[]) => {
+    if (seleccionados.length === 0) return;
+
+    if (catalogMode.lineIndex !== undefined) {
+      // Si se abrió desde una línea específica
+      const i = catalogMode.lineIndex;
+      const first = mapProductToLinea(seleccionados[0], lineas[i].orden, ivaPorcentajeDefault);
+
+      const nextLineas = [...lineas];
+      nextLineas[i] = { ...nextLineas[i], ...first };
+
+      if (seleccionados.length > 1) {
+        const masivas = seleccionados.slice(1).map((p, idx) =>
+          mapProductToLinea(p, lineas.length + idx + 1, ivaPorcentajeDefault)
+        );
+        onChange([...nextLineas, ...masivas]);
+      } else {
+        onChange(nextLineas);
+      }
+    } else {
+      // Si se abrió globalmente
+      const nuevasLineas = seleccionados.map((p, i) =>
+        mapProductToLinea(p, lineas.length + i + 1, ivaPorcentajeDefault)
+      );
+      onChange([...lineas, ...nuevasLineas]);
+    }
   };
 
   const updateLinea = (index: number, changes: Partial<DocumentoLinea>) => {
@@ -371,6 +427,7 @@ export const LineItemsEditor: React.FC<LineItemsEditorProps> = ({
                 productos={productos}
                 onUpdate={updateLinea}
                 onDelete={deleteLinea}
+                onOpenCatalog={(idx) => setCatalogMode({ isOpen: true, lineIndex: idx })}
                 readonly={readonly}
               />
             ))}
@@ -402,17 +459,35 @@ export const LineItemsEditor: React.FC<LineItemsEditorProps> = ({
       {/* Footer */}
       <div className="flex items-center justify-between px-3 py-2.5 bg-slate-50 border-t border-slate-200">
         {!readonly ? (
-          <button
-            onClick={addLinea}
-            className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium hover:bg-blue-50 px-2 py-1 rounded-lg transition-colors"
-          >
-            <Plus size={15} /> Añadir línea
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={addLinea}
+              className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium hover:bg-blue-50 px-2.5 py-1.5 rounded-lg transition-colors border border-transparent hover:border-blue-200"
+            >
+              <Plus size={15} /> Añadir línea vacía
+            </button>
+            <button
+              onClick={() => setCatalogMode({ isOpen: true })}
+              className="flex items-center gap-2 text-sm bg-indigo-600 text-white hover:bg-indigo-700 font-bold px-4 py-1.5 rounded-lg transition-all shadow-sm shadow-indigo-200"
+            >
+              <Search size={15} /> Buscar Artículos
+            </button>
+          </div>
         ) : <div />}
 
         <div className="text-sm font-semibold text-slate-700">
           Subtotal: <span className="text-slate-900 font-mono ml-1">{fmt(total)}</span>
         </div>
+
+        {/* Modal de búsqueda avanzada */}
+        <MaterialSelectorModal
+          isOpen={catalogMode.isOpen}
+          onClose={() => setCatalogMode({ isOpen: false })}
+          productos={productos as any[]}
+          stock={stock}
+          initialQuery={catalogMode.lineIndex !== undefined ? lineas[catalogMode.lineIndex].descripcion : ''}
+          onSelect={handleCatalogSelect}
+        />
       </div>
     </div>
   );
